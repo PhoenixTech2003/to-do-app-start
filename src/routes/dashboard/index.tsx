@@ -1,11 +1,18 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { CreateWorkspaceDialog } from '@/components/app/dashboard/create-workspace-dialog'
 
 export const Route = createFileRoute('/dashboard/')({
-  component: RouteComponent,
+  component: DashboardPage,
 })
 
-function RouteComponent() {
+function DashboardPage() {
   return (
-    <div>Hello</div>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Your Workspaces</h1>
+        <CreateWorkspaceDialog />
+      </div>
+      Hello
+    </div>
   )
 }
