@@ -99,7 +99,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               },
             ]}
           />
-          <Toaster />
+          <Toaster richColors />
         </ConvexProvider>
         <Scripts />
       </body>
