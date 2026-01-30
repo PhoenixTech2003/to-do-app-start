@@ -1,3 +1,5 @@
+import { UpdateWorkspaceDialog } from './update-workspace-dialog'
+
 interface WorkspaceCardProps {
   workspaceName: string
 }
@@ -8,6 +10,9 @@ export function WorkspaceCard({ workspaceName }: WorkspaceCardProps) {
       <a href="dashboard/workspace/{userWorkSpace.id}" className="block">
         <h2 className="mb-4 text-xl font-bold text-primary">{workspaceName}</h2>
       </a>
+      <div className="flex gap-2">
+        <UpdateWorkspaceDialog />
+      </div>
     </div>
   )
 }
