@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Plus } from 'lucide-react'
+import { CreateWorkspaceForm } from './create-workspace-form'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -10,22 +12,27 @@ import {
 } from '@/components/ui/dialog'
 
 export function CreateWorkspaceDialog() {
+  const [isOpen, setIsOpen] = useState(false)
+
+  function setCreateDialogIsOpen(value: boolean) {
+    setIsOpen(value)
+  }
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger>
-        <Button>
+        <Button onClick={() => setIsOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Create Workspace
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Are you absolutely sure?</DialogTitle>
+          <DialogTitle>Create Workspace</DialogTitle>
           <DialogDescription>
-            This action cannot be undone. This will permanently delete your
-            account and remove your data from our servers.
+            This will create a new workspace for your twodo lists
           </DialogDescription>
         </DialogHeader>
+        <CreateWorkspaceForm setCreateDialogIsOpen={setCreateDialogIsOpen} />
       </DialogContent>
     </Dialog>
   )
