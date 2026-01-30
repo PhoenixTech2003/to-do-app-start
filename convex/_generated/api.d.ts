@@ -10,6 +10,7 @@
 
 import type * as auth from "../auth.js";
 import type * as dashboard_mutations from "../dashboard/mutations.js";
+import type * as dashboard_queries from "../dashboard/queries.js";
 import type * as http from "../http.js";
 
 import type {
@@ -21,6 +22,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   "dashboard/mutations": typeof dashboard_mutations;
+  "dashboard/queries": typeof dashboard_queries;
   http: typeof http;
 }>;
 
