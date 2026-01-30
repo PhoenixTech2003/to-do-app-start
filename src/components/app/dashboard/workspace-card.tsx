@@ -11,7 +11,7 @@ export function WorkspaceCard({ workspaceName }: WorkspaceCardProps) {
         <h2 className="mb-4 text-xl font-bold text-primary">{workspaceName}</h2>
       </a>
       <div className="flex gap-2">
-        <UpdateWorkspaceDialog />
+        <UpdateWorkspaceDialog workspaceTitle={workspaceName} />
       </div>
     </div>
   )
