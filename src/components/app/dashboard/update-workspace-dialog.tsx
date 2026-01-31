@@ -1,4 +1,5 @@
 import { Pencil } from 'lucide-react'
+import { UpdateWorkspaceDetailsForm } from './update-workspace-form'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -8,7 +9,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 
-export function UpdateWorkspaceDialog() {
+interface UpdateWorkspaceDialogProps {
+  workspaceTitle: string
+}
+
+export function UpdateWorkspaceDialog({
+  workspaceTitle,
+}: UpdateWorkspaceDialogProps) {
   return (
     <Dialog>
       <DialogTrigger>
@@ -21,6 +28,7 @@ export function UpdateWorkspaceDialog() {
         <DialogHeader>
           <DialogTitle>Update Workspace Details</DialogTitle>
         </DialogHeader>
+        <UpdateWorkspaceDetailsForm workspaceName={workspaceTitle} />
       </DialogContent>
     </Dialog>
   )
