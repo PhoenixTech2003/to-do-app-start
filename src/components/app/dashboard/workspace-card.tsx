@@ -1,17 +1,20 @@
 import { UpdateWorkspaceDialog } from './update-workspace-dialog'
+import type { WorkspaceItem } from '@/types/global'
 
 interface WorkspaceCardProps {
-  workspaceName: string
+  workspaceData: WorkspaceItem
 }
 
-export function WorkspaceCard({ workspaceName }: WorkspaceCardProps) {
+export function WorkspaceCard({ workspaceData }: WorkspaceCardProps) {
   return (
     <div className="rounded-lg border-2 border-slate-100 bg-white p-6 shadow-sm transition-all hover:border-blue-200 hover:shadow-md">
       <a href="dashboard/workspace/{userWorkSpace.id}" className="block">
-        <h2 className="mb-4 text-xl font-bold text-primary">{workspaceName}</h2>
+        <h2 className="mb-4 text-xl font-bold text-primary">
+          {workspaceData.title}
+        </h2>
       </a>
       <div className="flex gap-2">
-        <UpdateWorkspaceDialog workspaceTitle={workspaceName} />
+        <UpdateWorkspaceDialog workspaceData={workspaceData} />
       </div>
     </div>
   )

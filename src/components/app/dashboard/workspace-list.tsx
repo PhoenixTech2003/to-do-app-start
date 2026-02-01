@@ -1,10 +1,8 @@
 import { WorkspaceCard } from './workspace-card'
-import type { api } from 'convex/_generated/api'
-
-type workspacesList = typeof api.dashboard.queries.getUserWorkspaces._returnType
+import type { WorkspacesList } from '@/types/global'
 
 interface WorkspaceListProps {
-  workspaceListData: workspacesList
+  workspaceListData: WorkspacesList
 }
 
 export function WorkspaceList({ workspaceListData }: WorkspaceListProps) {
@@ -19,7 +17,7 @@ export function WorkspaceList({ workspaceListData }: WorkspaceListProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {workspaceListData.map((workspace) => (
-        <WorkspaceCard key={workspace._id} workspaceName={workspace.title} />
+        <WorkspaceCard key={workspace._id} workspaceData={workspace} />
       ))}
     </div>
   )

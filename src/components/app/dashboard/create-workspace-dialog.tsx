@@ -18,7 +18,7 @@ export function CreateWorkspaceDialog() {
     setIsOpen(value)
   }
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={setCreateDialogIsOpen}>
       <DialogTrigger>
         <Button onClick={() => setIsOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />

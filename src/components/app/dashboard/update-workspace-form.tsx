@@ -1,26 +1,46 @@
 import { useForm } from '@tanstack/react-form'
 import { toast } from 'sonner'
+import { useConvexMutation } from '@convex-dev/react-query'
+import { api } from 'convex/_generated/api'
+import type { WorkspaceItem } from '@/types/global'
 import { updateWorkspaceFormSchema } from '@/validation/update-workspace-form-schema'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
 interface UpdateWorkspaceFormProps {
-  workspaceName: string
+  workspaceData: WorkspaceItem
+  setUpdateWorkspaceDialogIsOpen: (value: boolean) => void
 }
 
 export function UpdateWorkspaceDetailsForm({
-  workspaceName,
+  workspaceData,
+  setUpdateWorkspaceDialogIsOpen,
 }: UpdateWorkspaceFormProps) {
+  const updateWorkSpaceDetails = useConvexMutation(
+    api.dashboard.mutations.updateWorkspaceDetails,
+  )
   const form = useForm({
     defaultValues: {
-      title: workspaceName,
+      title: workspaceData.title,
     },
     validators: {
       onSubmit: updateWorkspaceFormSchema,
     },
-    onSubmit: async (formData) => {
-      toast.success(`submitted form successfully with ${formData.value.title}`)
+    onSubmit: (formData) => {
+      const updateWorkSpaceDetailsPromise = updateWorkSpaceDetails({
+        title: formData.value.title,
+        workspaceId: workspaceData._id,
+      })
+
+      toast.promise(updateWorkSpaceDetailsPromise, {
+        loading: 'Please wait while we update your workspace',
+        success: () => {
+          setUpdateWorkspaceDialogIsOpen(false)
+          return 'Workspace updated successfully'
+        },
+        error: 'An error occured while updating the workspace',
+      })
     },
   })
 
