@@ -44,6 +44,30 @@ export const updateWorkspaceDetails = mutation({
   },
 })
 
+export const deleteWorkspace = mutation({
+  args: {
+    workspaceId: v.id('workspace'),
+  },
+  handler: async (ctx, args) => {
+    const loggedInUser = await authComponent.getAuthUser(ctx)
+    const loggedInUserId = loggedInUser._id
+    const workspace = await ctx.db.get('workspace', args.workspaceId)
+    const workspaceId = workspace?._id
+    if (!workspaceId) {
+      throw new Error('workspace does not exist')
+    }
+    const isOwnerOfWorkspace = await verifyWorkspaceOnwership({
+      ctx,
+      userId: loggedInUserId,
+      workspaceId,
+    })
+    if (!isOwnerOfWorkspace) {
+      throw new Error('You are not the owner of this workspace')
+    }
+    await ctx.db.delete('workspace', args.workspaceId)
+  },
+})
+
 // helpers
 const verifyWorkspaceOnwership =
   async function VerifiesIfAPersonOwnsAWorkspace({

@@ -1,3 +1,4 @@
+import { DeleteWorkspaceDialog } from './delete-workspace-dialog'
 import { UpdateWorkspaceDialog } from './update-workspace-dialog'
 import type { WorkspaceItem } from '@/types/global'
 
@@ -15,6 +16,10 @@ export function WorkspaceCard({ workspaceData }: WorkspaceCardProps) {
       </a>
       <div className="flex gap-2">
         <UpdateWorkspaceDialog workspaceData={workspaceData} />
+        <DeleteWorkspaceDialog
+          workspaceId={workspaceData._id}
+          workspaceName={workspaceData.title}
+        />
       </div>
     </div>
   )
