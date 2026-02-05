@@ -68,9 +68,19 @@ export function CreateWorkspaceForm({
           )
         }}
       />
-      <Field className="py-4">
-        <Button type="submit">Add Workspace</Button>
-      </Field>
+      <form.Subscribe
+        selector={(state) => [state.isSubmitting, state.isSubmitSuccessful]}
+        children={([isSubmitting, isSubmitSuccessful]) => (
+          <Field className="py-4">
+            <Button
+              disabled={isSubmitting && !isSubmitSuccessful}
+              type="submit"
+            >
+              Add Workspace
+            </Button>
+          </Field>
+        )}
+      />
     </form>
   )
 }
