@@ -1,14 +1,15 @@
 import { ListTodo } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { CreateListDialog } from './create-list-dialog'
+import type { Id } from 'convex/_generated/dataModel'
 
 interface NoListsEmptyStateProps {
   workspaceName?: string
-  onCreateList?: () => void
+  workspaceId?: Id<'workspace'>
 }
 
 export function NoListsEmptyState({
   workspaceName = 'Workspace',
-  onCreateList,
+  workspaceId,
 }: NoListsEmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center space-y-6 rounded-lg border-2 border-dashed border-slate-200 bg-linear-to-br from-slate-50 to-slate-100 px-4 py-16 sm:px-6 lg:px-8">
@@ -25,11 +26,7 @@ export function NoListsEmptyState({
         </p>
       </div>
 
-      {onCreateList && (
-        <Button onClick={onCreateList} className="mt-4">
-          Create Your First List
-        </Button>
-      )}
+      {workspaceId && <CreateListDialog workspaceId={workspaceId} />}
     </div>
   )
 }

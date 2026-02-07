@@ -1,7 +1,33 @@
 import { v } from 'convex/values'
 import { mutation } from '../_generated/server'
 import { authComponent } from '../auth'
-import { verifyListOnwership } from '../globals/helpers'
+import {
+  verifyListOnwership,
+  verifyWorkspaceOnwership,
+} from '../globals/helpers'
+
+export const createList = mutation({
+  args: {
+    title: v.string(),
+    workspaceId: v.id('workspace'),
+  },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx)
+    const isOwnerOfWorkspace = await verifyWorkspaceOnwership({
+      ctx,
+      userId: user._id,
+      workspaceId: args.workspaceId,
+    })
+    if (!isOwnerOfWorkspace) {
+      throw new Error('You are not the owner of the workspace')
+    }
+    await ctx.db.insert('lists', {
+      title: args.title,
+      createdBy: user._id,
+      workspaceId: args.workspaceId,
+    })
+  },
+})
 
 export const updatelistDetails = mutation({
   args: {
