@@ -1,7 +1,5 @@
 import { Pencil } from 'lucide-react'
-import { useState } from 'react'
-import { UpdateWorkspaceDetailsForm } from './update-workspace-form'
-import type { WorkspaceItem } from '@/types/global'
+import React from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -11,18 +9,17 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 
-interface UpdateWorkspaceDialogProps {
-  workspaceData: WorkspaceItem
+interface UpdateDialogProps {
+  isOpen: boolean
+  setDialogIsOpen: (value: boolean) => void
+  children: React.ReactNode
 }
 
-export function UpdateWorkspaceDialog({
-  workspaceData,
-}: UpdateWorkspaceDialogProps) {
-  const [isOpen, setIsOpen] = useState(false)
-
-  function setDialogIsOpen(value: boolean) {
-    setIsOpen(value)
-  }
+export function UpdateDialog({
+  isOpen,
+  setDialogIsOpen,
+  children,
+}: UpdateDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setDialogIsOpen}>
       <DialogTrigger>
@@ -35,10 +32,7 @@ export function UpdateWorkspaceDialog({
         <DialogHeader>
           <DialogTitle>Update Workspace Details</DialogTitle>
         </DialogHeader>
-        <UpdateWorkspaceDetailsForm
-          workspaceData={workspaceData}
-          setUpdateWorkspaceDialogIsOpen={setDialogIsOpen}
-        />
+        {children}
       </DialogContent>
     </Dialog>
   )

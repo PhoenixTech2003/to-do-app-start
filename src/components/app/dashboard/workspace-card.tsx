@@ -1,6 +1,8 @@
 import { Link } from '@tanstack/react-router'
+import { useState } from 'react'
+import { UpdateDialog } from '../update-dialog'
 import { DeleteWorkspaceDialog } from './delete-workspace-dialog'
-import { UpdateWorkspaceDialog } from './update-workspace-dialog'
+import { UpdateWorkspaceDetailsForm } from './update-workspace-form'
 import type { WorkspaceItem } from '@/types/global'
 
 interface WorkspaceCardProps {
@@ -8,6 +10,10 @@ interface WorkspaceCardProps {
 }
 
 export function WorkspaceCard({ workspaceData }: WorkspaceCardProps) {
+  const [isOpenUpdateDialog, setIsOpenUpdateDialog] = useState(false)
+  function setIsOpenUpdateDialogHandler(value: boolean) {
+    setIsOpenUpdateDialog(value)
+  }
   return (
     <div className="rounded-lg border-2 border-slate-100 bg-white p-6 shadow-sm transition-all hover:border-blue-200 hover:shadow-md">
       <Link
@@ -20,7 +26,15 @@ export function WorkspaceCard({ workspaceData }: WorkspaceCardProps) {
         </h2>
       </Link>
       <div className="flex gap-2">
-        <UpdateWorkspaceDialog workspaceData={workspaceData} />
+        <UpdateDialog
+          isOpen={isOpenUpdateDialog}
+          setDialogIsOpen={setIsOpenUpdateDialogHandler}
+        >
+          <UpdateWorkspaceDetailsForm
+            workspaceData={workspaceData}
+            setUpdateWorkspaceDialogIsOpen={setIsOpenUpdateDialogHandler}
+          />
+        </UpdateDialog>
         <DeleteWorkspaceDialog
           workspaceId={workspaceData._id}
           workspaceName={workspaceData.title}
