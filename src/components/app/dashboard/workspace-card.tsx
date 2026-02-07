@@ -27,6 +27,7 @@ export function WorkspaceCard({ workspaceData }: WorkspaceCardProps) {
       </Link>
       <div className="flex gap-2">
         <UpdateDialog
+          updateDialogTitle="Update Workspace Details"
           isOpen={isOpenUpdateDialog}
           setDialogIsOpen={setIsOpenUpdateDialogHandler}
         >

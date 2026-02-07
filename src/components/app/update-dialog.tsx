@@ -13,12 +13,14 @@ interface UpdateDialogProps {
   isOpen: boolean
   setDialogIsOpen: (value: boolean) => void
   children: React.ReactNode
+  updateDialogTitle: string
 }
 
 export function UpdateDialog({
   isOpen,
   setDialogIsOpen,
   children,
+  updateDialogTitle,
 }: UpdateDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setDialogIsOpen}>
@@ -30,7 +32,7 @@ export function UpdateDialog({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Update Workspace Details</DialogTitle>
+          <DialogTitle>{updateDialogTitle}</DialogTitle>
         </DialogHeader>
         {children}
       </DialogContent>
