@@ -55,7 +55,11 @@ function WorkspaceListsPage() {
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {data.lists.map((listDetails) => (
-            <ListCard key={listDetails._id} listTitle={listDetails.title} />
+            <ListCard
+              key={listDetails._id}
+              listTitle={listDetails.title}
+              listItem={listDetails}
+            />
           ))}
         </div>
       </div>
