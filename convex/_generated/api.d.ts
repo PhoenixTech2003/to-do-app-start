@@ -13,6 +13,7 @@ import type * as dashboard_mutations from "../dashboard/mutations.js";
 import type * as dashboard_queries from "../dashboard/queries.js";
 import type * as globals_helpers from "../globals/helpers.js";
 import type * as http from "../http.js";
+import type * as workspace_mutations from "../workspace/mutations.js";
 import type * as workspace_queries from "../workspace/queries.js";
 
 import type {
@@ -27,6 +28,7 @@ declare const fullApi: ApiFromModules<{
   "dashboard/queries": typeof dashboard_queries;
   "globals/helpers": typeof globals_helpers;
   http: typeof http;
+  "workspace/mutations": typeof workspace_mutations;
   "workspace/queries": typeof workspace_queries;
 }>;
 
