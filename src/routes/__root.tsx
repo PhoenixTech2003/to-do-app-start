@@ -11,7 +11,6 @@ import { TanStackDevtools } from '@tanstack/react-devtools'
 import { Toaster } from 'sonner'
 import { createServerFn } from '@tanstack/react-start'
 import { ConvexBetterAuthProvider } from '@convex-dev/better-auth/react'
-import ConvexProvider from '../integrations/convex/provider'
 
 import appCss from '../styles.css?url'
 import type { ConvexQueryClient } from '@convex-dev/react-query'
@@ -86,21 +85,19 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <ConvexProvider>
-          {children}
-          <TanStackDevtools
-            config={{
-              position: 'bottom-right',
-            }}
-            plugins={[
-              {
-                name: 'Tanstack Router',
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-            ]}
-          />
-          <Toaster richColors />
-        </ConvexProvider>
+        {children}
+        <TanStackDevtools
+          config={{
+            position: 'bottom-right',
+          }}
+          plugins={[
+            {
+              name: 'Tanstack Router',
+              render: <TanStackRouterDevtoolsPanel />,
+            },
+          ]}
+        />
+        <Toaster richColors position="top-center" />
         <Scripts />
       </body>
     </html>

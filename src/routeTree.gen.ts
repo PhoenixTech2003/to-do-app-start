@@ -9,26 +9,39 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
+import { Route as DashboardWorkspaceWorkspaceIdRouteImport } from './routes/dashboard/workspace/$workspaceId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
+const DashboardRouteRoute = DashboardRouteRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
-  id: '/dashboard/',
-  path: '/dashboard/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRouteRoute,
 } as any)
 const authSignupRoute = authSignupRouteImport.update({
   id: '/(auth)/signup',
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardWorkspaceWorkspaceIdRoute =
+  DashboardWorkspaceWorkspaceIdRouteImport.update({
+    id: '/workspace/$workspaceId',
+    path: '/workspace/$workspaceId',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -37,40 +50,70 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRouteRouteWithChildren
   '/signup': typeof authSignupRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/dashboard/workspace/$workspaceId': typeof DashboardWorkspaceWorkspaceIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/signup': typeof authSignupRoute
   '/dashboard': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/dashboard/workspace/$workspaceId': typeof DashboardWorkspaceWorkspaceIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRouteRouteWithChildren
   '/(auth)/signup': typeof authSignupRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/dashboard/workspace/$workspaceId': typeof DashboardWorkspaceWorkspaceIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/signup' | '/dashboard/' | '/api/auth/$'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/signup'
+    | '/dashboard/'
+    | '/api/auth/$'
+    | '/dashboard/workspace/$workspaceId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/signup' | '/dashboard' | '/api/auth/$'
-  id: '__root__' | '/' | '/(auth)/signup' | '/dashboard/' | '/api/auth/$'
+  to:
+    | '/'
+    | '/signup'
+    | '/dashboard'
+    | '/api/auth/$'
+    | '/dashboard/workspace/$workspaceId'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/(auth)/signup'
+    | '/dashboard/'
+    | '/api/auth/$'
+    | '/dashboard/workspace/$workspaceId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
   authSignupRoute: typeof authSignupRoute
-  DashboardIndexRoute: typeof DashboardIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -80,10 +123,10 @@ declare module '@tanstack/react-router' {
     }
     '/dashboard/': {
       id: '/dashboard/'
-      path: '/dashboard'
+      path: '/'
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof DashboardRouteRoute
     }
     '/(auth)/signup': {
       id: '/(auth)/signup'
@@ -91,6 +134,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/signup'
       preLoaderRoute: typeof authSignupRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/workspace/$workspaceId': {
+      id: '/dashboard/workspace/$workspaceId'
+      path: '/workspace/$workspaceId'
+      fullPath: '/dashboard/workspace/$workspaceId'
+      preLoaderRoute: typeof DashboardWorkspaceWorkspaceIdRouteImport
+      parentRoute: typeof DashboardRouteRoute
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -102,10 +152,24 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface DashboardRouteRouteChildren {
+  DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardWorkspaceWorkspaceIdRoute: typeof DashboardWorkspaceWorkspaceIdRoute
+}
+
+const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
+  DashboardIndexRoute: DashboardIndexRoute,
+  DashboardWorkspaceWorkspaceIdRoute: DashboardWorkspaceWorkspaceIdRoute,
+}
+
+const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
+  DashboardRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DashboardRouteRoute: DashboardRouteRouteWithChildren,
   authSignupRoute: authSignupRoute,
-  DashboardIndexRoute: DashboardIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
