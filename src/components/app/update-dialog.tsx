@@ -26,8 +26,7 @@ export function UpdateDialog({
     <Dialog open={isOpen} onOpenChange={setDialogIsOpen}>
       <DialogTrigger>
         <Button variant="outline" size="sm" className="flex-1">
-          <Pencil className="mr-2 h-4 w-4" />
-          Edit
+          <Pencil className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent>

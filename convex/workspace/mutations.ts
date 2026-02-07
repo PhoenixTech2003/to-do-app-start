@@ -55,3 +55,26 @@ export const updatelistDetails = mutation({
     })
   },
 })
+export const deleteList = mutation({
+  args: {
+    listId: v.id('lists'),
+  },
+  handler: async (ctx, args) => {
+    const loggedInUser = await authComponent.getAuthUser(ctx)
+    const loggedInUserId = loggedInUser._id
+    const list = await ctx.db.get('lists', args.listId)
+    const listId = list?._id
+    if (!listId) {
+      throw new Error('list does not exist')
+    }
+    const isOwnerOfWorkspace = await verifyListOnwership({
+      ctx,
+      userId: loggedInUserId,
+      listId,
+    })
+    if (!isOwnerOfWorkspace) {
+      throw new Error('You are not the owner of this workspace')
+    }
+    await ctx.db.delete('lists', args.listId)
+  },
+})

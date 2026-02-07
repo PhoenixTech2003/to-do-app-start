@@ -1,3 +1,4 @@
+import { Trash2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -23,7 +24,11 @@ export function DeleteDialog({
 }: DeleteDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger>Delete</DialogTrigger>
+      <DialogTrigger>
+        <Button variant="destructive" size="sm" className="flex-1">
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{dialogTitle}</DialogTitle>
