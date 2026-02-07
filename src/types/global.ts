@@ -8,4 +8,4 @@ export type ListItems =
 
 export type WorkspaceItem = WorkspacesList[number]
 
-export type ListItem = ListItems[number]
+export type ListItem = ListItems['lists'][number]
