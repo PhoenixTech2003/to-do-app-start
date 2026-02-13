@@ -16,9 +16,12 @@ export default defineSchema({
     .index('createdBy_workspaceId', ['createdBy', 'workspaceId']),
   todos: defineTable({
     title: v.string(),
-    description: v.string(),
+    description: v.optional(v.string()),
     completed: v.boolean(),
-    dueDate: v.string(),
-    priority: v.union(v.literal('high'), v.literal('medium'), v.literal('low')),
+    dueDate: v.optional(v.string()),
+    priority: v.optional(
+      v.union(v.literal('high'), v.literal('medium'), v.literal('low')),
+    ),
+    createdBy: v.string(),
   }),
 })
