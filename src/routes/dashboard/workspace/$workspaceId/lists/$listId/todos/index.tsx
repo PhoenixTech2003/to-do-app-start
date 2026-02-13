@@ -45,7 +45,9 @@ function RouteComponent() {
     <div className="p-6">
       <header className="mb-4">
         <h2 className="text-2xl font-semibold">List Todos</h2>
-        <p className="text-sm text-muted-foreground">Showing todos for this list (sample data).</p>
+        <p className="text-sm text-muted-foreground">
+          Showing todos for this list (sample data).
+        </p>
       </header>
 
       <div className="space-y-3">
@@ -71,8 +73,12 @@ function RouteComponent() {
                 >
                   {todo.title}
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">{todo.notes}</div>
-                <div className="text-xs text-muted-foreground mt-2">Due: {todo.dueDate}</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {todo.notes}
+                </div>
+                <div className="text-xs text-muted-foreground mt-2">
+                  Due: {todo.dueDate}
+                </div>
               </div>
             </div>
 
@@ -82,8 +88,8 @@ function RouteComponent() {
                   todo.priority === 'high'
                     ? 'bg-red-600 text-white'
                     : todo.priority === 'medium'
-                    ? 'bg-yellow-400 text-black'
-                    : 'bg-green-600 text-white'
+                      ? 'bg-yellow-400 text-black'
+                      : 'bg-green-600 text-white'
                 }`}
               >
                 {todo.priority}
