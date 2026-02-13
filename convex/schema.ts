@@ -15,6 +15,7 @@ export default defineSchema({
     .index('workspaceId', ['workspaceId'])
     .index('createdBy_workspaceId', ['createdBy', 'workspaceId']),
   todos: defineTable({
+    listId: v.id('lists'),
     title: v.string(),
     description: v.optional(v.string()),
     completed: v.boolean(),
@@ -26,5 +27,5 @@ export default defineSchema({
       v.literal('none'),
     ),
     createdBy: v.string(),
-  }),
+  }).index('by_listId', ['listId']),
 })

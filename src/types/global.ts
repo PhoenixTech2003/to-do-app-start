@@ -9,3 +9,9 @@ export type ListItems =
 export type WorkspaceItem = WorkspacesList[number]
 
 export type ListItem = ListItems['lists'][number]
+
+export type TodosPageData = typeof api.todos.queries.GetAllTodos._returnType
+
+export type Todos = TodosPageData['todos']
+
+export type Todo = Todos[number]

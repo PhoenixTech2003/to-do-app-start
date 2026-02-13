@@ -29,6 +29,7 @@ export const createTodo = mutation({
     }
     await ctx.db.insert('todos', {
       title: args.title,
+      listId: args.listId,
       description: args.description,
       completed: false,
       dueDate: args.dueDate,
