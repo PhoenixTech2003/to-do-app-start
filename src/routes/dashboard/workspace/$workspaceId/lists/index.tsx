@@ -9,7 +9,7 @@ import { WorkspaceLoadingSkeleton } from '@/components/app/workspace/workspace-l
 import { NoListsEmptyState } from '@/components/app/workspace/no-lists-empty-state'
 import { CreateListDialog } from '@/components/app/workspace/create-list-dialog'
 
-export const Route = createFileRoute('/dashboard/workspace/$workspaceId')({
+export const Route = createFileRoute('/dashboard/workspace/$workspaceId/lists/')({
   loader: async (opts) => {
     await opts.context.queryClient.ensureQueryData(
       convexQuery(api.workspace.queries.getAllUserWorkspaceLists, {

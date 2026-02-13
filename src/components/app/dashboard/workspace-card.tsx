@@ -43,7 +43,7 @@ export function WorkspaceCard({ workspaceData }: WorkspaceCardProps) {
   return (
     <div className="rounded-lg border-2 border-slate-100 bg-white p-6 shadow-sm transition-all hover:border-blue-200 hover:shadow-md">
       <Link
-        to="/dashboard/workspace/$workspaceId"
+        to="/dashboard/workspace/$workspaceId/lists"
         params={{ workspaceId: workspaceData._id }}
         className="block"
       >
