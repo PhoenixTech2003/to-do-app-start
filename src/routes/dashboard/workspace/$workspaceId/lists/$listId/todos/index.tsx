@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useMemo } from 'react'
+import type { Id } from 'convex/_generated/dataModel'
+import { CreateTodoDialog } from '@/components/app/workspace/create-todo-dialog'
 
 export const Route = createFileRoute(
   '/dashboard/workspace/$workspaceId/lists/$listId/todos/',
@@ -8,6 +10,7 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
+  const { listId } = Route.useParams()
   const todos = useMemo(
     () => [
       {
@@ -43,11 +46,14 @@ function RouteComponent() {
 
   return (
     <div className="p-6">
-      <header className="mb-4">
-        <h2 className="text-2xl font-semibold">List Todos</h2>
-        <p className="text-sm text-muted-foreground">
-          Showing todos for this list (sample data).
-        </p>
+      <header className="mb-6 flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold">List Todos</h2>
+          <p className="text-sm text-muted-foreground">
+            Showing todos for this list (sample data).
+          </p>
+        </div>
+        <CreateTodoDialog listId={listId as Id<'lists'>} />
       </header>
 
       <div className="space-y-3">

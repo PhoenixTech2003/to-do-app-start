@@ -9,8 +9,11 @@ export const createTodo = mutation({
     title: v.string(),
     description: v.string(),
     dueDate: v.optional(v.string()),
-    priority: v.optional(
-      v.union(v.literal('high'), v.literal('medium'), v.literal('low')),
+    priority: v.union(
+      v.literal('high'),
+      v.literal('medium'),
+      v.literal('low'),
+      v.literal('none'),
     ),
   },
   handler: async (ctx, args) => {

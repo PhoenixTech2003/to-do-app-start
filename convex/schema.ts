@@ -19,8 +19,11 @@ export default defineSchema({
     description: v.optional(v.string()),
     completed: v.boolean(),
     dueDate: v.optional(v.string()),
-    priority: v.optional(
-      v.union(v.literal('high'), v.literal('medium'), v.literal('low')),
+    priority: v.union(
+      v.literal('high'),
+      v.literal('medium'),
+      v.literal('low'),
+      v.literal('none'),
     ),
     createdBy: v.string(),
   }),
