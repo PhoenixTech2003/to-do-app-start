@@ -9,6 +9,6 @@ export const createTodoFormSchema = z.object({
     .string()
     .min(1, { error: 'Description is required' })
     .max(500, 'Description cannot be longer than 500 characters'),
-  dueDate: z.string(),
+  dueDate: z.date(),
   priority: z.enum(['high', 'medium', 'low', 'none']),
 })

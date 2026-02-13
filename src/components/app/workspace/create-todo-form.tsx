@@ -15,6 +15,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { createTodoFormSchema } from '@/validation/create-todo-form-schema'
+import { DateTimePicker } from '@/components/ui/date-time-picker'
+import { toCATISOString } from '@/lib/date-utils'
 
 interface CreateTodoFormProps {
   listId: Id<'lists'>
@@ -28,10 +30,10 @@ export function CreateTodoForm({
   const addTodo = useConvexMutation(api.todos.mutations.createTodo)
   const form = useForm({
     defaultValues: {
-      title: '',
-      description: '',
-      dueDate: '',
-      priority: 'none',
+      title: '' as string,
+      description: '' as string,
+      dueDate: undefined as Date | undefined,
+      priority: 'none' as 'high' | 'medium' | 'low' | 'none',
     },
 
     validators: {
@@ -42,8 +44,10 @@ export function CreateTodoForm({
         listId,
         title: formData.value.title,
         description: formData.value.description,
-        dueDate: formData.value.dueDate || undefined,
-        priority: formData.value.priority as 'high' | 'medium' | 'low' | 'none',
+        dueDate: formData.value.dueDate
+          ? toCATISOString(formData.value.dueDate)
+          : undefined,
+        priority: formData.value.priority,
       })
       toast.promise(addTodoPromise, {
         loading: 'Please wait while we add your twodo',
@@ -118,14 +122,9 @@ export function CreateTodoForm({
           return (
             <Field data-invalid={isInvalid}>
               <FieldLabel htmlFor={field.name}>Due Date (Optional)</FieldLabel>
-              <Input
-                id={field.name}
-                name={field.name}
-                type="date"
+              <DateTimePicker
                 value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-                aria-invalid={isInvalid}
+                setValue={field.handleChange}
               />
               {isInvalid && <FieldError errors={field.state.meta.errors} />}
             </Field>
@@ -142,9 +141,11 @@ export function CreateTodoForm({
             <Field data-invalid={isInvalid}>
               <FieldLabel htmlFor={field.name}>Priority (Optional)</FieldLabel>
               <Select
-                value={field.state.value || 'medium'}
+                value={field.state.value}
                 onValueChange={(value) =>
-                  field.handleChange(value as 'high' | 'medium' | 'low')
+                  field.handleChange(
+                    value as 'high' | 'medium' | 'low' | 'none',
+                  )
                 }
               >
                 <SelectTrigger id={field.name}>
