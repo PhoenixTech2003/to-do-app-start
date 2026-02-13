@@ -2,8 +2,6 @@ import { v } from 'convex/values'
 import { authComponent } from '../auth'
 import { mutation } from '../_generated/server'
 import { verifyWorkspaceOnwership } from '../globals/helpers'
-import type { QueryCtx } from '../_generated/server'
-import type { Id } from '../_generated/dataModel'
 
 export const createWorkspace = mutation({
   args: {

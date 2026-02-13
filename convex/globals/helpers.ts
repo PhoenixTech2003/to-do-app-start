@@ -26,3 +26,29 @@ export const verifyWorkspaceOnwership =
       throw error
     }
   }
+
+export const verifyListOnwership =
+  async function VerifiesIfAPersonOwnsAWorkspace({
+    ctx,
+    userId,
+    listId,
+  }: {
+    ctx: QueryCtx
+    userId: string
+    listId: Id<'lists'>
+  }) {
+    try {
+      const list = await ctx.db.get('lists', listId)
+      if (!list) {
+        throw new Error('list does not exist')
+      }
+      const listOwnerId = list.createdBy
+      if (listOwnerId != userId) {
+        return false
+      }
+      return true
+    } catch (error) {
+      console.error(error)
+      throw error
+    }
+  }
