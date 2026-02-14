@@ -38,3 +38,15 @@ export const createTodo = mutation({
     })
   },
 })
+
+export const ToggleTodoCompletetion = mutation({
+  args: {
+    todoId: v.id('todos'),
+    isCompleted: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch('todos', args.todoId, {
+      completed: args.isCompleted,
+    })
+  },
+})

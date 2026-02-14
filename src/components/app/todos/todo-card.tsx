@@ -1,4 +1,6 @@
 import { format } from 'date-fns'
+import { useConvexMutation } from '@convex-dev/react-query'
+import { api } from 'convex/_generated/api'
 import type { Todo } from '@/types/global'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent } from '@/components/ui/card'
@@ -8,6 +10,9 @@ interface TodoCardProps {
 }
 
 export function TodoCard({ todo }: TodoCardProps) {
+  const toggleTodo = useConvexMutation(
+    api.todos.mutations.ToggleTodoCompletetion,
+  )
   return (
     <Card
       key={todo._id}
@@ -16,6 +21,9 @@ export function TodoCard({ todo }: TodoCardProps) {
       <CardContent className="flex flex-1  justify-between gap-4 p-4">
         <div className="flex items-center gap-3">
           <Checkbox
+            onCheckedChange={() =>
+              toggleTodo({ todoId: todo._id, isCompleted: !todo.completed })
+            }
             className="shadow-xl"
             checked={todo.completed}
             aria-label={`Mark ${todo.title} complete`}
