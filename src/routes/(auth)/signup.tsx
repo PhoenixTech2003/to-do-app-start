@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button'
 import { authClient } from '@/lib/auth-client'
 import { GoogleLogo } from '@/components/app/auth/google-logo'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
+import { SignupPageSkeleton } from '@/components/app/auth/signup-page-skeleton'
 
 export const Route = createFileRoute('/(auth)/signup')({
+  pendingComponent: SignupPageSkeleton,
   component: SignUpPage,
 })
 
@@ -35,9 +37,7 @@ function SignUpPage() {
         </Button>
 
         <div className="bg-card rounded-2xl border border-border p-8 shadow-sm text-center transition-colors duration-300">
-          <h1 className="text-4xl font-bold text-primary mb-2">
-            Get Started
-          </h1>
+          <h1 className="text-4xl font-bold text-primary mb-2">Get Started</h1>
           <p className="text-muted-foreground text-lg mb-8">
             Create your account to start organizing
           </p>

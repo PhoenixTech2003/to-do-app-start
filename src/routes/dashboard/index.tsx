@@ -7,6 +7,7 @@ import { WorkspaceList } from '@/components/app/dashboard/workspace-list'
 import { StateHandler } from '@/components/app/state-handler'
 import { DashboardLoadingSkeleton } from '@/components/app/dashboard/dashboard-loading-skeleton'
 import { NoWorkspacesEmptyState } from '@/components/app/dashboard/no-workspaces-empty-state'
+import { DashboardPageSkeleton } from '@/components/app/dashboard/dashboard-page-skeleton'
 
 export const Route = createFileRoute('/dashboard/')({
   loader: async (opts) => {
@@ -14,6 +15,7 @@ export const Route = createFileRoute('/dashboard/')({
       convexQuery(api.dashboard.queries.getUserWorkspaces),
     )
   },
+  pendingComponent: DashboardPageSkeleton,
   component: DashboardPage,
 })
 

@@ -7,6 +7,7 @@ import type { Id } from 'convex/_generated/dataModel'
 import { CreateTodoDialog } from '@/components/app/workspace/create-todo-dialog'
 import { TodoCard } from '@/components/app/todos/todo-card'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { TodosPageSkeleton } from '@/components/app/todos/todos-page-skeleton'
 
 export const Route = createFileRoute(
   '/dashboard/workspace/$workspaceId/lists/$listId/todos/',
@@ -18,6 +19,7 @@ export const Route = createFileRoute(
       }),
     )
   },
+  pendingComponent: TodosPageSkeleton,
   component: RouteComponent,
 })
 

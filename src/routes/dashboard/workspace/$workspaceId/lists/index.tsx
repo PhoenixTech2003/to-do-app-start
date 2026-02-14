@@ -8,8 +8,11 @@ import { StateHandler } from '@/components/app/state-handler'
 import { WorkspaceLoadingSkeleton } from '@/components/app/workspace/workspace-loading-skeleton'
 import { NoListsEmptyState } from '@/components/app/workspace/no-lists-empty-state'
 import { CreateListDialog } from '@/components/app/workspace/create-list-dialog'
+import { ListsPageSkeleton } from '@/components/app/workspace/lists-page-skeleton'
 
-export const Route = createFileRoute('/dashboard/workspace/$workspaceId/lists/')({
+export const Route = createFileRoute(
+  '/dashboard/workspace/$workspaceId/lists/',
+)({
   loader: async (opts) => {
     await opts.context.queryClient.ensureQueryData(
       convexQuery(api.workspace.queries.getAllUserWorkspaceLists, {
@@ -17,6 +20,7 @@ export const Route = createFileRoute('/dashboard/workspace/$workspaceId/lists/')
       }),
     )
   },
+  pendingComponent: ListsPageSkeleton,
   component: WorkspaceListsPage,
 })
 
