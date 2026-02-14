@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 
 interface DeleteDialogProps {
   dialogTitle: string
+  triggerTitle?: string
   isOpen: boolean
   setIsOpen: (value: boolean) => void
   handleDelete: () => void
@@ -19,14 +20,16 @@ interface DeleteDialogProps {
 export function DeleteDialog({
   isOpen,
   setIsOpen,
+  triggerTitle,
   dialogTitle,
   handleDelete,
 }: DeleteDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger>
+      <DialogTrigger className="grid">
         <Button variant="destructive" size="sm" className="flex-1">
           <Trash2 className="h-4 w-4" />
+          {triggerTitle}
         </Button>
       </DialogTrigger>
       <DialogContent>

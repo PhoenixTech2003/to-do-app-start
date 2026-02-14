@@ -14,4 +14,24 @@ export default defineSchema({
     .index('createdBy', ['createdBy'])
     .index('workspaceId', ['workspaceId'])
     .index('createdBy_workspaceId', ['createdBy', 'workspaceId']),
+  todos: defineTable({
+    listId: v.id('lists'),
+    title: v.string(),
+    description: v.optional(v.string()),
+    completed: v.boolean(),
+    dueDate: v.optional(v.string()),
+    priority: v.union(
+      v.literal('high'),
+      v.literal('medium'),
+      v.literal('low'),
+      v.literal('none'),
+    ),
+    createdBy: v.string(),
+  }).index('by_listId', ['listId']),
+  subTasks: defineTable({
+    todoId: v.id('todos'),
+    title: v.string(),
+    completed: v.boolean(),
+    createdBy: v.string(),
+  }).index('by_todo_id', ['todoId']),
 })
