@@ -7,7 +7,7 @@ import {
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
-
+import { ThemeProvider } from 'next-themes'
 import { Toaster } from 'sonner'
 import { createServerFn } from '@tanstack/react-start'
 import { ConvexBetterAuthProvider } from '@convex-dev/better-auth/react'
@@ -76,16 +76,18 @@ function RootComponent() {
       authClient={authClient}
       initialToken={context.token}
     >
-      <RootDocument>
-        <Outlet />
-      </RootDocument>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <RootDocument>
+          <Outlet />
+        </RootDocument>
+      </ThemeProvider>
     </ConvexBetterAuthProvider>
   )
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>

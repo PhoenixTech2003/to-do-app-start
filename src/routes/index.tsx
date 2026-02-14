@@ -1,36 +1,40 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { ArrowRight, CheckCircle2, ListTodo, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ThemeSwitcher } from '@/components/ui/theme-switcher'
 
 export const Route = createFileRoute('/')({ component: LandingPage })
 
 function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#fdfbf7] text-slate-800 font-['Patrick_Hand']">
-      <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
+    <div className="min-h-screen bg-background text-foreground font-['Patrick_Hand'] transition-colors duration-300">
+      <nav className="container mx-auto px-6 py-4 flex justify-between items-center border-b border-border">
         <div className="text-3xl font-bold tracking-wider text-primary">
           TwoDo
         </div>
-        <div className="space-x-4">
-          <Link to="/signup">
-            <Button variant="ghost" className="text-lg">
-              Sign In
-            </Button>
-          </Link>
-          <Link to="/signup">
-            <Button className="text-lg">Get Started</Button>
-          </Link>
+        <div className="flex items-center gap-4">
+          <ThemeSwitcher />
+          <div className="space-x-4">
+            <Link to="/signup">
+              <Button variant="ghost" className="text-lg">
+                Sign In
+              </Button>
+            </Link>
+            <Link to="/signup">
+              <Button className="text-lg">Get Started</Button>
+            </Link>
+          </div>
         </div>
       </nav>
 
       <section className="container mx-auto px-6 py-20 text-center">
         <h1 className="text-6xl md:text-8xl font-bold mb-6 leading-tight text-primary">
           Simply get things{' '}
-          <span className="text-blue-600 decoration-wavy underline decoration-2">
+          <span className="text-chart-1 decoration-wavy underline decoration-2">
             done.
           </span>
         </h1>
-        <p className="text-2xl md:text-3xl text-slate-600 mb-12 max-w-2xl mx-auto">
+        <p className="text-2xl md:text-3xl text-muted-foreground mb-12 max-w-2xl mx-auto">
           The minimal, collaborative to-do list app that feels like your
           favorite notebook.
         </p>
@@ -49,41 +53,41 @@ function LandingPage() {
 
       <section className="container mx-auto px-6 py-20">
         <div className="grid gap-12 md:grid-cols-3">
-          <div className="rounded-2xl border-2 border-slate-100 bg-white p-8 shadow-sm transition-colors hover:border-blue-200">
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+          <div className="rounded-2xl border border-border bg-card p-8 shadow-sm transition-colors hover:border-chart-1">
+            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-chart-1/20 text-chart-1">
               <ListTodo size={32} />
             </div>
-            <h3 className="mb-3 text-2xl font-bold">Simple Lists</h3>
-            <p className="text-xl text-slate-600">
+            <h3 className="mb-3 text-2xl font-bold text-card-foreground">Simple Lists</h3>
+            <p className="text-xl text-muted-foreground">
               Create workspaces and lists without the clutter. Just you and your
               tasks.
             </p>
           </div>
 
-          <div className="rounded-2xl border-2 border-slate-100 bg-white p-8 shadow-sm transition-colors hover:border-green-200">
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-600">
+          <div className="rounded-2xl border border-border bg-card p-8 shadow-sm transition-colors hover:border-chart-2">
+            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-chart-2/20 text-chart-2">
               <Users size={32} />
             </div>
-            <h3 className="mb-3 text-2xl font-bold">Collaborate</h3>
-            <p className="text-xl text-slate-600">
+            <h3 className="mb-3 text-2xl font-bold text-card-foreground">Collaborate</h3>
+            <p className="text-xl text-muted-foreground">
               Invite a buddy to your workspace. Plan events, projects, or
               groceries together.
             </p>
           </div>
 
-          <div className="rounded-2xl border-2 border-slate-100 bg-white p-8 shadow-sm transition-colors hover:border-purple-200">
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-purple-100 text-purple-600">
+          <div className="rounded-2xl border border-border bg-card p-8 shadow-sm transition-colors hover:border-chart-4">
+            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-chart-4/20 text-chart-4">
               <CheckCircle2 size={32} />
             </div>
-            <h3 className="mb-3 text-2xl font-bold">Stay on Track</h3>
-            <p className="text-xl text-slate-600">
+            <h3 className="mb-3 text-2xl font-bold text-card-foreground">Stay on Track</h3>
+            <p className="text-xl text-muted-foreground">
               Satisfying checkmarks and progress tracking to keep you motivated.
             </p>
           </div>
         </div>
       </section>
 
-      <footer className="container mx-auto mt-12 border-t border-slate-200 px-6 py-12 text-center text-lg text-slate-500">
+      <footer className="container mx-auto mt-12 border-t border-border px-6 py-12 text-center text-lg text-muted-foreground">
         <p>&copy; {new Date().getFullYear()} TwoDo. Crafted with &hearts;.</p>
       </footer>
     </div>

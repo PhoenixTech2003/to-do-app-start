@@ -16,7 +16,7 @@ export function TodoCheckInput({ todo }: TodoCheckInputProps) {
       onCheckedChange={() =>
         toggleTodo({ todoId: todo._id, isCompleted: !todo.completed })
       }
-      className="shadow-xl"
+      className="flex-shrink-0"
       checked={todo.completed}
       aria-label={`Mark ${todo.title} complete`}
     />

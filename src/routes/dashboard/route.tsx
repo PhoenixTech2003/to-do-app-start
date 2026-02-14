@@ -6,6 +6,7 @@ import {
 } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app/dashboard/app-sidebar'
 import { authClient } from '@/lib/auth-client'
+import { ThemeSwitcher } from '@/components/ui/theme-switcher'
 
 export const Route = createFileRoute('/dashboard')({
   component: DashboardLayout,
@@ -27,6 +28,7 @@ export function DashboardLayout() {
                 <p className="text-lg">Welcome back, {data?.user.name}</p>
               )}
             </div>
+            <ThemeSwitcher />
           </header>
           <div className="flex flex-1 flex-col gap-4 p-4 overflow-auto">
             <Outlet />
