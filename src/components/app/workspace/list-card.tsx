@@ -7,6 +7,7 @@ import { UpdateDialog } from '../update-dialog'
 import { DeleteDialog } from '../delete-dialog'
 import { UpdateListDetailsForm } from './update-list-details-form'
 import type { ListItem } from '@/types/global'
+import { Card, CardContent } from '@/components/ui/card'
 
 interface ListCardProps {
   listTitle: string
@@ -41,32 +42,34 @@ export function ListCard({ listTitle, listItem }: ListCardProps) {
   }
 
   return (
-    <div className="rounded-lg border-2 border-slate-100 bg-white p-6 shadow-sm transition-all hover:border-blue-200 hover:shadow-md">
-      <Link
-        to="/dashboard/workspace/$workspaceId/lists/$listId/todos"
-        params={{ listId: listItem._id, workspaceId: listItem.workspaceId }}
-        className="block"
-      >
-        <h2 className="mb-4 text-xl font-bold text-primary">{listTitle}</h2>
-      </Link>
-      <div className="flex gap-2">
-        <UpdateDialog
-          isOpen={isUpdatDialogOpen}
-          setDialogIsOpen={setIsUpdateDialogIsOpenHandler}
-          updateDialogTitle="Update your twodo list"
+    <Card className="bg-card/50 rounded-lg">
+      <CardContent className="p-6">
+        <Link
+          to="/dashboard/workspace/$workspaceId/lists/$listId/todos"
+          params={{ listId: listItem._id, workspaceId: listItem.workspaceId }}
+          className="block"
         >
-          <UpdateListDetailsForm
-            setUpdateListDialogIsOpen={setIsUpdateDialogIsOpenHandler}
-            listData={listItem}
+          <h2 className="mb-4 text-xl font-bold text-primary">{listTitle}</h2>
+        </Link>
+        <div className="flex gap-2">
+          <UpdateDialog
+            isOpen={isUpdatDialogOpen}
+            setDialogIsOpen={setIsUpdateDialogIsOpenHandler}
+            updateDialogTitle="Update your twodo list"
+          >
+            <UpdateListDetailsForm
+              setUpdateListDialogIsOpen={setIsUpdateDialogIsOpenHandler}
+              listData={listItem}
+            />
+          </UpdateDialog>
+          <DeleteDialog
+            isOpen={isOpenDeleteDialog}
+            setIsOpen={setIsOpenDeleteDialogHandler}
+            handleDelete={handleDelete}
+            dialogTitle={`This action will permanently delete the ${listTitle} list`}
           />
-        </UpdateDialog>
-        <DeleteDialog
-          isOpen={isOpenDeleteDialog}
-          setIsOpen={setIsOpenDeleteDialogHandler}
-          handleDelete={handleDelete}
-          dialogTitle={`This action will permanently delete the ${listTitle} list`}
-        />
-      </div>
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

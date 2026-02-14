@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { authClient } from '@/lib/auth-client'
 import { GoogleLogo } from '@/components/app/auth/google-logo'
+import { ThemeSwitcher } from '@/components/ui/theme-switcher'
 
 export const Route = createFileRoute('/(auth)/signup')({
   component: SignUpPage,
@@ -21,7 +22,10 @@ function SignUpPage() {
     })
   }
   return (
-    <div className="min-h-screen bg-[#fdfbf7] flex flex-col items-center justify-center p-4 font-['Patrick_Hand']">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 font-['Patrick_Hand'] transition-colors duration-300">
+      <div className="absolute top-4 right-4">
+        <ThemeSwitcher />
+      </div>
       <div className="w-full max-w-md">
         <Button
           variant="ghost"
@@ -30,22 +34,24 @@ function SignUpPage() {
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
         </Button>
 
-        <div className="bg-white rounded-2xl border-2 border-slate-100 p-8 shadow-sm text-center">
-          <h1 className="text-4xl font-bold text-primary mb-2">Get Started</h1>
-          <p className="text-slate-500 text-lg mb-8">
+        <div className="bg-card rounded-2xl border border-border p-8 shadow-sm text-center transition-colors duration-300">
+          <h1 className="text-4xl font-bold text-primary mb-2">
+            Get Started
+          </h1>
+          <p className="text-muted-foreground text-lg mb-8">
             Create your account to start organizing
           </p>
 
           <Button
             onClick={handleGoogleSignUp}
-            className="w-full h-12 text-lg rounded-xl bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
+            className="w-full h-12 text-lg rounded-xl bg-card border-2 border-border text-foreground hover:bg-accent hover:border-accent-foreground/20 transition-all shadow-sm"
             variant="outline"
           >
             <GoogleLogo className="mr-2 h-5 w-5" />
             Sign up with Google
           </Button>
 
-          <p className="mt-8 text-slate-400 text-sm">
+          <p className="mt-8 text-muted-foreground text-sm">
             Already have an account?{' '}
             <a
               href="/signin"

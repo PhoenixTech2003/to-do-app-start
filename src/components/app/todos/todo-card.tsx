@@ -43,10 +43,10 @@ export function TodoCard({ todo }: TodoCardProps) {
               <span
                 className={`px-2 py-1 text-xs rounded-full font-medium tracking-wide ${
                   todo.priority === 'high'
-                    ? 'bg-red-600 text-white'
+                    ? 'bg-red-600 dark:bg-red-700 text-white'
                     : todo.priority === 'medium'
-                      ? 'bg-yellow-400 text-black'
-                      : 'bg-green-600 text-white'
+                      ? 'bg-yellow-400 dark:bg-yellow-500 text-black dark:text-black'
+                      : 'bg-green-600 dark:bg-green-700 text-white'
                 }`}
               >
                 {todo.priority}

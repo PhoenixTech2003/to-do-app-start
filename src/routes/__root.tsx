@@ -76,7 +76,7 @@ function RootComponent() {
       authClient={authClient}
       initialToken={context.token}
     >
-      <ThemeProvider>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <RootDocument>
           <Outlet />
         </RootDocument>
@@ -87,7 +87,7 @@ function RootComponent() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
