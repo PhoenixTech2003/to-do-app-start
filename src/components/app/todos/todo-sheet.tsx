@@ -1,4 +1,8 @@
 import React from 'react'
+import { Calendar } from 'lucide-react'
+import { format } from 'date-fns'
+import { TodoCheckInput } from './todo-check-input'
+import type { Todo } from '@/types/global'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,18 +19,25 @@ import {
 
 interface TodoSheetProps {
   children: React.ReactNode
+  todo: Todo
 }
 
-export function TodoSheet({ children }: TodoSheetProps) {
+export function TodoSheet({ children, todo }: TodoSheetProps) {
   return (
     <Sheet>
       <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Edit profile</SheetTitle>
-          <SheetDescription>
-            Make changes to your profile here. Click save when you&apos;re done.
-          </SheetDescription>
+          <div className="flex items-center gap-2">
+            <TodoCheckInput todo={todo} />
+            <SheetTitle>{todo.title}</SheetTitle>
+          </div>
+          <SheetDescription>{todo.description}</SheetDescription>
+          <div className="flex items-center gap-2">
+            <Calendar size={20} />
+            {todo.dueDate &&
+              `Due: ${format(todo.dueDate, 'EEEE, dd MMMM yyyy')} at ${format(todo.dueDate, 'HH:mm')}`}
+          </div>
         </SheetHeader>
         <div className="grid flex-1 auto-rows-min gap-6 px-4">
           <div className="grid gap-3">
