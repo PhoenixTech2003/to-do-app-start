@@ -15,3 +15,9 @@ export type TodosPageData = typeof api.todos.queries.GetAllTodos._returnType
 export type Todos = TodosPageData['todos']
 
 export type Todo = Todos[number]
+
+export type SubTasksData = typeof api.todos.queries.GetAllSubtasks._returnType
+
+export type SubTasks = SubTasksData['subtasks']
+
+export type SubTask = SubTasks[number]

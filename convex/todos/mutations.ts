@@ -50,3 +50,43 @@ export const ToggleTodoCompletetion = mutation({
     })
   },
 })
+
+export const addSubTask = mutation({
+  args: {
+    todoId: v.id('todos'),
+    title: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const loggedInUser = await authComponent.getAuthUser(ctx)
+    const loggedInUserId = loggedInUser._id
+    ctx.db.insert('subTasks', {
+      title: args.title,
+      todoId: args.todoId,
+      completed: false,
+      createdBy: loggedInUserId,
+    })
+  },
+})
+
+export const updateSubTask = mutation({
+  args: {
+    subTaskId: v.id('subTasks'),
+    title: v.optional(v.string()),
+    completed: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const patch: Record<string, unknown> = {}
+    if (typeof args.title === 'string') patch.title = args.title
+    if (typeof args.completed === 'boolean') patch.completed = args.completed
+    await ctx.db.patch('subTasks', args.subTaskId, patch)
+  },
+})
+
+export const deleteSubTask = mutation({
+  args: {
+    subTaskId: v.id('subTasks'),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.delete('subTasks', args.subTaskId)
+  },
+})

@@ -22,3 +22,19 @@ export const GetAllTodos = query({
     }
   },
 })
+
+export const GetAllSubtasks = query({
+  args: {
+    todoId: v.id('todos'),
+  },
+  handler: async (ctx, args) => {
+    const subtasks = await ctx.db
+      .query('subTasks')
+      .withIndex('by_todo_id', (q) => q.eq('todoId', args.todoId))
+      .collect()
+
+    return {
+      subtasks,
+    }
+  },
+})

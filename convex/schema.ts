@@ -28,4 +28,10 @@ export default defineSchema({
     ),
     createdBy: v.string(),
   }).index('by_listId', ['listId']),
+  subTasks: defineTable({
+    todoId: v.id('todos'),
+    title: v.string(),
+    completed: v.boolean(),
+    createdBy: v.string(),
+  }).index('by_todo_id', ['todoId']),
 })
