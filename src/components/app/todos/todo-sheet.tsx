@@ -23,6 +23,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface TodoSheetProps {
   children: React.ReactNode
@@ -105,16 +106,20 @@ export function TodoSheet({ children, todo }: TodoSheetProps) {
               <div className="text-sm text-muted-foreground">No subtasks</div>
             }
           >
-            <div className="mt-3 space-y-2">
-              {data.subtasks.map((subtask) => (
-                <SubtaskItem
-                  key={subtask._id}
-                  st={subtask}
-                  onToggle={() => handleToggle(subtask._id, !subtask.completed)}
-                  onDelete={() => handleDelete(subtask._id)}
-                />
-              ))}
-            </div>
+            <ScrollArea className="w-full h-72 px-4">
+              <div className="mt-3 space-y-2">
+                {data.subtasks.map((subtask) => (
+                  <SubtaskItem
+                    key={subtask._id}
+                    st={subtask}
+                    onToggle={() =>
+                      handleToggle(subtask._id, !subtask.completed)
+                    }
+                    onDelete={() => handleDelete(subtask._id)}
+                  />
+                ))}
+              </div>
+            </ScrollArea>
           </StateHandler>
         </div>
         <SheetFooter>

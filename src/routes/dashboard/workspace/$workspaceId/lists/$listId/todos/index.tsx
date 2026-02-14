@@ -42,7 +42,7 @@ function RouteComponent() {
         </div>
         <CreateTodoDialog listId={listId as Id<'lists'>} />
       </header>
-      <ScrollArea className="w-full h-100 px-2">
+      <ScrollArea className="w-full h-100 px-4">
         <div className="space-y-3">
           {data.todos.map((todo) => (
             <TodoCard key={todo._id} todo={todo} />
