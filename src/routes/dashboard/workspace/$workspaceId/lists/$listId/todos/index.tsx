@@ -6,6 +6,7 @@ import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { CreateTodoDialog } from '@/components/app/workspace/create-todo-dialog'
 import { TodoCard } from '@/components/app/todos/todo-card'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 export const Route = createFileRoute(
   '/dashboard/workspace/$workspaceId/lists/$listId/todos/',
@@ -41,12 +42,13 @@ function RouteComponent() {
         </div>
         <CreateTodoDialog listId={listId as Id<'lists'>} />
       </header>
-
-      <div className="space-y-3">
-        {data.todos.map((todo) => (
-          <TodoCard key={todo._id} todo={todo} />
-        ))}
-      </div>
+      <ScrollArea className="w-full h-100 px-4">
+        <div className="space-y-3">
+          {data.todos.map((todo) => (
+            <TodoCard key={todo._id} todo={todo} />
+          ))}
+        </div>
+      </ScrollArea>
     </div>
   )
 }
