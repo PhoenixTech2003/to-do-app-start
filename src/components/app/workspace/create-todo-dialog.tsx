@@ -9,7 +9,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 
 interface CreateTodoDialogProps {
@@ -24,12 +23,11 @@ export function CreateTodoDialog({ listId }: CreateTodoDialogProps) {
   }
   return (
     <Dialog open={isOpen} onOpenChange={setCreateDialogIsOpen}>
-      <DialogTrigger>
-        <Button onClick={() => setIsOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Todo
-        </Button>
-      </DialogTrigger>
+      <Button onClick={() => setIsOpen(true)}>
+        <Plus className="mr-2 h-4 w-4" />
+        Create Todo
+      </Button>
+
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Todo</DialogTitle>
