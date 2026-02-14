@@ -1,7 +1,7 @@
 import { v } from 'convex/values'
 import { mutation } from '../_generated/server'
 import { authComponent } from '../auth'
-import { verifyListOnwership } from '../globals/helpers'
+import { verifyListOnwership, verifyTodoOnwership } from '../globals/helpers'
 
 export const createTodo = mutation({
   args: {
@@ -88,5 +88,47 @@ export const deleteSubTask = mutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.delete('subTasks', args.subTaskId)
+  },
+})
+
+export const updateTodo = mutation({
+  args: {
+    todoId: v.id('todos'),
+    title: v.string(),
+    description: v.optional(v.string()),
+    dueDate: v.optional(v.string()),
+    priority: v.union(
+      v.literal('high'),
+      v.literal('medium'),
+      v.literal('low'),
+      v.literal('none'),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const loggedInUser = await authComponent.getAuthUser(ctx)
+    const loggedInUserId = loggedInUser._id
+    const isOwnerOfTodo = await verifyTodoOnwership({
+      ctx,
+      userId: loggedInUserId,
+      todoId: args.todoId,
+    })
+    if (!isOwnerOfTodo) {
+      throw new Error('You are not the owner of the list')
+    }
+    await ctx.db.patch('todos', args.todoId, {
+      title: args.title,
+      description: args.description,
+      dueDate: args.dueDate,
+      priority: args.priority,
+    })
+  },
+})
+
+export const deleteTodo = mutation({
+  args: {
+    todoId: v.id('todos'),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.delete('todos', args.todoId)
   },
 })
