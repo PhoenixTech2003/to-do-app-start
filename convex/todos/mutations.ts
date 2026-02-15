@@ -7,7 +7,7 @@ export const createTodo = mutation({
   args: {
     listId: v.id('lists'),
     title: v.string(),
-    description: v.string(),
+    description: v.optional(v.string()),
     dueDate: v.optional(v.string()),
     priority: v.union(
       v.literal('high'),

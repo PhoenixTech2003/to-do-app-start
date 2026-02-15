@@ -2,6 +2,7 @@ import { useForm } from '@tanstack/react-form'
 import { useConvexMutation } from '@convex-dev/react-query'
 import { toast } from 'sonner'
 import { api } from 'convex/_generated/api'
+import type z from 'zod'
 import type { Id } from 'convex/_generated/dataModel'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -28,13 +29,14 @@ export function CreateTodoForm({
   setCreateDialogIsOpen,
 }: CreateTodoFormProps) {
   const addTodo = useConvexMutation(api.todos.mutations.createTodo)
+
+  const defaultValues: z.input<typeof createTodoFormSchema> = {
+    title: '',
+    priority: 'none',
+  }
+
   const form = useForm({
-    defaultValues: {
-      title: '' as string,
-      description: '' as string,
-      dueDate: undefined as Date | undefined,
-      priority: 'none' as 'high' | 'medium' | 'low' | 'none',
-    },
+    defaultValues,
 
     validators: {
       onSubmit: createTodoFormSchema,
@@ -141,6 +143,7 @@ export function CreateTodoForm({
             <Field data-invalid={isInvalid}>
               <FieldLabel htmlFor={field.name}>Priority (Optional)</FieldLabel>
               <Select
+                defaultValue={field.state.value}
                 value={field.state.value}
                 onValueChange={(value) =>
                   field.handleChange(
@@ -152,6 +155,7 @@ export function CreateTodoForm({
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">none</SelectItem>
                   <SelectItem value="high">High</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
                   <SelectItem value="low">Low</SelectItem>
