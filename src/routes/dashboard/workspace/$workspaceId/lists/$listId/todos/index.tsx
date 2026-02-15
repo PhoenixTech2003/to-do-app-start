@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
-
+import { motion } from 'motion/react'
 import { convexQuery } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
@@ -32,7 +32,7 @@ function RouteComponent() {
   )
 
   return (
-    <div className="p-6">
+    <div className="p-6 grid">
       <header className="mb-6 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold">
@@ -44,10 +44,12 @@ function RouteComponent() {
         </div>
         <CreateTodoDialog listId={listId as Id<'lists'>} />
       </header>
-      <ScrollArea className="w-full h-100 px-4">
-        <div className="space-y-3">
+      <ScrollArea className="w-full h-120">
+        <div className="space-y-6 p-6">
           {data.todos.map((todo) => (
-            <TodoCard key={todo._id} todo={todo} />
+            <motion.div whileHover={{ scale: 1.03 }}>
+              <TodoCard key={todo._id} todo={todo} />
+            </motion.div>
           ))}
         </div>
       </ScrollArea>

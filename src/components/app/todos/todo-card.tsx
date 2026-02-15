@@ -1,4 +1,5 @@
 import { format } from 'date-fns'
+import { useState } from 'react'
 import { TodoSheet } from './todo-sheet'
 import { TodoCheckInput } from './todo-check-input'
 import type { Todo } from '@/types/global'
@@ -9,15 +10,27 @@ interface TodoCardProps {
 }
 
 export function TodoCard({ todo }: TodoCardProps) {
+  const [sheetIsOpen, setSheetIsOpen] = useState(false)
+
+  function setSheetIsOpenHanlder(value: boolean) {
+    setSheetIsOpen(value)
+  }
   return (
-    <TodoSheet todo={todo}>
+    <TodoSheet
+      isOpen={sheetIsOpen}
+      setIsOpen={setSheetIsOpenHanlder}
+      todo={todo}
+    >
       <Card
         key={todo._id}
+        onClick={() => setSheetIsOpen(true)}
         className="flex-row items-start justify-between gap-4 p-4 rounded-lg  bg-card/50"
       >
-        <CardContent className="flex flex-1  justify-between gap-4 p-4">
+        <CardContent className="flex flex-1 hover:cursor-pointer  justify-between gap-4 p-4">
           <div className="flex items-center gap-3">
-            <TodoCheckInput todo={todo} />
+            <div onClick={(e) => e.stopPropagation()}>
+              <TodoCheckInput todo={todo} />
+            </div>
             <div>
               <div
                 className={`text-sm font-medium ${

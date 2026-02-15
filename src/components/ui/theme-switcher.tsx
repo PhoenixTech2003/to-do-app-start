@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTheme } from 'next-themes'
-import { Moon, Sun, Monitor } from 'lucide-react'
+import { Monitor, Moon, Sun } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -20,7 +20,7 @@ export function ThemeSwitcher() {
 
   if (!mounted) {
     return (
-      <div className="h-9 w-[120px] rounded-md border border-input bg-background" />
+      <div className="h-9 w-30 rounded-md border border-input bg-background" />
     )
   }
 
@@ -37,11 +37,15 @@ export function ThemeSwitcher() {
 
   return (
     <Select value={theme} onValueChange={setTheme}>
-      <SelectTrigger className="w-[130px]">
+      <SelectTrigger className="w-32.5">
         <div className="flex items-center gap-2">
           {getIcon()}
           <SelectValue>
-            {theme === 'system' ? 'System' : theme === 'dark' ? 'Dark' : 'Light'}
+            {theme === 'system'
+              ? 'System'
+              : theme === 'dark'
+                ? 'Dark'
+                : 'Light'}
           </SelectValue>
         </div>
       </SelectTrigger>
