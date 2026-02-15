@@ -9,6 +9,7 @@ import { WorkspaceLoadingSkeleton } from '@/components/app/workspace/workspace-l
 import { NoListsEmptyState } from '@/components/app/workspace/no-lists-empty-state'
 import { CreateListDialog } from '@/components/app/workspace/create-list-dialog'
 import { ListsPageSkeleton } from '@/components/app/workspace/lists-page-skeleton'
+import { BackButton } from '@/components/app/back-button'
 
 export const Route = createFileRoute(
   '/dashboard/workspace/$workspaceId/lists/',
@@ -50,6 +51,7 @@ function WorkspaceListsPage() {
     >
       <div className="space-y-4">
         <div className="flex items-center justify-between">
+          <BackButton />
           <h1 className="text-3xl font-bold">{data.workspaceDetails?.title}</h1>
           <div className="flex gap-2">
             {data.workspaceDetails?._id && (
