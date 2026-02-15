@@ -1,5 +1,4 @@
-import { Home } from 'lucide-react'
-
+import { CheckCircleIcon, Home } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import {
   Sidebar,
@@ -19,6 +18,11 @@ const items = [
     title: 'Workspaces',
     url: '/dashboard',
     icon: Home,
+  },
+  {
+    title: 'Today',
+    url: '/today',
+    icon: CheckCircleIcon,
   },
 ]
 

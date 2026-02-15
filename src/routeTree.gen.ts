@@ -9,17 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
+import { Route as appRouteRouteImport } from './routes/(app)/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
+import { Route as appTodayIndexRouteImport } from './routes/(app)/today/index'
+import { Route as appDashboardIndexRouteImport } from './routes/(app)/dashboard/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as DashboardWorkspaceWorkspaceIdListsIndexRouteImport } from './routes/dashboard/workspace/$workspaceId/lists/index'
-import { Route as DashboardWorkspaceWorkspaceIdListsListIdTodosIndexRouteImport } from './routes/dashboard/workspace/$workspaceId/lists/$listId/todos/index'
+import { Route as appDashboardWorkspaceWorkspaceIdListsIndexRouteImport } from './routes/(app)/dashboard/workspace/$workspaceId/lists/index'
+import { Route as appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRouteImport } from './routes/(app)/dashboard/workspace/$workspaceId/lists/$listId/todos/index'
 
-const DashboardRouteRoute = DashboardRouteRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const appRouteRoute = appRouteRouteImport.update({
+  id: '/(app)',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -27,104 +27,113 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardIndexRoute = DashboardIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
 const authSignupRoute = authSignupRouteImport.update({
   id: '/(auth)/signup',
   path: '/signup',
   getParentRoute: () => rootRouteImport,
+} as any)
+const appTodayIndexRoute = appTodayIndexRouteImport.update({
+  id: '/today/',
+  path: '/today/',
+  getParentRoute: () => appRouteRoute,
+} as any)
+const appDashboardIndexRoute = appDashboardIndexRouteImport.update({
+  id: '/dashboard/',
+  path: '/dashboard/',
+  getParentRoute: () => appRouteRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardWorkspaceWorkspaceIdListsIndexRoute =
-  DashboardWorkspaceWorkspaceIdListsIndexRouteImport.update({
-    id: '/workspace/$workspaceId/lists/',
-    path: '/workspace/$workspaceId/lists/',
-    getParentRoute: () => DashboardRouteRoute,
+const appDashboardWorkspaceWorkspaceIdListsIndexRoute =
+  appDashboardWorkspaceWorkspaceIdListsIndexRouteImport.update({
+    id: '/dashboard/workspace/$workspaceId/lists/',
+    path: '/dashboard/workspace/$workspaceId/lists/',
+    getParentRoute: () => appRouteRoute,
   } as any)
-const DashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute =
-  DashboardWorkspaceWorkspaceIdListsListIdTodosIndexRouteImport.update({
-    id: '/workspace/$workspaceId/lists/$listId/todos/',
-    path: '/workspace/$workspaceId/lists/$listId/todos/',
-    getParentRoute: () => DashboardRouteRoute,
+const appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute =
+  appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRouteImport.update({
+    id: '/dashboard/workspace/$workspaceId/lists/$listId/todos/',
+    path: '/dashboard/workspace/$workspaceId/lists/$listId/todos/',
+    getParentRoute: () => appRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRouteRouteWithChildren
   '/signup': typeof authSignupRoute
-  '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/dashboard/workspace/$workspaceId/lists/': typeof DashboardWorkspaceWorkspaceIdListsIndexRoute
-  '/dashboard/workspace/$workspaceId/lists/$listId/todos/': typeof DashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute
+  '/dashboard/': typeof appDashboardIndexRoute
+  '/today/': typeof appTodayIndexRoute
+  '/dashboard/workspace/$workspaceId/lists/': typeof appDashboardWorkspaceWorkspaceIdListsIndexRoute
+  '/dashboard/workspace/$workspaceId/lists/$listId/todos/': typeof appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/signup': typeof authSignupRoute
-  '/dashboard': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/dashboard/workspace/$workspaceId/lists': typeof DashboardWorkspaceWorkspaceIdListsIndexRoute
-  '/dashboard/workspace/$workspaceId/lists/$listId/todos': typeof DashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute
+  '/dashboard': typeof appDashboardIndexRoute
+  '/today': typeof appTodayIndexRoute
+  '/dashboard/workspace/$workspaceId/lists': typeof appDashboardWorkspaceWorkspaceIdListsIndexRoute
+  '/dashboard/workspace/$workspaceId/lists/$listId/todos': typeof appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/(app)': typeof appRouteRouteWithChildren
   '/(auth)/signup': typeof authSignupRoute
-  '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/dashboard/workspace/$workspaceId/lists/': typeof DashboardWorkspaceWorkspaceIdListsIndexRoute
-  '/dashboard/workspace/$workspaceId/lists/$listId/todos/': typeof DashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute
+  '/(app)/dashboard/': typeof appDashboardIndexRoute
+  '/(app)/today/': typeof appTodayIndexRoute
+  '/(app)/dashboard/workspace/$workspaceId/lists/': typeof appDashboardWorkspaceWorkspaceIdListsIndexRoute
+  '/(app)/dashboard/workspace/$workspaceId/lists/$listId/todos/': typeof appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/dashboard'
     | '/signup'
-    | '/dashboard/'
     | '/api/auth/$'
+    | '/dashboard/'
+    | '/today/'
     | '/dashboard/workspace/$workspaceId/lists/'
     | '/dashboard/workspace/$workspaceId/lists/$listId/todos/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/signup'
-    | '/dashboard'
     | '/api/auth/$'
+    | '/dashboard'
+    | '/today'
     | '/dashboard/workspace/$workspaceId/lists'
     | '/dashboard/workspace/$workspaceId/lists/$listId/todos'
   id:
     | '__root__'
     | '/'
-    | '/dashboard'
+    | '/(app)'
     | '/(auth)/signup'
-    | '/dashboard/'
     | '/api/auth/$'
-    | '/dashboard/workspace/$workspaceId/lists/'
-    | '/dashboard/workspace/$workspaceId/lists/$listId/todos/'
+    | '/(app)/dashboard/'
+    | '/(app)/today/'
+    | '/(app)/dashboard/workspace/$workspaceId/lists/'
+    | '/(app)/dashboard/workspace/$workspaceId/lists/$listId/todos/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
+  appRouteRoute: typeof appRouteRouteWithChildren
   authSignupRoute: typeof authSignupRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteRouteImport
+    '/(app)': {
+      id: '/(app)'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof appRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -134,19 +143,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/': {
-      id: '/dashboard/'
-      path: '/'
-      fullPath: '/dashboard/'
-      preLoaderRoute: typeof DashboardIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
     '/(auth)/signup': {
       id: '/(auth)/signup'
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof authSignupRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/(app)/today/': {
+      id: '/(app)/today/'
+      path: '/today'
+      fullPath: '/today/'
+      preLoaderRoute: typeof appTodayIndexRouteImport
+      parentRoute: typeof appRouteRoute
+    }
+    '/(app)/dashboard/': {
+      id: '/(app)/dashboard/'
+      path: '/dashboard'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof appDashboardIndexRouteImport
+      parentRoute: typeof appRouteRoute
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -155,44 +171,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/workspace/$workspaceId/lists/': {
-      id: '/dashboard/workspace/$workspaceId/lists/'
-      path: '/workspace/$workspaceId/lists'
+    '/(app)/dashboard/workspace/$workspaceId/lists/': {
+      id: '/(app)/dashboard/workspace/$workspaceId/lists/'
+      path: '/dashboard/workspace/$workspaceId/lists'
       fullPath: '/dashboard/workspace/$workspaceId/lists/'
-      preLoaderRoute: typeof DashboardWorkspaceWorkspaceIdListsIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      preLoaderRoute: typeof appDashboardWorkspaceWorkspaceIdListsIndexRouteImport
+      parentRoute: typeof appRouteRoute
     }
-    '/dashboard/workspace/$workspaceId/lists/$listId/todos/': {
-      id: '/dashboard/workspace/$workspaceId/lists/$listId/todos/'
-      path: '/workspace/$workspaceId/lists/$listId/todos'
+    '/(app)/dashboard/workspace/$workspaceId/lists/$listId/todos/': {
+      id: '/(app)/dashboard/workspace/$workspaceId/lists/$listId/todos/'
+      path: '/dashboard/workspace/$workspaceId/lists/$listId/todos'
       fullPath: '/dashboard/workspace/$workspaceId/lists/$listId/todos/'
-      preLoaderRoute: typeof DashboardWorkspaceWorkspaceIdListsListIdTodosIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      preLoaderRoute: typeof appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRouteImport
+      parentRoute: typeof appRouteRoute
     }
   }
 }
 
-interface DashboardRouteRouteChildren {
-  DashboardIndexRoute: typeof DashboardIndexRoute
-  DashboardWorkspaceWorkspaceIdListsIndexRoute: typeof DashboardWorkspaceWorkspaceIdListsIndexRoute
-  DashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute: typeof DashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute
+interface appRouteRouteChildren {
+  appDashboardIndexRoute: typeof appDashboardIndexRoute
+  appTodayIndexRoute: typeof appTodayIndexRoute
+  appDashboardWorkspaceWorkspaceIdListsIndexRoute: typeof appDashboardWorkspaceWorkspaceIdListsIndexRoute
+  appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute: typeof appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute
 }
 
-const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
-  DashboardIndexRoute: DashboardIndexRoute,
-  DashboardWorkspaceWorkspaceIdListsIndexRoute:
-    DashboardWorkspaceWorkspaceIdListsIndexRoute,
-  DashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute:
-    DashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute,
+const appRouteRouteChildren: appRouteRouteChildren = {
+  appDashboardIndexRoute: appDashboardIndexRoute,
+  appTodayIndexRoute: appTodayIndexRoute,
+  appDashboardWorkspaceWorkspaceIdListsIndexRoute:
+    appDashboardWorkspaceWorkspaceIdListsIndexRoute,
+  appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute:
+    appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute,
 }
 
-const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
-  DashboardRouteRouteChildren,
+const appRouteRouteWithChildren = appRouteRoute._addFileChildren(
+  appRouteRouteChildren,
 )
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DashboardRouteRoute: DashboardRouteRouteWithChildren,
+  appRouteRoute: appRouteRouteWithChildren,
   authSignupRoute: authSignupRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }

@@ -11,7 +11,7 @@ import { TodosPageSkeleton } from '@/components/app/todos/todos-page-skeleton'
 import { BackButton } from '@/components/app/back-button'
 
 export const Route = createFileRoute(
-  '/dashboard/workspace/$workspaceId/lists/$listId/todos/',
+  '/(app)/dashboard/workspace/$workspaceId/lists/$listId/todos/',
 )({
   loader: async (opts) => {
     await opts.context.queryClient.ensureQueryData(

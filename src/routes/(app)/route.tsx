@@ -8,7 +8,7 @@ import { AppSidebar } from '@/components/app/dashboard/app-sidebar'
 import { authClient } from '@/lib/auth-client'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
 
-export const Route = createFileRoute('/dashboard')({
+export const Route = createFileRoute('/(app)')({
   component: DashboardLayout,
 })
 
