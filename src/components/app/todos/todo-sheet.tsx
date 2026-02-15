@@ -94,7 +94,7 @@ export function TodoSheet({
           <div className="flex items-center gap-2">
             <Calendar size={20} />
             {todo.dueDate &&
-              `Due: ${format(todo.dueDate, 'EEEE, dd MMMM yyyy')} at ${format(todo.dueDate, 'HH:mm')}`}
+              `Due: ${format(todo.dueDate, 'EEEE, dd MMMM yyyy')} ${todo.dueTime ? `at ${todo.dueTime}` : ''} `}
           </div>
         </SheetHeader>
         <div className="px-4">

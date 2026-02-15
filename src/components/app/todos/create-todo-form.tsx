@@ -2,6 +2,7 @@ import { useForm } from '@tanstack/react-form'
 import { useConvexMutation } from '@convex-dev/react-query'
 import { toast } from 'sonner'
 import { api } from 'convex/_generated/api'
+import { formatInTimeZone } from 'date-fns-tz'
 import type z from 'zod'
 import type { Id } from 'convex/_generated/dataModel'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
@@ -17,7 +18,6 @@ import {
 } from '@/components/ui/select'
 import { createTodoFormSchema } from '@/validation/create-todo-form-schema'
 import { DateTimePicker } from '@/components/ui/date-time-picker'
-import { toCATISOString } from '@/lib/date-utils'
 
 interface CreateTodoFormProps {
   listId: Id<'lists'>
@@ -42,12 +42,17 @@ export function CreateTodoForm({
       onSubmit: createTodoFormSchema,
     },
     onSubmit: (formData) => {
+      const usersTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
       const addTodoPromise = addTodo({
         listId,
         title: formData.value.title,
         description: formData.value.description,
         dueDate: formData.value.dueDate
-          ? toCATISOString(formData.value.dueDate)
+          ? formatInTimeZone(
+              formData.value.dueDate,
+              usersTimeZone,
+              "yyyy-MM-dd'T'HH:mm",
+            )
           : undefined,
         priority: formData.value.priority,
       })

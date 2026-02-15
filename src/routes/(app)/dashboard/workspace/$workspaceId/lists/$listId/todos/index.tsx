@@ -4,7 +4,7 @@ import { motion } from 'motion/react'
 import { convexQuery } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
-import { CreateTodoDialog } from '@/components/app/workspace/create-todo-dialog'
+import { CreateTodoDialog } from '@/components/app/todos/create-todo-dialog'
 import { TodoCard } from '@/components/app/todos/todo-card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { TodosPageSkeleton } from '@/components/app/todos/todos-page-skeleton'
@@ -51,7 +51,7 @@ function RouteComponent() {
       <ScrollArea className="w-full h-120">
         <div className="space-y-6 p-6">
           {data.todos.map((todo) => (
-            <motion.div whileHover={{ scale: 1.03 }}>
+            <motion.div key={todo._id} whileHover={{ scale: 1.03 }}>
               <TodoCard key={todo._id} todo={todo} />
             </motion.div>
           ))}

@@ -2,6 +2,8 @@ import { useForm } from '@tanstack/react-form'
 import { useConvexMutation } from '@convex-dev/react-query'
 import { toast } from 'sonner'
 import { api } from 'convex/_generated/api'
+import { formatInTimeZone } from 'date-fns-tz'
+import { format, parse } from 'date-fns'
 import type z from 'zod'
 import type { Todo } from '@/types/global'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
@@ -17,7 +19,6 @@ import {
 } from '@/components/ui/select'
 import { createTodoFormSchema } from '@/validation/create-todo-form-schema'
 import { DateTimePicker } from '@/components/ui/date-time-picker'
-import { toCATISOString } from '@/lib/date-utils'
 
 interface UpdateTodoFormProps {
   todo: Todo
@@ -29,11 +30,17 @@ export function UpdateTodoForm({
   setUpdateDialogIsOpen,
 }: UpdateTodoFormProps) {
   const updateTodo = useConvexMutation(api.todos.mutations.updateTodo)
+  const dueTime = todo.dueTime || '00:00'
+  const dueDate = todo.dueDate
+    ? format(todo.dueDate, 'yyyy-MM-dd')
+    : format(new Date(), 'yyyy-MM-dd')
 
   const defaultValues: z.input<typeof createTodoFormSchema> = {
     title: todo.title,
     description: todo.description,
-    dueDate: todo.dueDate ? new Date(todo.dueDate) : undefined,
+    dueDate: todo.dueDate
+      ? parse(`${dueDate} ${dueTime}`, 'yyyy-MM-dd HH:mm', new Date())
+      : undefined,
     priority: todo.priority,
   }
 
@@ -44,12 +51,17 @@ export function UpdateTodoForm({
       onSubmit: createTodoFormSchema,
     },
     onSubmit: (formData) => {
+      const usersTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
       const updateTodoPromise = updateTodo({
         todoId: todo._id,
         title: formData.value.title,
         description: formData.value.description,
         dueDate: formData.value.dueDate
-          ? toCATISOString(formData.value.dueDate)
+          ? formatInTimeZone(
+              formData.value.dueDate,
+              usersTimeZone,
+              "yyyy-MM-dd'T'HH:mm",
+            )
           : undefined,
         priority: formData.value.priority,
       })

@@ -20,6 +20,7 @@ export default defineSchema({
     description: v.optional(v.string()),
     completed: v.boolean(),
     dueDate: v.optional(v.string()),
+    dueTime: v.optional(v.string()),
     priority: v.union(
       v.literal('high'),
       v.literal('medium'),
@@ -27,7 +28,9 @@ export default defineSchema({
       v.literal('none'),
     ),
     createdBy: v.string(),
-  }).index('by_listId', ['listId']),
+  })
+    .index('by_listId', ['listId'])
+    .index('by_due_date', ['dueDate']),
   subTasks: defineTable({
     todoId: v.id('todos'),
     title: v.string(),

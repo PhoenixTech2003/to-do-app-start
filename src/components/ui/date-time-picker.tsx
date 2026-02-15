@@ -29,7 +29,7 @@ export function DateTimePicker({ value, setValue }: DateTimeProps) {
       // If there's an existing date with time, preserve the time
       if (date) {
         const newDate = new Date(dateValue)
-        newDate.setHours(date.getHours(), date.getMinutes(), date.getSeconds())
+        newDate.setHours(date.getHours(), date.getMinutes())
         setDate(newDate)
         setValue(newDate)
       } else {
@@ -61,7 +61,7 @@ export function DateTimePicker({ value, setValue }: DateTimeProps) {
             className="justify-start font-normal"
           >
             {date ? (
-              format(date, 'EEEE, dd MMMM, yyyy  HH:mm:ss')
+              format(date, "EEEE, dd MMMM, yyyy 'at' HH:mm")
             ) : (
               <span>Pick a date</span>
             )}
