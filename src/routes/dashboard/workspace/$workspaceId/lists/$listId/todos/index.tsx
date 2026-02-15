@@ -8,6 +8,7 @@ import { CreateTodoDialog } from '@/components/app/workspace/create-todo-dialog'
 import { TodoCard } from '@/components/app/todos/todo-card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { TodosPageSkeleton } from '@/components/app/todos/todos-page-skeleton'
+import { BackButton } from '@/components/app/back-button'
 
 export const Route = createFileRoute(
   '/dashboard/workspace/$workspaceId/lists/$listId/todos/',
@@ -34,13 +35,16 @@ function RouteComponent() {
   return (
     <div className="p-6 grid">
       <header className="mb-6 flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold">
-            {data.listDetails.title} List
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Showing twodos for this list.
-          </p>
+        <div className="flex items-center gap-6">
+          <BackButton />
+          <div>
+            <h2 className="text-2xl font-semibold">
+              {data.listDetails.title} List
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Showing twodos for this list.
+            </p>
+          </div>
         </div>
         <CreateTodoDialog listId={listId as Id<'lists'>} />
       </header>
