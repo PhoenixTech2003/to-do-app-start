@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useConvexMutation } from '@convex-dev/react-query'
 import { toast } from 'sonner'
 import { api } from 'convex/_generated/api'
-import { Link } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
+import { motion } from 'motion/react'
 import { UpdateDialog } from '../update-dialog'
 import { DeleteDialog } from '../delete-dialog'
 import { UpdateListDetailsForm } from './update-list-details-form'
@@ -16,6 +17,8 @@ interface ListCardProps {
 export function ListCard({ listTitle, listItem }: ListCardProps) {
   const [isUpdatDialogOpen, setIsUpdateDialogIsOpen] = useState(false)
   const [isOpenDeleteDialog, setIsOpenDeleteDialog] = useState(false)
+
+  const navigate = useNavigate()
 
   function setIsUpdateDialogIsOpenHandler(value: boolean) {
     setIsUpdateDialogIsOpen(value)
@@ -42,34 +45,43 @@ export function ListCard({ listTitle, listItem }: ListCardProps) {
   }
 
   return (
-    <Card className="bg-card/50 rounded-lg">
-      <CardContent className="p-6">
-        <Link
-          to="/dashboard/workspace/$workspaceId/lists/$listId/todos"
-          params={{ listId: listItem._id, workspaceId: listItem.workspaceId }}
-          className="block"
-        >
+    <motion.div whileHover={{ scale: 1.05 }}>
+      <Card
+        className="bg-card/50 rounded-lg hover:cursor-pointer"
+        onClick={() =>
+          navigate({
+            to: '/dashboard/workspace/$workspaceId/lists/$listId/todos',
+            params: { workspaceId: listItem.workspaceId, listId: listItem._id },
+          })
+        }
+      >
+        <CardContent className="p-6">
           <h2 className="mb-4 text-xl font-bold text-primary">{listTitle}</h2>
-        </Link>
-        <div className="flex gap-2">
-          <UpdateDialog
-            isOpen={isUpdatDialogOpen}
-            setDialogIsOpen={setIsUpdateDialogIsOpenHandler}
-            updateDialogTitle="Update your twodo list"
-          >
-            <UpdateListDetailsForm
-              setUpdateListDialogIsOpen={setIsUpdateDialogIsOpenHandler}
-              listData={listItem}
-            />
-          </UpdateDialog>
-          <DeleteDialog
-            isOpen={isOpenDeleteDialog}
-            setIsOpen={setIsOpenDeleteDialogHandler}
-            handleDelete={handleDelete}
-            dialogTitle={`This action will permanently delete the ${listTitle} list`}
-          />
-        </div>
-      </CardContent>
-    </Card>
+
+          <div className="flex gap-2">
+            <div onClick={(e) => e.stopPropagation()}>
+              <UpdateDialog
+                isOpen={isUpdatDialogOpen}
+                setDialogIsOpen={setIsUpdateDialogIsOpenHandler}
+                updateDialogTitle="Update your twodo list"
+              >
+                <UpdateListDetailsForm
+                  setUpdateListDialogIsOpen={setIsUpdateDialogIsOpenHandler}
+                  listData={listItem}
+                />
+              </UpdateDialog>
+            </div>
+            <div onClick={(e) => e.stopPropagation()}>
+              <DeleteDialog
+                isOpen={isOpenDeleteDialog}
+                setIsOpen={setIsOpenDeleteDialogHandler}
+                handleDelete={handleDelete}
+                dialogTitle={`This action will permanently delete the ${listTitle} list`}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   )
 }

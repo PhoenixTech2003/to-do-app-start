@@ -26,7 +26,7 @@ export function DeleteDialog({
 }: DeleteDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger className="grid">
+      <DialogTrigger className="grid ">
         <Button variant="destructive" size="sm" className="flex-1">
           <Trash2 className="h-4 w-4" />
           {triggerTitle}
