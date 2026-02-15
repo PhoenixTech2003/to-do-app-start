@@ -8,7 +8,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 
 export function CreateWorkspaceDialog() {
@@ -19,12 +18,11 @@ export function CreateWorkspaceDialog() {
   }
   return (
     <Dialog open={isOpen} onOpenChange={setCreateDialogIsOpen}>
-      <DialogTrigger>
-        <Button onClick={() => setIsOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Workspace
-        </Button>
-      </DialogTrigger>
+      <Button onClick={() => setIsOpen(true)}>
+        <Plus className="mr-2 h-4 w-4" />
+        Create Workspace
+      </Button>
+
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Workspace</DialogTitle>

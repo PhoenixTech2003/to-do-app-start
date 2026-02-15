@@ -6,14 +6,14 @@ export function BackButton() {
   const router = useRouter()
   return (
     <div>
-      {canGoBack && (
+      {canGoBack ? (
         <div
           className="hover:cursor-pointer"
           onClick={() => router.history.back()}
         >
           <ChevronLeft />
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

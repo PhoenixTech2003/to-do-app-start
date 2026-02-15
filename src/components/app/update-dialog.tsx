@@ -6,7 +6,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 
 interface UpdateDialogProps {
@@ -26,12 +25,16 @@ export function UpdateDialog({
 }: UpdateDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setDialogIsOpen}>
-      <DialogTrigger className="grid">
-        <Button variant="outline" size="sm" className="flex-1">
-          <Pencil className="h-4 w-4" />
-          {triggerTitle}
-        </Button>
-      </DialogTrigger>
+      <Button
+        variant="outline"
+        onClick={() => setDialogIsOpen(true)}
+        size="sm"
+        className="flex-1 py-2"
+      >
+        <Pencil className="h-4 w-4" />
+        {triggerTitle}
+      </Button>
+
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{updateDialogTitle}</DialogTitle>

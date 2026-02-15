@@ -71,7 +71,7 @@ function TodayPage() {
         errorTitle="Failed to load today's tasks"
         errorDescription="An error occurred while loading your tasks for today. Please try again."
       >
-        <ScrollArea className="w-full h-72">
+        <ScrollArea className="w-full h-150">
           <div className="space-y-6 p-6">
             {data.todos.map((todo) => (
               <motion.div key={todo._id} whileHover={{ scale: 1.03 }}>
