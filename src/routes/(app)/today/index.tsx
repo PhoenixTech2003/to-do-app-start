@@ -2,10 +2,10 @@ import { createFileRoute } from '@tanstack/react-router'
 import { BackButton } from '@/components/app/back-button'
 
 export const Route = createFileRoute('/(app)/today/')({
-  component: RouteComponent,
+  component: TodayPage,
 })
 
-function RouteComponent() {
+function TodayPage() {
   return (
     <header className="mb-6 flex items-center justify-between">
       <div className="flex items-center gap-6">
