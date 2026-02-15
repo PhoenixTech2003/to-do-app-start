@@ -21,16 +21,22 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '@/components/ui/sheet'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface TodoSheetProps {
   children: React.ReactNode
   todo: Todo
+  isOpen: boolean
+  setIsOpen: (value: boolean) => void
 }
 
-export function TodoSheet({ children, todo }: TodoSheetProps) {
+export function TodoSheet({
+  children,
+  todo,
+  isOpen,
+  setIsOpen,
+}: TodoSheetProps) {
   const { data, isFetching, isError, error } = useSuspenseQuery(
     convexQuery(api.todos.queries.GetAllSubtasks, {
       todoId: todo._id,
@@ -76,8 +82,8 @@ export function TodoSheet({ children, todo }: TodoSheetProps) {
   }
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>{children}</SheetTrigger>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      {children}
       <SheetContent>
         <SheetHeader>
           <div className="flex items-center gap-2">
