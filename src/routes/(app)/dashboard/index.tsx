@@ -9,7 +9,7 @@ import { DashboardLoadingSkeleton } from '@/components/app/dashboard/dashboard-l
 import { NoWorkspacesEmptyState } from '@/components/app/dashboard/no-workspaces-empty-state'
 import { DashboardPageSkeleton } from '@/components/app/dashboard/dashboard-page-skeleton'
 
-export const Route = createFileRoute('/dashboard/')({
+export const Route = createFileRoute('/(app)/dashboard/')({
   loader: async (opts) => {
     await opts.context.queryClient.ensureQueryData(
       convexQuery(api.dashboard.queries.getUserWorkspaces),

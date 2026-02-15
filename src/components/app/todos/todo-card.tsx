@@ -47,7 +47,7 @@ export function TodoCard({ todo }: TodoCardProps) {
                   Due Date:{' '}
                   {todo.dueDate && format(todo.dueDate, 'dd MMMM, yyyy')}
                 </p>
-                <p>Due Time: {todo.dueDate && format(todo.dueDate, 'HH:mm')}</p>
+                <p>Due Time: {todo.dueTime && todo.dueTime}</p>
               </div>
             </div>
           </div>

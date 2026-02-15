@@ -5,7 +5,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 
@@ -26,12 +25,16 @@ export function DeleteDialog({
 }: DeleteDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger className="grid ">
-        <Button variant="destructive" size="sm" className="flex-1">
-          <Trash2 className="h-4 w-4" />
-          {triggerTitle}
-        </Button>
-      </DialogTrigger>
+      <Button
+        variant="destructive"
+        onClick={() => setIsOpen(true)}
+        size="sm"
+        className="flex-1 py-2"
+      >
+        <Trash2 className="h-4 w-4" />
+        {triggerTitle}
+      </Button>
+
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{dialogTitle}</DialogTitle>

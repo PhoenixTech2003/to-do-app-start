@@ -1,4 +1,5 @@
 import { v } from 'convex/values'
+import { format } from 'date-fns'
 import { mutation } from '../_generated/server'
 import { authComponent } from '../auth'
 import { verifyListOnwership, verifyTodoOnwership } from '../globals/helpers'
@@ -27,12 +28,18 @@ export const createTodo = mutation({
     if (!isOwnerOfList) {
       throw new Error('You are not the owner of the list')
     }
+    console.log(args.dueDate)
+    const dueDate = args.dueDate
+      ? format(args.dueDate, 'yyyy-LL-dd')
+      : undefined
+    const dueTime = args.dueDate ? format(args.dueDate, 'HH:mm') : undefined
     await ctx.db.insert('todos', {
       title: args.title,
       listId: args.listId,
       description: args.description,
       completed: false,
-      dueDate: args.dueDate,
+      dueDate: dueDate,
+      dueTime: dueTime,
       priority: args.priority,
       createdBy: loggedInUserId,
     })
@@ -115,10 +122,15 @@ export const updateTodo = mutation({
     if (!isOwnerOfTodo) {
       throw new Error('You are not the owner of the list')
     }
+    const dueDate = args.dueDate
+      ? format(args.dueDate, 'yyyy-LL-dd')
+      : undefined
+    const dueTime = args.dueDate ? format(args.dueDate, 'HH:mm') : undefined
     await ctx.db.patch('todos', args.todoId, {
       title: args.title,
       description: args.description,
-      dueDate: args.dueDate,
+      dueDate: dueDate,
+      dueTime: dueTime,
       priority: args.priority,
     })
   },

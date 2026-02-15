@@ -8,7 +8,7 @@ import { AppSidebar } from '@/components/app/dashboard/app-sidebar'
 import { authClient } from '@/lib/auth-client'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
 
-export const Route = createFileRoute('/dashboard')({
+export const Route = createFileRoute('/(app)')({
   component: DashboardLayout,
 })
 
@@ -30,7 +30,7 @@ export function DashboardLayout() {
             </div>
             <ThemeSwitcher />
           </header>
-          <div className="grid flex-1  gap-4 p-4 overflow-auto">
+          <div className="grid flex-1  gap-4 p-4 ">
             <Outlet />
           </div>
         </SidebarInset>

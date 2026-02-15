@@ -12,7 +12,7 @@ import { ListsPageSkeleton } from '@/components/app/workspace/lists-page-skeleto
 import { BackButton } from '@/components/app/back-button'
 
 export const Route = createFileRoute(
-  '/dashboard/workspace/$workspaceId/lists/',
+  '/(app)/dashboard/workspace/$workspaceId/lists/',
 )({
   loader: async (opts) => {
     await opts.context.queryClient.ensureQueryData(

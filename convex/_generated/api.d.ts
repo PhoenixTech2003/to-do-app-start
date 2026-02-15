@@ -12,6 +12,7 @@ import type * as auth from "../auth.js";
 import type * as dashboard_mutations from "../dashboard/mutations.js";
 import type * as dashboard_queries from "../dashboard/queries.js";
 import type * as globals_helpers from "../globals/helpers.js";
+import type * as globals_queries from "../globals/queries.js";
 import type * as http from "../http.js";
 import type * as todos_mutations from "../todos/mutations.js";
 import type * as todos_queries from "../todos/queries.js";
@@ -29,6 +30,7 @@ declare const fullApi: ApiFromModules<{
   "dashboard/mutations": typeof dashboard_mutations;
   "dashboard/queries": typeof dashboard_queries;
   "globals/helpers": typeof globals_helpers;
+  "globals/queries": typeof globals_queries;
   http: typeof http;
   "todos/mutations": typeof todos_mutations;
   "todos/queries": typeof todos_queries;
