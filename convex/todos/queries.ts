@@ -1,11 +1,29 @@
 import { v } from 'convex/values'
 import { query } from '../_generated/server'
+import { authComponent } from '../auth'
 
+export const GetListDetails = query({
+  args: {
+    listId: v.id('lists'),
+  },
+  handler: async (ctx, args) => {
+    const loggedInUser = await authComponent.getAuthUser(ctx)
+    const loggedInUserId = loggedInUser._id
+    const listDetails = await ctx.db.get('lists', args.listId)
+    if (!listDetails) {
+      throw new Error('List does not exist contact support')
+    }
+
+    return listDetails
+  },
+})
 export const GetAllTodos = query({
   args: {
     listId: v.id('lists'),
   },
   handler: async (ctx, args) => {
+    const loggedInUser = await authComponent.getAuthUser(ctx)
+    const loggedInUserId = loggedInUser._id
     const listDetails = await ctx.db.get('lists', args.listId)
     if (!listDetails) {
       throw new Error('List does not exist contact support')
@@ -13,7 +31,9 @@ export const GetAllTodos = query({
 
     const todos = await ctx.db
       .query('todos')
-      .withIndex('by_listId', (q) => q.eq('listId', args.listId))
+      .withIndex('by_list_id_createdBy', (q) =>
+        q.eq('listId', args.listId).eq('createdBy', loggedInUserId),
+      )
       .collect()
 
     return {
@@ -23,6 +43,72 @@ export const GetAllTodos = query({
   },
 })
 
+export const GetPendingTodos = query({
+  args: {
+    listId: v.id('lists'),
+  },
+  handler: async (ctx, args) => {
+    const loggedInUser = await authComponent.getAuthUser(ctx)
+    const loggedInUserId = loggedInUser._id
+
+    const todos = await ctx.db
+      .query('todos')
+      .withIndex('by_status_createdBy_listId', (q) =>
+        q
+          .eq('status', 'pending')
+          .eq('createdBy', loggedInUserId)
+          .eq('listId', args.listId),
+      )
+      .collect()
+    return {
+      todos,
+    }
+  },
+})
+export const GetCompletedTodos = query({
+  args: {
+    listId: v.id('lists'),
+  },
+  handler: async (ctx, args) => {
+    const loggedInUser = await authComponent.getAuthUser(ctx)
+    const loggedInUserId = loggedInUser._id
+    const todos = await ctx.db
+      .query('todos')
+      .withIndex('by_status_createdBy_listId', (q) =>
+        q
+          .eq('status', 'completed')
+          .eq('createdBy', loggedInUserId)
+          .eq('listId', args.listId),
+      )
+      .collect()
+    return {
+      todos,
+    }
+  },
+})
+
+export const GetOverDueTodos = query({
+  args: {
+    listId: v.id('lists'),
+  },
+
+  handler: async (ctx, args) => {
+    const loggedInUser = await authComponent.getAuthUser(ctx)
+    const loggedInUserId = loggedInUser._id
+    const todos = await ctx.db
+      .query('todos')
+      .withIndex('by_status_createdBy_listId', (q) =>
+        q
+          .eq('status', 'overdue')
+          .eq('createdBy', loggedInUserId)
+          .eq('listId', args.listId),
+      )
+      .collect()
+    return {
+      todos,
+    }
+  },
+})
 export const GetAllSubtasks = query({
   args: {
     todoId: v.id('todos'),

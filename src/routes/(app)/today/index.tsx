@@ -5,11 +5,12 @@ import { convexQuery } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
-import { CheckCircle } from 'lucide-react'
 import { BackButton } from '@/components/app/back-button'
 import { TodoCard } from '@/components/app/todos/todo-card'
 import { TodosPageSkeleton } from '@/components/app/todos/todos-page-skeleton'
 import { StateHandler } from '@/components/app/state-handler'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Empty } from '@/components/ui/empty'
 
 export const Route = createFileRoute('/(app)/today/')({
   loaderDeps: () => ({
@@ -34,53 +35,93 @@ function TodayPage() {
     }),
   )
 
+  const pendingTodos = data.todos.filter((t: any) => t.status === 'pending')
+  const completedTodos = data.todos.filter((t: any) => t.status === 'completed')
+
   return (
-    <div className="p-6 grid">
+    <div className="p-6 flex flex-col">
       <header className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <BackButton />
           <div>
-            <h2 className="text-2xl font-semibold">Twodo's for today</h2>
+            <h2 className="text-2xl font-semibold">Todos for today</h2>
             <p className="text-sm text-muted-foreground">
-              Showing twodos for today.
+              Showing todos for today.
             </p>
           </div>
         </div>
       </header>
-      <StateHandler
-        isFetching={isFetching}
-        isError={isError}
-        error={error}
-        isEmpty={data.todos.length === 0}
-        loadingSkeleton={<TodosPageSkeleton />}
-        emptyState={
-          <div className="flex flex-col items-center justify-center space-y-6 rounded-lg border-2 border-dashed border-slate-200 bg-linear-to-br from-slate-50 to-slate-100 px-4 py-16 sm:px-6 lg:px-8">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-              <CheckCircle className="h-8 w-8 text-blue-600" />
+      <ScrollArea className="w-full h-75">
+        <div className="space-y-6">
+          <StateHandler
+            isFetching={isFetching}
+            isError={isError}
+            error={error}
+            isEmpty={pendingTodos.length === 0}
+            loadingSkeleton={
+              <div className="space-y-6 p-6">
+                <h2 className="font-bold text-xl">Pending Tasks</h2>
+                <div className="space-y-4">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton key={i} className="h-20 w-full" />
+                  ))}
+                </div>
+              </div>
+            }
+            emptyState={
+              <div className="space-y-6 p-6">
+                <h2 className="font-bold text-xl">Pending Tasks</h2>
+                <Empty>No pending tasks for today</Empty>
+              </div>
+            }
+            errorTitle="Failed to load today's pending tasks"
+            errorDescription="An error occurred while loading pending tasks. Please try again."
+          >
+            <div className="space-y-6 p-6">
+              <h2 className="font-bold text-xl">Pending Tasks</h2>
+              {pendingTodos.map((todo: any) => (
+                <motion.div key={todo._id} whileHover={{ scale: 1.03 }}>
+                  <TodoCard todo={todo} />
+                </motion.div>
+              ))}
             </div>
-            <div className="space-y-2 text-center">
-              <h3 className="text-2xl font-bold text-slate-900">
-                All caught up!
-              </h3>
-              <p className="text-base text-slate-500">
-                No tasks for today. Great job staying organized!
-              </p>
+          </StateHandler>
+
+          <StateHandler
+            isFetching={isFetching}
+            isError={isError}
+            error={error}
+            isEmpty={completedTodos.length === 0}
+            loadingSkeleton={
+              <div className="space-y-6 p-6">
+                <h2 className="font-bold text-xl">Completed Tasks</h2>
+                <div className="space-y-4">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton key={i} className="h-20 w-full" />
+                  ))}
+                </div>
+              </div>
+            }
+            emptyState={
+              <div className="space-y-6 p-6">
+                <h2 className="font-bold text-xl">Completed Tasks</h2>
+                <Empty>No completed tasks for today</Empty>
+              </div>
+            }
+            errorTitle="Failed to load today's completed tasks"
+            errorDescription="An error occurred while loading completed tasks. Please try again."
+          >
+            <div className="space-y-6 p-6">
+              <h2 className="font-bold text-xl">Completed Tasks</h2>
+              {completedTodos.map((todo: any) => (
+                <motion.div key={todo._id} whileHover={{ scale: 1.03 }}>
+                  <TodoCard todo={todo} />
+                </motion.div>
+              ))}
             </div>
-          </div>
-        }
-        errorTitle="Failed to load today's tasks"
-        errorDescription="An error occurred while loading your tasks for today. Please try again."
-      >
-        <ScrollArea className="w-full h-150">
-          <div className="space-y-6 p-6">
-            {data.todos.map((todo) => (
-              <motion.div key={todo._id} whileHover={{ scale: 1.03 }}>
-                <TodoCard todo={todo} />
-              </motion.div>
-            ))}
-          </div>
-        </ScrollArea>
-      </StateHandler>
+          </StateHandler>
+        </div>
+      </ScrollArea>
     </div>
   )
 }

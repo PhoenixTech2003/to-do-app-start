@@ -43,6 +43,9 @@ export function CreateTodoForm({
     },
     onSubmit: (formData) => {
       const usersTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+      const scheduledFunctionRunTime = formData.value.dueDate
+        ? formData.value.dueDate.getTime() + 60000
+        : undefined
       const addTodoPromise = addTodo({
         listId,
         title: formData.value.title,
@@ -55,6 +58,7 @@ export function CreateTodoForm({
             )
           : undefined,
         priority: formData.value.priority,
+        scheduledFuntionRunTime: scheduledFunctionRunTime,
       })
       toast.promise(addTodoPromise, {
         loading: 'Please wait while we add your twodo',

@@ -2,8 +2,8 @@ import { useForm } from '@tanstack/react-form'
 import { useConvexMutation } from '@convex-dev/react-query'
 import { toast } from 'sonner'
 import { api } from 'convex/_generated/api'
-import { formatInTimeZone } from 'date-fns-tz'
 import { format, parse } from 'date-fns'
+import { formatInTimeZone } from 'date-fns-tz'
 import type z from 'zod'
 import type { Todo } from '@/types/global'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
@@ -34,13 +34,15 @@ export function UpdateTodoForm({
   const dueDate = todo.dueDate
     ? format(todo.dueDate, 'yyyy-MM-dd')
     : format(new Date(), 'yyyy-MM-dd')
-
+  const parsedDate = parse(
+    `${dueDate} ${dueTime}`,
+    'yyyy-MM-dd HH:mm',
+    new Date(),
+  )
   const defaultValues: z.input<typeof createTodoFormSchema> = {
     title: todo.title,
     description: todo.description,
-    dueDate: todo.dueDate
-      ? parse(`${dueDate} ${dueTime}`, 'yyyy-MM-dd HH:mm', new Date())
-      : undefined,
+    dueDate: parsedDate,
     priority: todo.priority,
   }
 
@@ -52,6 +54,9 @@ export function UpdateTodoForm({
     },
     onSubmit: (formData) => {
       const usersTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+      const scheduledFunctionRunTime = formData.value.dueDate
+        ? formData.value.dueDate.getTime() + 60000
+        : undefined
       const updateTodoPromise = updateTodo({
         todoId: todo._id,
         title: formData.value.title,
@@ -64,6 +69,7 @@ export function UpdateTodoForm({
             )
           : undefined,
         priority: formData.value.priority,
+        scheduledFunctionRunTime,
       })
       toast.promise(updateTodoPromise, {
         loading: 'Please wait while we update your twodo',

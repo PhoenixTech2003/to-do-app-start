@@ -16,9 +16,14 @@ export default defineSchema({
     .index('createdBy_workspaceId', ['createdBy', 'workspaceId']),
   todos: defineTable({
     listId: v.id('lists'),
+    markAsOverdueScheudledFunctionId: v.optional(v.id('_scheduled_functions')),
     title: v.string(),
     description: v.optional(v.string()),
-    completed: v.boolean(),
+    status: v.union(
+      v.literal('pending'),
+      v.literal('completed'),
+      v.literal('overdue'),
+    ),
     dueDate: v.optional(v.string()),
     dueTime: v.optional(v.string()),
     priority: v.union(
@@ -30,7 +35,9 @@ export default defineSchema({
     createdBy: v.string(),
   })
     .index('by_listId', ['listId'])
-    .index('by_due_date', ['dueDate']),
+    .index('by_list_id_createdBy', ['listId', 'createdBy'])
+    .index('by_due_date', ['dueDate'])
+    .index('by_status_createdBy_listId', ['status', 'createdBy', 'listId']),
   subTasks: defineTable({
     todoId: v.id('todos'),
     title: v.string(),
