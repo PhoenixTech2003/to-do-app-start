@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { TodoSheet } from './todo-sheet'
 import { TodoCheckInput } from './todo-check-input'
 import type { Todo } from '@/types/global'
+import { cn } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 
 interface TodoCardProps {
@@ -33,16 +34,25 @@ export function TodoCard({ todo }: TodoCardProps) {
             </div>
             <div>
               <div
-                className={`text-sm font-medium ${
-                  todo.completed ? 'line-through text-muted-foreground' : ''
-                }`}
+                className={cn(
+                  'text-sm font-medium',
+                  todo.status === 'completed' &&
+                    'line-through text-muted-foreground',
+                )}
               >
                 {todo.title}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
                 {todo.description}
               </div>
-              <div className="text-xs text-muted-foreground mt-2">
+              <div
+                className={cn(
+                  'text-xs mt-2',
+                  todo.status === 'overdue'
+                    ? 'text-red-600 dark:text-red-400 font-medium'
+                    : 'text-muted-foreground',
+                )}
+              >
                 <p>
                   Due Date:{' '}
                   {todo.dueDate && format(todo.dueDate, 'dd MMMM, yyyy')}
