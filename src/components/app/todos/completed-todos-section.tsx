@@ -52,7 +52,7 @@ export function CompletedTodosSection({ listId }: CompletedTodosSectionProps) {
       emptyState={<CompletedTodosEmptyState />}
     >
       <div className="space-y-6 p-6">
-        <h2 className="font-bold text-xl">Completedd Tasks</h2>
+        <h2 className="font-bold text-xl">Completed Tasks</h2>
         {data?.todos.map((todo) => (
           <motion.div key={todo._id} whileHover={{ scale: 1.03 }}>
             <TodoCard key={todo._id} todo={todo} />

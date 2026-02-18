@@ -10,6 +10,8 @@ import { BackButton } from '@/components/app/back-button'
 import { PendingTodosSection } from '@/components/app/todos/pending-todos-section'
 import { OverdueTodosSection } from '@/components/app/todos/overdue-todos-section'
 import { CompletedTodosSection } from '@/components/app/todos/completed-todos-section'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Spinner } from '@/components/ui/spinner'
 
 export const Route = createFileRoute(
   '/(app)/dashboard/workspace/$workspaceId/lists/$listId/todos/',
@@ -39,14 +41,29 @@ function RouteComponent() {
         <div className="flex items-center gap-6">
           <BackButton />
           <div>
-            <h2 className="text-2xl font-semibold">{data.title} List</h2>
+            <h2 className="text-2xl font-semibold flex items-center gap-2">
+              {data.title} List
+              {isFetching ? (
+                <Spinner className="text-muted-foreground" />
+              ) : null}
+            </h2>
             <p className="text-sm text-muted-foreground">
-              Showing twodos for this list.
+              Showing todos for this list.
             </p>
           </div>
         </div>
         <CreateTodoDialog listId={listId as Id<'lists'>} />
       </header>
+      {isError ? (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTitle>Failed to load list</AlertTitle>
+          <AlertDescription>
+            {error instanceof Error
+              ? error.message
+              : 'An unexpected error occurred.'}
+          </AlertDescription>
+        </Alert>
+      ) : null}
       <ScrollArea className="w-full h-120">
         <PendingTodosSection listId={listId as Id<'lists'>} />
         <OverdueTodosSection listId={listId as Id<'lists'>} />
