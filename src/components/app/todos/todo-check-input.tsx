@@ -1,6 +1,6 @@
 import { useConvexMutation } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
-import { isAfter, isBefore, parse } from 'date-fns'
+import { isAfter, parse } from 'date-fns'
 import type { Todo } from '@/types/global'
 import { Checkbox } from '@/components/ui/checkbox'
 
@@ -15,26 +15,19 @@ function getTodoStatus({
   status: 'pending' | 'completed' | 'overdue'
   dueDate?: Date
 }) {
+  // No due date: simple toggle (overdue also goes to completed)
   if (!dueDate) {
-    return 'pending'
+    return status === 'completed' ? 'pending' : 'completed'
   }
+
+  // Has due date: completing a todo goes back to pending or overdue based on date,
+  // otherwise mark as completed
   const now = new Date()
-  console.log(dueDate)
-  console.log(now)
-  console.log(isBefore(dueDate, now))
-  if (status === 'pending') {
-    return 'completed'
+  if (status === 'completed') {
+    return isAfter(now, dueDate) ? 'overdue' : 'pending'
   }
-  if (status === 'completed' && isBefore(now, dueDate)) {
-    return 'pending'
-  }
-  if (status === 'completed' && isAfter(now, dueDate)) {
-    return 'overdue'
-  }
-  if (status === 'overdue') {
-    return 'completed'
-  }
-  return 'pending'
+
+  return 'completed'
 }
 
 export function TodoCheckInput({ todo }: TodoCheckInputProps) {
