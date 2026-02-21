@@ -30,7 +30,71 @@ export function KanbanBoard({ listId }: KanbanBoardProps) {
   )
   const updateTodoStatus = useConvexMutation(
     api.todos.mutations.toggleTodoStatus,
-  )
+  ).withOptimisticUpdate((localStore, args) => {
+    const { todoId, status: newStatus } = args
+
+    const pendingData = localStore.getQuery(api.todos.queries.GetPendingTodos, {
+      listId,
+    })
+    const completedData = localStore.getQuery(
+      api.todos.queries.GetCompletedTodos,
+      { listId },
+    )
+    const overdueData = localStore.getQuery(api.todos.queries.GetOverDueTodos, {
+      listId,
+    })
+
+    const findTodo = (data: { todos: Array<Todo> } | undefined) =>
+      data?.todos.find((t) => t._id === todoId)
+    const currentTodo =
+      findTodo(pendingData) ?? findTodo(completedData) ?? findTodo(overdueData)
+    if (!currentTodo) return
+
+    const optimisticTodo = { ...currentTodo, status: newStatus } as Todo
+
+    const withoutTodo = (data: { todos: Array<Todo> } | undefined) =>
+      data ? { todos: data.todos.filter((t) => t._id !== todoId) } : undefined
+    const withTodo = (data: { todos: Array<Todo> } | undefined, todo: Todo) =>
+      data ? { todos: [...data.todos, todo] } : undefined
+
+    const nextPending =
+      currentTodo.status === 'pending'
+        ? withoutTodo(pendingData)
+        : newStatus === 'pending'
+          ? withTodo(pendingData, optimisticTodo)
+          : pendingData
+    const nextCompleted =
+      currentTodo.status === 'completed'
+        ? withoutTodo(completedData)
+        : newStatus === 'completed'
+          ? withTodo(completedData, optimisticTodo)
+          : completedData
+    const nextOverdue =
+      currentTodo.status === 'overdue'
+        ? withoutTodo(overdueData)
+        : newStatus === 'overdue'
+          ? withTodo(overdueData, optimisticTodo)
+          : overdueData
+
+    if (nextPending)
+      localStore.setQuery(
+        api.todos.queries.GetPendingTodos,
+        { listId },
+        nextPending,
+      )
+    if (nextCompleted)
+      localStore.setQuery(
+        api.todos.queries.GetCompletedTodos,
+        { listId },
+        nextCompleted,
+      )
+    if (nextOverdue)
+      localStore.setQuery(
+        api.todos.queries.GetOverDueTodos,
+        { listId },
+        nextOverdue,
+      )
+  })
   function getTodoStatus({
     status,
     dueDate,
