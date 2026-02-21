@@ -64,7 +64,11 @@ function RouteComponent() {
         </div>
         <div className="flex items-center gap-3">
           <div>
-            <ViewModeTrigger listId={listId} workspaceId={workspaceId} />
+            <ViewModeTrigger
+              mode={view}
+              listId={listId}
+              workspaceId={workspaceId}
+            />
           </div>
           <CreateTodoDialog listId={listId as Id<'lists'>} />
         </div>
@@ -79,16 +83,17 @@ function RouteComponent() {
           </AlertDescription>
         </Alert>
       ) : null}
+      <section>
+        {view === 'kanban' && <KanbanBoard listId={listId as Id<'lists'>} />}
 
-      {view === 'kanban' && <KanbanBoard listId={listId as Id<'lists'>} />}
-
-      {view === 'list' && (
-        <ScrollArea className="w-full h-120">
-          <PendingTodosSection listId={listId as Id<'lists'>} />
-          <OverdueTodosSection listId={listId as Id<'lists'>} />
-          <CompletedTodosSection listId={listId as Id<'lists'>} />
-        </ScrollArea>
-      )}
+        {view === 'list' && (
+          <ScrollArea className="w-full h-120">
+            <PendingTodosSection listId={listId as Id<'lists'>} />
+            <OverdueTodosSection listId={listId as Id<'lists'>} />
+            <CompletedTodosSection listId={listId as Id<'lists'>} />
+          </ScrollArea>
+        )}
+      </section>
     </div>
   )
 }

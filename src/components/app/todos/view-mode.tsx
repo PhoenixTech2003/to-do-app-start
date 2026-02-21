@@ -5,17 +5,19 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { Button } from '@/components/ui/button'
 
 interface ViewModeProps {
   workspaceId: string
   listId: string
+  mode: 'list' | 'kanban'
 }
 
-export function ViewModeTrigger({ workspaceId, listId }: ViewModeProps) {
+export function ViewModeTrigger({ mode, workspaceId, listId }: ViewModeProps) {
   return (
     <div className="flex gap-2 items-center">
       <Tooltip>
-        <TooltipTrigger>
+        <TooltipTrigger asChild>
           <Link
             to="/dashboard/workspace/$workspaceId/lists/$listId/todos"
             params={{
@@ -26,7 +28,9 @@ export function ViewModeTrigger({ workspaceId, listId }: ViewModeProps) {
               view: 'list',
             }}
           >
-            <List />
+            <Button variant={mode === 'list' ? 'secondary' : 'ghost'}>
+              <List />
+            </Button>
           </Link>
         </TooltipTrigger>
         <TooltipContent>
@@ -34,7 +38,7 @@ export function ViewModeTrigger({ workspaceId, listId }: ViewModeProps) {
         </TooltipContent>
       </Tooltip>
       <Tooltip>
-        <TooltipTrigger>
+        <TooltipTrigger asChild>
           <Link
             to="/dashboard/workspace/$workspaceId/lists/$listId/todos"
             params={{
@@ -45,7 +49,9 @@ export function ViewModeTrigger({ workspaceId, listId }: ViewModeProps) {
               view: 'kanban',
             }}
           >
-            <KanbanSquare />
+            <Button variant={mode === 'kanban' ? 'secondary' : 'ghost'}>
+              <KanbanSquare />
+            </Button>
           </Link>
         </TooltipTrigger>
         <TooltipContent>
