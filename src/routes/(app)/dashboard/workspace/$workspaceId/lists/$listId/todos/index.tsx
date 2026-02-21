@@ -2,6 +2,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { convexQuery } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
+import { zodValidator } from '@tanstack/zod-adapter'
+import { z } from 'zod'
 import type { Id } from 'convex/_generated/dataModel'
 import { CreateTodoDialog } from '@/components/app/todos/create-todo-dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -12,10 +14,17 @@ import { OverdueTodosSection } from '@/components/app/todos/overdue-todos-sectio
 import { CompletedTodosSection } from '@/components/app/todos/completed-todos-section'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Spinner } from '@/components/ui/spinner'
+import { KanbanBoard } from '@/components/app/kanban-board'
+import { ViewModeTrigger } from '@/components/app/todos/view-mode'
+
+const viewModeSchema = z.object({
+  view: z.enum(['list', 'kanban']).default('list'),
+})
 
 export const Route = createFileRoute(
   '/(app)/dashboard/workspace/$workspaceId/lists/$listId/todos/',
 )({
+  validateSearch: zodValidator(viewModeSchema),
   loader: async (opts) => {
     await opts.context.queryClient.ensureQueryData(
       convexQuery(api.todos.queries.GetListDetails, {
@@ -28,7 +37,8 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
-  const { listId } = Route.useParams()
+  const { listId, workspaceId } = Route.useParams()
+  const { view } = Route.useSearch()
   const { data, isFetching, isError, error } = useSuspenseQuery(
     convexQuery(api.todos.queries.GetListDetails, {
       listId: listId as Id<'lists'>,
@@ -52,7 +62,12 @@ function RouteComponent() {
             </p>
           </div>
         </div>
-        <CreateTodoDialog listId={listId as Id<'lists'>} />
+        <div className="flex items-center gap-3">
+          <div>
+            <ViewModeTrigger listId={listId} workspaceId={workspaceId} />
+          </div>
+          <CreateTodoDialog listId={listId as Id<'lists'>} />
+        </div>
       </header>
       {isError ? (
         <Alert variant="destructive" className="mb-4">
@@ -64,11 +79,16 @@ function RouteComponent() {
           </AlertDescription>
         </Alert>
       ) : null}
-      <ScrollArea className="w-full h-120">
-        <PendingTodosSection listId={listId as Id<'lists'>} />
-        <OverdueTodosSection listId={listId as Id<'lists'>} />
-        <CompletedTodosSection listId={listId as Id<'lists'>} />
-      </ScrollArea>
+
+      {view === 'kanban' && <KanbanBoard listId={listId as Id<'lists'>} />}
+
+      {view === 'list' && (
+        <ScrollArea className="w-full h-120">
+          <PendingTodosSection listId={listId as Id<'lists'>} />
+          <OverdueTodosSection listId={listId as Id<'lists'>} />
+          <CompletedTodosSection listId={listId as Id<'lists'>} />
+        </ScrollArea>
+      )}
     </div>
   )
 }
