@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Outlet, createFileRoute } from '@tanstack/react-router'
 import { BellIcon } from 'lucide-react'
 import { toast } from 'sonner'
@@ -13,7 +14,10 @@ import { authClient } from '@/lib/auth-client'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
 import { usePomoBackgroundTimer } from '@/hooks/use-pomo-background-timer'
 import { Button } from '@/components/ui/button'
-import { getMessagingToken } from '@/firebase/firebase'
+import {
+  getMessagingToken,
+  listenForForegroundMessages,
+} from '@/firebase/firebase'
 
 export const Route = createFileRoute('/(app)')({
   component: DashboardLayout,
@@ -25,6 +29,13 @@ export function DashboardLayout() {
     api.notifications.mutation.createPushNotificationToken,
   )
   usePomoBackgroundTimer()
+
+  useEffect(() => {
+    const unsubscribe = listenForForegroundMessages((payload) => {
+      toast.info(payload.title, { description: payload.body })
+    })
+    return () => unsubscribe()
+  }, [])
 
   function requestPermission() {
     Notification.requestPermission().then((permission) => {
