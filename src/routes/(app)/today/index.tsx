@@ -39,13 +39,13 @@ function TodayPage() {
   const completedTodos = data.todos.filter((t: any) => t.status === 'completed')
 
   return (
-    <div className="p-6 flex flex-col">
-      <header className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-6">
+    <div className="p-3 sm:p-6 flex flex-col">
+      <header className="mb-4 sm:mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-2 sm:gap-6 min-w-0">
           <BackButton />
-          <div>
-            <h2 className="text-2xl font-semibold">Todos for today</h2>
-            <p className="text-sm text-muted-foreground">
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-2xl font-semibold truncate">Todos for today</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Showing todos for today.
             </p>
           </div>
@@ -59,8 +59,8 @@ function TodayPage() {
             error={error}
             isEmpty={pendingTodos.length === 0}
             loadingSkeleton={
-              <div className="space-y-6 p-6">
-                <h2 className="font-bold text-xl">Pending Tasks</h2>
+              <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
+                <h2 className="font-bold text-lg sm:text-xl">Pending Tasks</h2>
                 <div className="space-y-4">
                   {Array.from({ length: 3 }).map((_, i) => (
                     <Skeleton key={i} className="h-20 w-full" />
@@ -69,16 +69,16 @@ function TodayPage() {
               </div>
             }
             emptyState={
-              <div className="space-y-6 p-6">
-                <h2 className="font-bold text-xl">Pending Tasks</h2>
+              <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
+                <h2 className="font-bold text-lg sm:text-xl">Pending Tasks</h2>
                 <Empty>No pending tasks for today</Empty>
               </div>
             }
             errorTitle="Failed to load today's pending tasks"
             errorDescription="An error occurred while loading pending tasks. Please try again."
           >
-            <div className="space-y-6 p-6">
-              <h2 className="font-bold text-xl">Pending Tasks</h2>
+            <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
+              <h2 className="font-bold text-lg sm:text-xl">Pending Tasks</h2>
               {pendingTodos.map((todo: any) => (
                 <motion.div key={todo._id} whileHover={{ scale: 1.03 }}>
                   <TodoCard todo={todo} />
@@ -93,8 +93,8 @@ function TodayPage() {
             error={error}
             isEmpty={completedTodos.length === 0}
             loadingSkeleton={
-              <div className="space-y-6 p-6">
-                <h2 className="font-bold text-xl">Completed Tasks</h2>
+              <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
+                <h2 className="font-bold text-lg sm:text-xl">Completed Tasks</h2>
                 <div className="space-y-4">
                   {Array.from({ length: 3 }).map((_, i) => (
                     <Skeleton key={i} className="h-20 w-full" />
@@ -103,16 +103,16 @@ function TodayPage() {
               </div>
             }
             emptyState={
-              <div className="space-y-6 p-6">
-                <h2 className="font-bold text-xl">Completed Tasks</h2>
+              <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
+                <h2 className="font-bold text-lg sm:text-xl">Completed Tasks</h2>
                 <Empty>No completed tasks for today</Empty>
               </div>
             }
             errorTitle="Failed to load today's completed tasks"
             errorDescription="An error occurred while loading completed tasks. Please try again."
           >
-            <div className="space-y-6 p-6">
-              <h2 className="font-bold text-xl">Completed Tasks</h2>
+            <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
+              <h2 className="font-bold text-lg sm:text-xl">Completed Tasks</h2>
               {completedTodos.map((todo: any) => (
                 <motion.div key={todo._id} whileHover={{ scale: 1.03 }}>
                   <TodoCard todo={todo} />

@@ -35,6 +35,7 @@ export const getRouter = () => {
     defaultErrorComponent: (err) => <p>{err.error.stack}</p>,
     defaultNotFoundComponent: () => <p>not found</p>,
     scrollRestoration: true,
+    defaultViewTransition: true,
     defaultPreloadStaleTime: 0,
   })
   setupRouterSsrQueryIntegration({

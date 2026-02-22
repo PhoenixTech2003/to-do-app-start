@@ -86,15 +86,21 @@ export function TodoSheet({
       {children}
       <SheetContent>
         <SheetHeader>
-          <div className="flex items-center gap-2">
-            <TodoCheckInput todo={todo} />
-            <SheetTitle>{todo.title}</SheetTitle>
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="shrink-0">
+              <TodoCheckInput todo={todo} />
+            </div>
+            <SheetTitle className="truncate">{todo.title}</SheetTitle>
           </div>
-          <SheetDescription>{todo.description}</SheetDescription>
-          <div className="flex items-center gap-2">
-            {todo.dueDate && <Calendar size={20} />}
-            {todo.dueDate &&
-              `Due: ${format(todo.dueDate, 'EEEE, dd MMMM yyyy')} ${todo.dueTime ? `at ${todo.dueTime}` : ''} `}
+          <SheetDescription className="line-clamp-3">{todo.description}</SheetDescription>
+          <div className="flex items-center gap-2 text-sm">
+            {todo.dueDate && <Calendar size={16} className="shrink-0" />}
+            {todo.dueDate && (
+              <span className="truncate">
+                Due: {format(todo.dueDate, 'EEE, dd MMM yyyy')}{' '}
+                {todo.dueTime ? `at ${todo.dueTime}` : ''}
+              </span>
+            )}
           </div>
         </SheetHeader>
         <div className="px-4">

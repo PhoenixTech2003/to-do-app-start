@@ -55,8 +55,8 @@ export function WorkspaceCard({ workspaceData }: WorkspaceCardProps) {
           })
         }
       >
-        <CardContent className="p-6">
-          <h2 className="mb-4 text-xl font-bold text-primary">
+        <CardContent className="p-4 sm:p-6">
+          <h2 className="mb-4 text-lg sm:text-xl font-bold text-primary truncate">
             {workspaceData.title}
           </h2>
 

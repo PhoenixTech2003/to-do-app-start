@@ -8,26 +8,26 @@ export const Route = createFileRoute('/')({ component: LandingPage })
 function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground font-['Patrick_Hand'] transition-colors duration-300">
-      <nav className="container mx-auto px-6 py-4 flex justify-between items-center border-b border-border">
-        <div className="text-3xl font-bold tracking-wider text-primary">
+      <nav className="container mx-auto px-4 sm:px-6 py-4 flex justify-between items-center border-b border-border gap-2">
+        <div className="text-2xl sm:text-3xl font-bold tracking-wider text-primary shrink-0">
           TwoDo
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <ThemeSwitcher />
-          <div className="space-x-4">
-            <Link to="/signup">
+          <div className="flex gap-2 sm:space-x-4">
+            <Link to="/signup" className="hidden sm:inline-block">
               <Button variant="ghost" className="text-lg">
                 Sign In
               </Button>
             </Link>
             <Link to="/signup">
-              <Button className="text-lg">Get Started</Button>
+              <Button className="text-sm sm:text-lg">Get Started</Button>
             </Link>
           </div>
         </div>
       </nav>
 
-      <section className="container mx-auto px-6 py-20 text-center">
+      <section className="container mx-auto px-4 sm:px-6 py-10 sm:py-20 text-center">
         <h1 className="text-6xl md:text-8xl font-bold mb-6 leading-tight text-primary">
           Simply get things{' '}
           <span className="text-chart-1 decoration-wavy underline decoration-2">
@@ -51,9 +51,9 @@ function LandingPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-6 py-20">
-        <div className="grid gap-12 md:grid-cols-3">
-          <div className="rounded-2xl border border-border bg-card p-8 shadow-sm transition-colors hover:border-chart-1">
+      <section className="container mx-auto px-4 sm:px-6 py-10 sm:py-20">
+        <div className="grid gap-6 sm:gap-12 md:grid-cols-3">
+          <div className="rounded-2xl border border-border bg-card p-5 sm:p-8 shadow-sm transition-colors hover:border-chart-1">
             <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-chart-1/20 text-chart-1">
               <ListTodo size={32} />
             </div>
@@ -64,7 +64,7 @@ function LandingPage() {
             </p>
           </div>
 
-          <div className="rounded-2xl border border-border bg-card p-8 shadow-sm transition-colors hover:border-chart-2">
+          <div className="rounded-2xl border border-border bg-card p-5 sm:p-8 shadow-sm transition-colors hover:border-chart-2">
             <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-chart-2/20 text-chart-2">
               <Users size={32} />
             </div>
@@ -75,7 +75,7 @@ function LandingPage() {
             </p>
           </div>
 
-          <div className="rounded-2xl border border-border bg-card p-8 shadow-sm transition-colors hover:border-chart-4">
+          <div className="rounded-2xl border border-border bg-card p-5 sm:p-8 shadow-sm transition-colors hover:border-chart-4">
             <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-chart-4/20 text-chart-4">
               <CheckCircle2 size={32} />
             </div>

@@ -14,8 +14,8 @@ interface PendingTodosSectionProps {
 
 function PendingTodosLoadingSkeleton() {
   return (
-    <div className="space-y-6 p-6">
-      <h2 className="font-bold text-xl">Pending Tasks</h2>
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
+      <h2 className="font-bold text-lg sm:text-xl">Pending Tasks</h2>
       <div className="space-y-4">
         {Array.from({ length: 3 }).map((_, i) => (
           <Skeleton key={i} className="h-20 w-full" />
@@ -27,8 +27,8 @@ function PendingTodosLoadingSkeleton() {
 
 function PendingTodosEmptyState() {
   return (
-    <div className="space-y-6 p-6">
-      <h2 className="font-bold text-xl">Pending Tasks</h2>
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
+      <h2 className="font-bold text-lg sm:text-xl">Pending Tasks</h2>
       <Empty>No pending tasks</Empty>
     </div>
   )
@@ -51,8 +51,8 @@ export function PendingTodosSection({ listId }: PendingTodosSectionProps) {
       loadingSkeleton={<PendingTodosLoadingSkeleton />}
       emptyState={<PendingTodosEmptyState />}
     >
-      <div className="space-y-6 p-6">
-        <h2 className="font-bold text-xl">Pending Tasks</h2>
+      <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
+        <h2 className="font-bold text-lg sm:text-xl">Pending Tasks</h2>
         {data?.todos.map((todo) => (
           <motion.div key={todo._id} whileHover={{ scale: 1.03 }}>
             <TodoCard key={todo._id} todo={todo} />

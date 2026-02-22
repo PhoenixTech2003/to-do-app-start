@@ -15,7 +15,7 @@ interface ViewModeProps {
 
 export function ViewModeTrigger({ mode, workspaceId, listId }: ViewModeProps) {
   return (
-    <div className="flex gap-2 items-center">
+    <div className="hidden sm:flex gap-2 items-center">
       <Tooltip>
         <TooltipTrigger asChild>
           <Link
