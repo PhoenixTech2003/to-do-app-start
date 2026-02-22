@@ -30,7 +30,7 @@ export function DashboardLayout() {
             </div>
             <ThemeSwitcher />
           </header>
-          <div className="grid flex-1 gap-4 p-2 sm:p-4">
+          <div className="flex-1 overflow-auto p-2 sm:p-4">
             <Outlet />
           </div>
         </SidebarInset>
