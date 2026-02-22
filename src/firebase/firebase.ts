@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { getMessaging, getToken } from 'firebase/messaging'
+import { getMessaging, getToken, onMessage } from 'firebase/messaging'
 
 const firebaseConfig = {
   apiKey: 'AIzaSyANwWqk54dVoEzW-A4l8-CCJa9n0EwJRys',
@@ -13,13 +13,32 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 
+function getBrowserMessaging() {
+  if (typeof window === 'undefined') return null
+  return getMessaging(app)
+}
+
 export function getMessagingToken() {
-  if (typeof window === 'undefined') {
+  const messaging = getBrowserMessaging()
+  if (!messaging) {
     return Promise.reject(new Error('Messaging requires a browser environment'))
   }
-  const messaging = getMessaging(app)
   return getToken(messaging, {
     vapidKey:
       'BKQwD_z41mtZLv6yBn2z8fCeZ0750eAawubKlXSs8rtb3YwYc2kJuGxlesIL5lFCIV51DkhANmVEDnlbSzVK25o',
+  })
+}
+
+export function listenForForegroundMessages(
+  callback: (payload: { title: string; body: string }) => void,
+) {
+  const messaging = getBrowserMessaging()
+  if (!messaging) return () => {}
+  return onMessage(messaging, (payload) => {
+    console.log('[FCM] Foreground message received:', payload)
+    callback({
+      title: payload.notification?.title || 'New Notification',
+      body: payload.notification?.body || '',
+    })
   })
 }
