@@ -1,158 +1,150 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Pause, Play, RotateCcw, SkipForward } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+import { Pause, Play, Plus, RotateCcw, SkipForward } from 'lucide-react'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { PomodoroSettingsDialog } from './pomodoro-settings-dialog'
-import type { PomodoroSettings } from './pomodoro-settings-dialog'
+import {
+  DEFAULT_SETTINGS,
+  DEFAULT_STATE,
+  advancePhase,
+  catchUpTimer,
+  createRound,
+  ensureState,
+  getPhaseDuration,
+  getSettings,
+  phaseBg,
+  phaseColor,
+  phaseLabel,
+  saveState,
+  startNewRound,
+} from './pomo-helpers'
+import type { Phase, PomodoroSettings } from '@/dexie/db'
+import { db } from '@/dexie/db'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 
-type Phase = 'focus' | 'shortBreak' | 'longBreak'
-
-const STORAGE_KEY = 'twodo-pomo-settings'
-
-function loadSettings(): PomodoroSettings {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw) as PomodoroSettings
-  } catch {
-    /* ignore */
-  }
-  return {
-    pomoDuration: 25,
-    shortBreakDuration: 5,
-    longBreakDuration: 15,
-    pomosBeforeLongBreak: 4,
-  }
-}
-
-function saveSettings(s: PomodoroSettings) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(s))
-}
-
-function phaseLabel(phase: Phase) {
-  switch (phase) {
-    case 'focus':
-      return 'Focus'
-    case 'shortBreak':
-      return 'Short Break'
-    case 'longBreak':
-      return 'Long Break'
-  }
-}
-
-function phaseColor(phase: Phase) {
-  switch (phase) {
-    case 'focus':
-      return 'text-primary'
-    case 'shortBreak':
-      return 'text-chart-2'
-    case 'longBreak':
-      return 'text-chart-4'
-  }
-}
-
-function phaseBg(phase: Phase) {
-  switch (phase) {
-    case 'focus':
-      return 'bg-primary'
-    case 'shortBreak':
-      return 'bg-chart-2'
-    case 'longBreak':
-      return 'bg-chart-4'
-  }
-}
-
 export function PomodoroTimer() {
-  const [settings, setSettings] = useState<PomodoroSettings>(loadSettings)
-  const [phase, setPhase] = useState<Phase>('focus')
-  const [completedPomos, setCompletedPomos] = useState(0)
-  const [isRunning, setIsRunning] = useState(false)
+  const rawSettings = useLiveQuery(() => db.pomodoroSettings.get(1))
+  const settings = rawSettings ?? DEFAULT_SETTINGS
+  const rawState = useLiveQuery(() => db.pomodoroState.get(1))
+  const state = rawState ?? DEFAULT_STATE
 
-  const phaseDuration = useCallback(
-    (p: Phase) => {
-      switch (p) {
-        case 'focus':
-          return settings.pomoDuration * 60
-        case 'shortBreak':
-          return settings.shortBreakDuration * 60
-        case 'longBreak':
-          return settings.longBreakDuration * 60
-      }
-    },
-    [settings],
-  )
-
-  const [secondsLeft, setSecondsLeft] = useState(() => phaseDuration('focus'))
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const catchUpDoneRef = useRef(false)
+  const lastSavedTickRef = useRef(0)
 
   useEffect(() => {
-    if (!isRunning) {
+    ensureState(settings)
+  }, [])
+
+  useEffect(() => {
+    if (catchUpDoneRef.current || !rawState) return
+    catchUpDoneRef.current = true
+
+    if (rawState.isRunning && rawState.lastTickAt) {
+      const elapsed = Math.floor((Date.now() - rawState.lastTickAt) / 1000)
+      if (elapsed > 0) {
+        catchUpTimer(rawState, elapsed, settings)
+      }
+    }
+  }, [rawState])
+
+  useEffect(() => {
+    if (!state.isRunning) {
       if (intervalRef.current) clearInterval(intervalRef.current)
+      intervalRef.current = null
       return
     }
     intervalRef.current = setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          setIsRunning(false)
-          return 0
-        }
-        return prev - 1
-      })
+      tick()
     }, 1000)
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
-  }, [isRunning])
+  }, [state.isRunning])
 
-  useEffect(() => {
-    if (secondsLeft === 0 && !isRunning) {
-      advancePhase()
-    }
-  }, [secondsLeft, isRunning])
+  async function tick() {
+    const current = await db.pomodoroState.get(1)
+    if (!current || !current.isRunning) return
 
-  function advancePhase() {
-    if (phase === 'focus') {
-      const next = completedPomos + 1
-      setCompletedPomos(next)
-      if (next % settings.pomosBeforeLongBreak === 0) {
-        switchTo('longBreak')
-      } else {
-        switchTo('shortBreak')
-      }
+    const next = current.secondsLeft - 1
+    const now = Date.now()
+
+    if (next <= 0) {
+      await advancePhase(current)
     } else {
-      switchTo('focus')
+      const shouldPersistTick = now - lastSavedTickRef.current >= 5000
+      if (shouldPersistTick) {
+        lastSavedTickRef.current = now
+        await saveState({ secondsLeft: next, lastTickAt: now })
+      } else {
+        await saveState({ secondsLeft: next })
+      }
     }
   }
 
-  function switchTo(p: Phase) {
-    setPhase(p)
-    setSecondsLeft(phaseDuration(p))
-    setIsRunning(false)
+  async function switchTo(p: Phase) {
+    await db.pomodoroState.put({
+      id: 1,
+      roundId: state.roundId,
+      phase: p,
+      secondsLeft: getPhaseDuration(p, settings),
+      completedPomos: state.completedPomos,
+      isRunning: false,
+      lastTickAt: null,
+    })
   }
 
-  function handleReset() {
-    setSecondsLeft(phaseDuration(phase))
-    setIsRunning(false)
+  async function handlePlayPause() {
+    if (state.isRunning) {
+      await saveState({ isRunning: false, lastTickAt: null })
+    } else {
+      if (!state.roundId) {
+        const cfg = await getSettings()
+        const newRoundId = await createRound(cfg)
+        await saveState({
+          roundId: newRoundId,
+          isRunning: true,
+          lastTickAt: Date.now(),
+        })
+      } else {
+        await saveState({ isRunning: true, lastTickAt: Date.now() })
+      }
+    }
   }
 
-  function handleSkip() {
-    setSecondsLeft(0)
-    setIsRunning(false)
+  async function handleReset() {
+    await saveState({
+      secondsLeft: getPhaseDuration(state.phase, settings),
+      isRunning: false,
+      lastTickAt: null,
+    })
   }
 
-  function handleSettingsSave(next: PomodoroSettings) {
-    setSettings(next)
-    saveSettings(next)
-    setPhase('focus')
-    setCompletedPomos(0)
-    setSecondsLeft(next.pomoDuration * 60)
-    setIsRunning(false)
+  async function handleSkip() {
+    const current = await db.pomodoroState.get(1)
+    if (current) {
+      await advancePhase(current)
+    }
   }
 
-  const totalDuration = phaseDuration(phase)
-  const progress = ((totalDuration - secondsLeft) / totalDuration) * 100
-  const minutes = Math.floor(secondsLeft / 60)
-  const seconds = secondsLeft % 60
+  async function handleSettingsSave(next: Omit<PomodoroSettings, 'id'>) {
+    await db.pomodoroSettings.put({ id: 1, ...next })
+    await db.pomodoroState.put({
+      id: 1,
+      roundId: state.roundId,
+      phase: 'focus',
+      secondsLeft: next.pomoDuration * 60,
+      completedPomos: 0,
+      isRunning: false,
+      lastTickAt: null,
+    })
+  }
+
+  const totalDuration = getPhaseDuration(state.phase, settings)
+  const progress = ((totalDuration - state.secondsLeft) / totalDuration) * 100
+  const minutes = Math.floor(state.secondsLeft / 60)
+  const seconds = state.secondsLeft % 60
   const display = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 
   return (
@@ -165,7 +157,7 @@ export function PomodoroTimer() {
             onClick={() => switchTo(p)}
             className={cn(
               'rounded-md px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium transition-colors',
-              phase === p
+              state.phase === p
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground',
             )}
@@ -196,7 +188,10 @@ export function PomodoroTimer() {
             r="90"
             fill="none"
             stroke="currentColor"
-            className={cn('transition-all duration-1000', phaseColor(phase))}
+            className={cn(
+              'transition-all duration-1000',
+              phaseColor(state.phase),
+            )}
             strokeWidth="6"
             strokeLinecap="round"
             strokeDasharray={2 * Math.PI * 90}
@@ -207,13 +202,13 @@ export function PomodoroTimer() {
           <span
             className={cn(
               'text-5xl sm:text-7xl font-bold tabular-nums tracking-tight',
-              phaseColor(phase),
+              phaseColor(state.phase),
             )}
           >
             {display}
           </span>
           <span className="text-xs sm:text-sm text-muted-foreground mt-1">
-            {phaseLabel(phase)}
+            {phaseLabel(state.phase)}
           </span>
         </div>
       </div>
@@ -224,17 +219,17 @@ export function PomodoroTimer() {
           value={progress}
           className={cn(
             'h-2',
-            `[&>[data-slot=progress-indicator]]:${phaseBg(phase)}`,
+            `[&>[data-slot=progress-indicator]]:${phaseBg(state.phase)}`,
           )}
         />
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>
             Session{' '}
-            {(completedPomos % settings.pomosBeforeLongBreak) +
-              (phase === 'focus' ? 1 : 0)}{' '}
+            {(state.completedPomos % settings.pomosBeforeLongBreak) +
+              (state.phase === 'focus' ? 1 : 0)}{' '}
             / {settings.pomosBeforeLongBreak}
           </span>
-          <span>{completedPomos} completed</span>
+          <span>{state.completedPomos} completed</span>
         </div>
       </div>
 
@@ -245,10 +240,10 @@ export function PomodoroTimer() {
             key={i}
             className={cn(
               'h-3 w-3 rounded-full border-2 transition-colors',
-              i < completedPomos % settings.pomosBeforeLongBreak ||
-                (completedPomos > 0 &&
-                  completedPomos % settings.pomosBeforeLongBreak === 0 &&
-                  phase !== 'focus')
+              i < state.completedPomos % settings.pomosBeforeLongBreak ||
+                (state.completedPomos > 0 &&
+                  state.completedPomos % settings.pomosBeforeLongBreak === 0 &&
+                  state.phase !== 'focus')
                 ? 'bg-primary border-primary'
                 : 'border-muted-foreground/40',
             )}
@@ -257,22 +252,32 @@ export function PomodoroTimer() {
       </div>
 
       {/* Controls */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={startNewRound}
+          aria-label="New Round"
+          title="New Round"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
         <Button
           variant="outline"
           size="icon"
           onClick={handleReset}
           aria-label="Reset"
+          title="Reset"
         >
           <RotateCcw className="h-4 w-4" />
         </Button>
         <Button
           size="lg"
           className="h-14 w-14 rounded-full"
-          onClick={() => setIsRunning(!isRunning)}
-          aria-label={isRunning ? 'Pause' : 'Start'}
+          onClick={handlePlayPause}
+          aria-label={state.isRunning ? 'Pause' : 'Start'}
         >
-          {isRunning ? (
+          {state.isRunning ? (
             <Pause className="h-6 w-6" />
           ) : (
             <Play className="h-6 w-6 ml-0.5" />
@@ -283,6 +288,7 @@ export function PomodoroTimer() {
           size="icon"
           onClick={handleSkip}
           aria-label="Skip"
+          title="Skip"
         >
           <SkipForward className="h-4 w-4" />
         </Button>

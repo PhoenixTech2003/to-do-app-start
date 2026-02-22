@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Settings } from 'lucide-react'
+import type { PomodoroSettings } from '@/dexie/db'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,16 +13,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 
-export interface PomodoroSettings {
-  pomoDuration: number
-  shortBreakDuration: number
-  longBreakDuration: number
-  pomosBeforeLongBreak: number
-}
-
 interface PomodoroSettingsDialogProps {
-  settings: PomodoroSettings
-  onSave: (settings: PomodoroSettings) => void
+  settings: Omit<PomodoroSettings, 'id'>
+  onSave: (settings: Omit<PomodoroSettings, 'id'>) => void
 }
 
 export function PomodoroSettingsDialog({
@@ -29,7 +23,7 @@ export function PomodoroSettingsDialog({
   onSave,
 }: PomodoroSettingsDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [draft, setDraft] = useState<PomodoroSettings>(settings)
+  const [draft, setDraft] = useState<Omit<PomodoroSettings, 'id'>>(settings)
 
   function handleOpen(open: boolean) {
     if (open) setDraft(settings)

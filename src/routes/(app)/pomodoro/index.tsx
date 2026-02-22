@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { PomodoroTimer } from '@/components/app/pomodoro/pomodoro-timer'
+import { PomodoroRoundHistory } from '@/components/app/pomodoro/pomodoro-round-history'
 import { PomodoroPageSkeleton } from '@/components/app/pomodoro/pomodoro-page-skeleton'
 import { BackButton } from '@/components/app/back-button'
 
@@ -20,8 +21,11 @@ function PomodoroPage() {
           </p>
         </div>
       </header>
-      <div className="flex-1 flex items-start justify-center pt-4 sm:pt-8">
-        <PomodoroTimer />
+      <div className="grid gap-6 md:grid-cols-[2fr_1fr] md:items-start">
+        <div className="flex items-start justify-center pt-4 sm:pt-8">
+          <PomodoroTimer />
+        </div>
+        <PomodoroRoundHistory />
       </div>
     </div>
   )
