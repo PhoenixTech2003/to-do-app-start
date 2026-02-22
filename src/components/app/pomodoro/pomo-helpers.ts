@@ -84,8 +84,13 @@ export async function saveState(patch: Partial<PomodoroTimerState>) {
 }
 
 export async function ensureState(settings: Omit<PomodoroSettings, 'id'>) {
-  const existing = await db.pomodoroState.get(1)
-  if (!existing) {
+  const existingSettings = await db.pomodoroSettings.get(1)
+  if (!existingSettings) {
+    await db.pomodoroSettings.put({ id: 1, ...DEFAULT_SETTINGS })
+  }
+
+  const existingState = await db.pomodoroState.get(1)
+  if (!existingState) {
     await db.pomodoroState.put({
       ...DEFAULT_STATE,
       secondsLeft: settings.pomoDuration * 60,
