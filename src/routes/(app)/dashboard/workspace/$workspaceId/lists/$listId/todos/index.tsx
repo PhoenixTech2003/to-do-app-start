@@ -6,7 +6,6 @@ import { zodValidator } from '@tanstack/zod-adapter'
 import { z } from 'zod'
 import type { Id } from 'convex/_generated/dataModel'
 import { CreateTodoDialog } from '@/components/app/todos/create-todo-dialog'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { TodosPageSkeleton } from '@/components/app/todos/todos-page-skeleton'
 import { BackButton } from '@/components/app/back-button'
 import { PendingTodosSection } from '@/components/app/todos/pending-todos-section'
@@ -16,6 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Spinner } from '@/components/ui/spinner'
 import { KanbanBoard } from '@/components/app/kanban-board'
 import { ViewModeTrigger } from '@/components/app/todos/view-mode'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 const viewModeSchema = z.object({
   view: z.enum(['list', 'kanban']).default('list'),
@@ -38,7 +38,9 @@ export const Route = createFileRoute(
 
 function RouteComponent() {
   const { listId, workspaceId } = Route.useParams()
-  const { view } = Route.useSearch()
+  const { view: searchView } = Route.useSearch()
+  const isMobile = useIsMobile()
+  const view = isMobile ? 'list' : searchView
   const { data, isFetching, isError, error } = useSuspenseQuery(
     convexQuery(api.todos.queries.GetListDetails, {
       listId: listId as Id<'lists'>,
@@ -46,7 +48,7 @@ function RouteComponent() {
   )
 
   return (
-    <div className="p-3 sm:p-6 grid">
+    <div className="p-3 sm:p-6 flex flex-col min-w-0">
       <header className="mb-4 sm:mb-6 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 sm:gap-6 min-w-0">
           <BackButton />
@@ -81,15 +83,15 @@ function RouteComponent() {
           </AlertDescription>
         </Alert>
       ) : null}
-      <section>
+      <section className="min-w-0 overflow-hidden">
         {view === 'kanban' && <KanbanBoard listId={listId as Id<'lists'>} />}
 
         {view === 'list' && (
-          <ScrollArea className="w-full h-120">
+          <div className="space-y-2">
             <PendingTodosSection listId={listId as Id<'lists'>} />
             <OverdueTodosSection listId={listId as Id<'lists'>} />
             <CompletedTodosSection listId={listId as Id<'lists'>} />
-          </ScrollArea>
+          </div>
         )}
       </section>
     </div>
