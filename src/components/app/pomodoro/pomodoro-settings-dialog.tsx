@@ -45,7 +45,7 @@ export function PomodoroSettingsDialog({
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setIsOpen(true)}
+        onClick={() => handleOpen(true)}
         aria-label="Pomodoro settings"
       >
         <Settings className="h-5 w-5" />
