@@ -1,4 +1,4 @@
-import { CheckCircleIcon, Home } from 'lucide-react'
+import { CheckCircleIcon, Home, Timer } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import {
   Sidebar,
@@ -23,6 +23,11 @@ const items = [
     title: 'Today',
     url: '/today',
     icon: CheckCircleIcon,
+  },
+  {
+    title: 'Pomodoro',
+    url: '/pomodoro',
+    icon: Timer,
   },
 ]
 

@@ -7,6 +7,7 @@ import {
 import { AppSidebar } from '@/components/app/dashboard/app-sidebar'
 import { authClient } from '@/lib/auth-client'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
+import { usePomoBackgroundTimer } from '@/hooks/use-pomo-background-timer'
 
 export const Route = createFileRoute('/(app)')({
   component: DashboardLayout,
@@ -14,6 +15,7 @@ export const Route = createFileRoute('/(app)')({
 
 export function DashboardLayout() {
   const { isPending, isRefetching, data } = authClient.useSession()
+  usePomoBackgroundTimer()
   return (
     <SidebarProvider>
       <AppSidebar />

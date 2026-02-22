@@ -13,6 +13,7 @@ import { Route as appRouteRouteImport } from './routes/(app)/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as appTodayIndexRouteImport } from './routes/(app)/today/index'
+import { Route as appPomodoroIndexRouteImport } from './routes/(app)/pomodoro/index'
 import { Route as appDashboardIndexRouteImport } from './routes/(app)/dashboard/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as appDashboardWorkspaceWorkspaceIdListsIndexRouteImport } from './routes/(app)/dashboard/workspace/$workspaceId/lists/index'
@@ -35,6 +36,11 @@ const authSignupRoute = authSignupRouteImport.update({
 const appTodayIndexRoute = appTodayIndexRouteImport.update({
   id: '/today/',
   path: '/today/',
+  getParentRoute: () => appRouteRoute,
+} as any)
+const appPomodoroIndexRoute = appPomodoroIndexRouteImport.update({
+  id: '/pomodoro/',
+  path: '/pomodoro/',
   getParentRoute: () => appRouteRoute,
 } as any)
 const appDashboardIndexRoute = appDashboardIndexRouteImport.update({
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof authSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/dashboard/': typeof appDashboardIndexRoute
+  '/pomodoro/': typeof appPomodoroIndexRoute
   '/today/': typeof appTodayIndexRoute
   '/dashboard/workspace/$workspaceId/lists/': typeof appDashboardWorkspaceWorkspaceIdListsIndexRoute
   '/dashboard/workspace/$workspaceId/lists/$listId/todos/': typeof appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/signup': typeof authSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/dashboard': typeof appDashboardIndexRoute
+  '/pomodoro': typeof appPomodoroIndexRoute
   '/today': typeof appTodayIndexRoute
   '/dashboard/workspace/$workspaceId/lists': typeof appDashboardWorkspaceWorkspaceIdListsIndexRoute
   '/dashboard/workspace/$workspaceId/lists/$listId/todos': typeof appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/(auth)/signup': typeof authSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/(app)/dashboard/': typeof appDashboardIndexRoute
+  '/(app)/pomodoro/': typeof appPomodoroIndexRoute
   '/(app)/today/': typeof appTodayIndexRoute
   '/(app)/dashboard/workspace/$workspaceId/lists/': typeof appDashboardWorkspaceWorkspaceIdListsIndexRoute
   '/(app)/dashboard/workspace/$workspaceId/lists/$listId/todos/': typeof appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/api/auth/$'
     | '/dashboard/'
+    | '/pomodoro/'
     | '/today/'
     | '/dashboard/workspace/$workspaceId/lists/'
     | '/dashboard/workspace/$workspaceId/lists/$listId/todos/'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/api/auth/$'
     | '/dashboard'
+    | '/pomodoro'
     | '/today'
     | '/dashboard/workspace/$workspaceId/lists'
     | '/dashboard/workspace/$workspaceId/lists/$listId/todos'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '/(auth)/signup'
     | '/api/auth/$'
     | '/(app)/dashboard/'
+    | '/(app)/pomodoro/'
     | '/(app)/today/'
     | '/(app)/dashboard/workspace/$workspaceId/lists/'
     | '/(app)/dashboard/workspace/$workspaceId/lists/$listId/todos/'
@@ -157,6 +169,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appTodayIndexRouteImport
       parentRoute: typeof appRouteRoute
     }
+    '/(app)/pomodoro/': {
+      id: '/(app)/pomodoro/'
+      path: '/pomodoro'
+      fullPath: '/pomodoro/'
+      preLoaderRoute: typeof appPomodoroIndexRouteImport
+      parentRoute: typeof appRouteRoute
+    }
     '/(app)/dashboard/': {
       id: '/(app)/dashboard/'
       path: '/dashboard'
@@ -190,6 +209,7 @@ declare module '@tanstack/react-router' {
 
 interface appRouteRouteChildren {
   appDashboardIndexRoute: typeof appDashboardIndexRoute
+  appPomodoroIndexRoute: typeof appPomodoroIndexRoute
   appTodayIndexRoute: typeof appTodayIndexRoute
   appDashboardWorkspaceWorkspaceIdListsIndexRoute: typeof appDashboardWorkspaceWorkspaceIdListsIndexRoute
   appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute: typeof appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute
@@ -197,6 +217,7 @@ interface appRouteRouteChildren {
 
 const appRouteRouteChildren: appRouteRouteChildren = {
   appDashboardIndexRoute: appDashboardIndexRoute,
+  appPomodoroIndexRoute: appPomodoroIndexRoute,
   appTodayIndexRoute: appTodayIndexRoute,
   appDashboardWorkspaceWorkspaceIdListsIndexRoute:
     appDashboardWorkspaceWorkspaceIdListsIndexRoute,
