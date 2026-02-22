@@ -9,6 +9,8 @@ import { DeleteDialog } from '../delete-dialog'
 import { UpdateListDetailsForm } from './update-list-details-form'
 import type { ListItem } from '@/types/global'
 import { Card, CardContent } from '@/components/ui/card'
+import { truncateText } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 interface ListCardProps {
   listTitle: string
@@ -17,6 +19,7 @@ interface ListCardProps {
 export function ListCard({ listTitle, listItem }: ListCardProps) {
   const [isUpdatDialogOpen, setIsUpdateDialogIsOpen] = useState(false)
   const [isOpenDeleteDialog, setIsOpenDeleteDialog] = useState(false)
+  const isMobile = useIsMobile()
 
   const navigate = useNavigate()
 
@@ -56,7 +59,7 @@ export function ListCard({ listTitle, listItem }: ListCardProps) {
         }
       >
         <CardContent className="p-4 sm:p-6">
-          <h2 className="mb-4 text-lg sm:text-xl font-bold text-primary truncate">{listTitle}</h2>
+          <h2 className="mb-4 text-lg sm:text-xl font-bold text-primary truncate">{isMobile ? truncateText(listTitle) : listTitle}</h2>
 
           <div className="flex gap-2">
             <div onClick={(e) => e.stopPropagation()}>

@@ -3,8 +3,9 @@ import { forwardRef, useState } from 'react'
 import { TodoSheet } from './todo-sheet'
 import { TodoCheckInput } from './todo-check-input'
 import type { Todo } from '@/types/global'
-import { cn } from '@/lib/utils'
+import { cn, truncateText } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 interface TodoCardProps {
   todo: Todo
@@ -13,10 +14,17 @@ interface TodoCardProps {
 export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
   ({ todo }: TodoCardProps, ref) => {
     const [sheetIsOpen, setSheetIsOpen] = useState(false)
+    const isMobile = useIsMobile()
 
     function setSheetIsOpenHanlder(value: boolean) {
       setSheetIsOpen(value)
     }
+
+    const title = isMobile ? truncateText(todo.title) : todo.title
+    const description = isMobile
+      ? truncateText(todo.description)
+      : todo.description
+
     return (
       <TodoSheet
         isOpen={sheetIsOpen}
@@ -42,10 +50,10 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
                       'line-through text-muted-foreground',
                   )}
                 >
-                  {todo.title}
+                  {title}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1 truncate">
-                  {todo.description}
+                  {description}
                 </div>
                 <div
                   className={cn(

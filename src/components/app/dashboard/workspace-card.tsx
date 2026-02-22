@@ -9,6 +9,8 @@ import { DeleteDialog } from '../delete-dialog'
 import { UpdateWorkspaceDetailsForm } from './update-workspace-form'
 import type { WorkspaceItem } from '@/types/global'
 import { Card, CardContent } from '@/components/ui/card'
+import { truncateText } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 interface WorkspaceCardProps {
   workspaceData: WorkspaceItem
@@ -17,6 +19,7 @@ interface WorkspaceCardProps {
 export function WorkspaceCard({ workspaceData }: WorkspaceCardProps) {
   const [isOpenUpdateDialog, setIsOpenUpdateDialog] = useState(false)
   const [isOpenDeletDialog, setIsOpenDeleteDialog] = useState(false)
+  const isMobile = useIsMobile()
 
   const navigate = useNavigate()
 
@@ -57,7 +60,7 @@ export function WorkspaceCard({ workspaceData }: WorkspaceCardProps) {
       >
         <CardContent className="p-4 sm:p-6">
           <h2 className="mb-4 text-lg sm:text-xl font-bold text-primary truncate">
-            {workspaceData.title}
+            {isMobile ? truncateText(workspaceData.title) : workspaceData.title}
           </h2>
 
           <div className="flex gap-2">
