@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react'
 import { Pause, Play, Plus, RotateCcw, SkipForward } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { PomodoroSettingsDialog } from './pomodoro-settings-dialog'
@@ -6,9 +5,7 @@ import {
   DEFAULT_SETTINGS,
   DEFAULT_STATE,
   advancePhase,
-  catchUpTimer,
   createRound,
-  ensureState,
   getPhaseDuration,
   getSettings,
   phaseBg,
@@ -28,60 +25,6 @@ export function PomodoroTimer() {
   const settings = rawSettings ?? DEFAULT_SETTINGS
   const rawState = useLiveQuery(() => db.pomodoroState.get(1))
   const state = rawState ?? DEFAULT_STATE
-
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const catchUpDoneRef = useRef(false)
-  const lastSavedTickRef = useRef(0)
-
-  useEffect(() => {
-    ensureState(settings)
-  }, [])
-
-  useEffect(() => {
-    if (catchUpDoneRef.current || !rawState) return
-    catchUpDoneRef.current = true
-
-    if (rawState.isRunning && rawState.lastTickAt) {
-      const elapsed = Math.floor((Date.now() - rawState.lastTickAt) / 1000)
-      if (elapsed > 0) {
-        catchUpTimer(rawState, elapsed, settings)
-      }
-    }
-  }, [rawState])
-
-  useEffect(() => {
-    if (!state.isRunning) {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-      intervalRef.current = null
-      return
-    }
-    intervalRef.current = setInterval(() => {
-      tick()
-    }, 1000)
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
-  }, [state.isRunning])
-
-  async function tick() {
-    const current = await db.pomodoroState.get(1)
-    if (!current || !current.isRunning) return
-
-    const next = current.secondsLeft - 1
-    const now = Date.now()
-
-    if (next <= 0) {
-      await advancePhase(current)
-    } else {
-      const shouldPersistTick = now - lastSavedTickRef.current >= 5000
-      if (shouldPersistTick) {
-        lastSavedTickRef.current = now
-        await saveState({ secondsLeft: next, lastTickAt: now })
-      } else {
-        await saveState({ secondsLeft: next })
-      }
-    }
-  }
 
   async function switchTo(p: Phase) {
     await db.pomodoroState.put({

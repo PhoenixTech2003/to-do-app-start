@@ -1,3 +1,4 @@
+import { toast } from 'sonner'
 import type { Phase, PomodoroSettings, PomodoroTimerState } from '@/dexie/db'
 import { db } from '@/dexie/db'
 
@@ -109,6 +110,17 @@ export async function advancePhase(current: PomodoroTimerState) {
   playNotificationSound()
   const cfg = await getSettings()
 
+  const completedLabel = phaseLabel(current.phase)
+  const nextLabel =
+    current.phase === 'focus'
+      ? (current.completedPomos + 1) % cfg.pomosBeforeLongBreak === 0
+        ? 'Long Break'
+        : 'Short Break'
+      : 'Focus'
+  toast.success(`${completedLabel} complete`, {
+    description: `Time for ${nextLabel}. Press play when you're ready.`,
+  })
+
   if (current.phase === 'focus') {
     const nextCompleted = current.completedPomos + 1
     const roundId = current.roundId
@@ -159,63 +171,6 @@ export async function advancePhase(current: PomodoroTimerState) {
       lastTickAt: null,
     })
   }
-}
-
-export async function catchUpTimer(
-  s: PomodoroTimerState,
-  elapsedSeconds: number,
-  cfg: Omit<PomodoroSettings, 'id'>,
-) {
-  let remaining = s.secondsLeft - elapsedSeconds
-  let currentPhase = s.phase
-  let completedPomos = s.completedPomos
-  let roundId = s.roundId
-
-  while (remaining <= 0) {
-    if (currentPhase === 'focus') {
-      completedPomos += 1
-      if (roundId) {
-        const round = await db.pomodoroRounds.get(roundId)
-        if (round) {
-          const isRoundDone = completedPomos >= round.totalPomos
-          await db.pomodoroRounds.update(roundId, {
-            completedPomos,
-            ...(isRoundDone && {
-              status: 'completed',
-              finishedAt: Date.now(),
-            }),
-          })
-        }
-      }
-      const isLongBreak = completedPomos % cfg.pomosBeforeLongBreak === 0
-      const nextPhase: Phase = isLongBreak ? 'longBreak' : 'shortBreak'
-      remaining += getPhaseDuration(nextPhase, cfg)
-      currentPhase = nextPhase
-    } else {
-      if (roundId) {
-        const round = await db.pomodoroRounds.get(roundId)
-        if (!round || round.status === 'completed') {
-          roundId = await createRound(cfg)
-          completedPomos = 0
-        }
-      } else {
-        roundId = await createRound(cfg)
-        completedPomos = 0
-      }
-      remaining += getPhaseDuration('focus', cfg)
-      currentPhase = 'focus'
-    }
-  }
-
-  await db.pomodoroState.put({
-    id: 1,
-    roundId,
-    phase: currentPhase,
-    secondsLeft: Math.max(0, remaining),
-    completedPomos,
-    isRunning: remaining > 0,
-    lastTickAt: remaining > 0 ? Date.now() : null,
-  })
 }
 
 export async function startNewRound() {
