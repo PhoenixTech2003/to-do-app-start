@@ -27,6 +27,11 @@ export const Route = createRootRouteWithContext<{
   convexQueryClient: ConvexQueryClient
 }>()({
   head: () => ({
+    scripts: [
+      {
+        src: 'https://feedlab.cloud/widget/166e4296-875c-4178-b528-83133f6a81fc.js',
+      },
+    ],
     meta: [
       {
         charSet: 'utf-8',
