@@ -1,4 +1,8 @@
 import { Outlet, createFileRoute } from '@tanstack/react-router'
+import { BellIcon } from 'lucide-react'
+import { toast } from 'sonner'
+import { useConvexMutation } from '@convex-dev/react-query'
+import { api } from 'convex/_generated/api'
 import {
   SidebarInset,
   SidebarProvider,
@@ -8,6 +12,8 @@ import { AppSidebar } from '@/components/app/dashboard/app-sidebar'
 import { authClient } from '@/lib/auth-client'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
 import { usePomoBackgroundTimer } from '@/hooks/use-pomo-background-timer'
+import { Button } from '@/components/ui/button'
+import { getMessagingToken } from '@/firebase/firebase'
 
 export const Route = createFileRoute('/(app)')({
   component: DashboardLayout,
@@ -15,7 +21,29 @@ export const Route = createFileRoute('/(app)')({
 
 export function DashboardLayout() {
   const { isPending, isRefetching, data } = authClient.useSession()
+  const createPushNotificationToken = useConvexMutation(
+    api.notifications.mutation.createPushNotificationToken,
+  )
   usePomoBackgroundTimer()
+
+  function requestPermission() {
+    Notification.requestPermission().then((permission) => {
+      if (permission === 'granted') {
+        toast.success('Notification permission granted.')
+        getMessagingToken()
+          .then(async (token) => {
+            console.log('Token:', token)
+            await createPushNotificationToken({ token })
+          })
+          .catch(() => {
+            toast.error('Failed to get notification token.')
+          })
+      } else {
+        toast.error('Notification permission denied.')
+      }
+    })
+  }
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -27,9 +55,15 @@ export function DashboardLayout() {
               {isPending || isRefetching ? (
                 <p>loading...</p>
               ) : (
-                <p className="text-sm sm:text-lg truncate">Welcome back, {data?.user.name}</p>
+                <p className="text-sm sm:text-lg truncate">
+                  Welcome back, {data?.user.name}
+                </p>
               )}
             </div>
+            <Button onClick={requestPermission}>
+              <BellIcon className="w-4 h-4" />
+              Enable Notifications
+            </Button>
             <ThemeSwitcher />
           </header>
           <div className="flex-1 overflow-auto p-2 sm:p-4">

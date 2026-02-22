@@ -44,4 +44,8 @@ export default defineSchema({
     completed: v.boolean(),
     createdBy: v.string(),
   }).index('by_todo_id', ['todoId']),
+  pushNotificationTokens: defineTable({
+    token: v.string(),
+    createdBy: v.string(),
+  }).index('by_createdBy', ['createdBy']),
 })
