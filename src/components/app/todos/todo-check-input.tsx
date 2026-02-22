@@ -99,6 +99,24 @@ export function TodoCheckInput({ todo }: TodoCheckInputProps) {
         { listId: todo.listId },
         nextOverdue,
       )
+
+    // Today page: getTodosByDate returns all todos for a date; update in place
+    if (todo.dueDate) {
+      const byDateData = localStore.getQuery(
+        api.globals.queries.getTodosByDate,
+        { date: todo.dueDate },
+      )
+      if (byDateData) {
+        const nextTodos = byDateData.todos.map((t) =>
+          t._id === todoId ? optimisticTodo : t,
+        )
+        localStore.setQuery(
+          api.globals.queries.getTodosByDate,
+          { date: todo.dueDate },
+          { todos: nextTodos },
+        )
+      }
+    }
   })
   const formattedDate =
     todo.dueDate && todo.dueTime
