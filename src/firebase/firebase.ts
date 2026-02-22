@@ -2,7 +2,7 @@ import { initializeApp } from 'firebase/app'
 import { getMessaging, getToken } from 'firebase/messaging'
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyANwWqk54dVoEzW-A4l8-CCJa9n0EwJRys',
+  apiKey: 'AIzaSyCN5okmq6EvsYUmdAYBH_ATKlnjsHnvOIM',
   authDomain: 'twodo-3d89f.firebaseapp.com',
   projectId: 'twodo-3d89f',
   storageBucket: 'twodo-3d89f.firebasestorage.app',
