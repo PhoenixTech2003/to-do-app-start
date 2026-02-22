@@ -46,30 +46,28 @@ function RouteComponent() {
   )
 
   return (
-    <div className="p-6 grid">
-      <header className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-6">
+    <div className="p-3 sm:p-6 grid">
+      <header className="mb-4 sm:mb-6 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 sm:gap-6 min-w-0">
           <BackButton />
-          <div>
-            <h2 className="text-2xl font-semibold flex items-center gap-2">
-              {data.title} List
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-2xl font-semibold flex items-center gap-2 truncate">
+              <span className="truncate">{data.title} List</span>
               {isFetching ? (
-                <Spinner className="text-muted-foreground" />
+                <Spinner className="text-muted-foreground shrink-0" />
               ) : null}
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Showing todos for this list.
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div>
-            <ViewModeTrigger
-              mode={view}
-              listId={listId}
-              workspaceId={workspaceId}
-            />
-          </div>
+        <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+          <ViewModeTrigger
+            mode={view}
+            listId={listId}
+            workspaceId={workspaceId}
+          />
           <CreateTodoDialog listId={listId as Id<'lists'>} />
         </div>
       </header>

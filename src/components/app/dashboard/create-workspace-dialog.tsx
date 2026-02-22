@@ -18,9 +18,9 @@ export function CreateWorkspaceDialog() {
   }
   return (
     <Dialog open={isOpen} onOpenChange={setCreateDialogIsOpen}>
-      <Button onClick={() => setIsOpen(true)}>
-        <Plus className="mr-2 h-4 w-4" />
-        Create Workspace
+      <Button onClick={() => setIsOpen(true)} size="icon" className="sm:size-auto sm:px-4 sm:py-2">
+        <Plus className="h-4 w-4 sm:mr-2" />
+        <span className="hidden sm:inline">Create Workspace</span>
       </Button>
 
       <DialogContent>

@@ -14,8 +14,8 @@ interface OverdueTodosSectionProps {
 
 function OverdueTodosLoadingSkeleton() {
   return (
-    <div className="space-y-6 p-6">
-      <h2 className="font-bold text-xl">Overdue Tasks</h2>
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
+      <h2 className="font-bold text-lg sm:text-xl">Overdue Tasks</h2>
       <div className="space-y-4">
         {Array.from({ length: 3 }).map((_, i) => (
           <Skeleton key={i} className="h-20 w-full" />
@@ -27,9 +27,9 @@ function OverdueTodosLoadingSkeleton() {
 
 function OverdueTodosEmptyState() {
   return (
-    <div className="space-y-6 p-6">
-      <h2 className="font-bold text-xl">Overdue Tasks</h2>
-      <Empty>No Overdue tasks</Empty>
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
+      <h2 className="font-bold text-lg sm:text-xl">Overdue Tasks</h2>
+      <Empty>No overdue tasks</Empty>
     </div>
   )
 }
@@ -51,8 +51,8 @@ export function OverdueTodosSection({ listId }: OverdueTodosSectionProps) {
       loadingSkeleton={<OverdueTodosLoadingSkeleton />}
       emptyState={<OverdueTodosEmptyState />}
     >
-      <div className="space-y-6 p-6">
-        <h2 className="font-bold text-xl">Overdue Tasks</h2>
+      <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
+        <h2 className="font-bold text-lg sm:text-xl">Overdue Tasks</h2>
         {data?.todos.map((todo) => (
           <motion.div key={todo._id} whileHover={{ scale: 1.03 }}>
             <TodoCard key={todo._id} todo={todo} />

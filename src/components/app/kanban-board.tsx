@@ -146,10 +146,16 @@ export function KanbanBoard({ listId }: KanbanBoardProps) {
         })
       }}
     >
-      <div className="grid grid-cols-3 gap-4">
-        <KanbanLane title="Pending" todos={pendingTodos.todos} />
-        <KanbanLane title="Completed" todos={completedTodos.todos} />
-        <KanbanLane title="Overdue" todos={overdueTodos.todos} />
+      <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-x-visible sm:snap-none sm:pb-0">
+        <div className="min-w-[75vw] snap-center sm:min-w-0">
+          <KanbanLane title="Pending" todos={pendingTodos.todos} />
+        </div>
+        <div className="min-w-[75vw] snap-center sm:min-w-0">
+          <KanbanLane title="Completed" todos={completedTodos.todos} />
+        </div>
+        <div className="min-w-[75vw] snap-center sm:min-w-0">
+          <KanbanLane title="Overdue" todos={overdueTodos.todos} />
+        </div>
       </div>
     </DragDropProvider>
   )

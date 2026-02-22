@@ -27,24 +27,24 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
           ref={ref}
           key={todo._id}
           onClick={() => setSheetIsOpen(true)}
-          className="flex-row items-start justify-between gap-4 p-4 rounded-lg  bg-card/50"
+          className="flex-row items-start justify-between gap-2 sm:gap-4 p-2 sm:p-4 rounded-lg bg-card/50"
         >
-          <CardContent className="flex flex-1 hover:cursor-pointer  justify-between gap-4 p-4">
-            <div className="flex items-center gap-3">
-              <div onClick={(e) => e.stopPropagation()}>
+          <CardContent className="flex flex-1 hover:cursor-pointer justify-between gap-2 sm:gap-4 p-2 sm:p-4 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div onClick={(e) => e.stopPropagation()} className="shrink-0">
                 <TodoCheckInput todo={todo} />
               </div>
-              <div>
+              <div className="min-w-0">
                 <div
                   className={cn(
-                    'text-sm font-medium',
+                    'text-sm font-medium truncate',
                     todo.status === 'completed' &&
                       'line-through text-muted-foreground',
                   )}
                 >
                   {todo.title}
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">
+                <div className="text-xs text-muted-foreground mt-1 truncate">
                   {todo.description}
                 </div>
                 <div
@@ -55,28 +55,26 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
                       : 'text-muted-foreground',
                   )}
                 >
-                  <p>
-                    Due Date:{' '}
-                    {todo.dueDate && format(todo.dueDate, 'dd MMMM, yyyy')}
+                  <p className="truncate">
+                    Due:{' '}
+                    {todo.dueDate && format(todo.dueDate, 'dd MMM, yyyy')}
+                    {todo.dueTime && ` at ${todo.dueTime}`}
                   </p>
-                  <p>Due Time: {todo.dueTime && todo.dueTime}</p>
                 </div>
               </div>
             </div>
-            <div className="grid">
-              <div className="flex flex-1 items-center  gap-3">
-                <span
-                  className={`px-2 py-1 text-xs rounded-full font-medium tracking-wide ${
-                    todo.priority === 'high'
-                      ? 'bg-red-600 dark:bg-red-700 text-white'
-                      : todo.priority === 'medium'
-                        ? 'bg-yellow-400 dark:bg-yellow-500 text-black dark:text-black'
-                        : 'bg-green-600 dark:bg-green-700 text-white'
-                  }`}
-                >
-                  {todo.priority}
-                </span>
-              </div>
+            <div className="shrink-0 self-center">
+              <span
+                className={`px-2 py-1 text-xs rounded-full font-medium tracking-wide ${
+                  todo.priority === 'high'
+                    ? 'bg-red-600 dark:bg-red-700 text-white'
+                    : todo.priority === 'medium'
+                      ? 'bg-yellow-400 dark:bg-yellow-500 text-black dark:text-black'
+                      : 'bg-green-600 dark:bg-green-700 text-white'
+                }`}
+              >
+                {todo.priority}
+              </span>
             </div>
           </CardContent>
         </Card>

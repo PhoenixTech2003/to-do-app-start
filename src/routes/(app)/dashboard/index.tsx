@@ -36,8 +36,8 @@ function DashboardPage() {
       errorDescription="An error occurred while loading your workspaces. Please try again."
     >
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Your Workspaces</h1>
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="text-xl sm:text-3xl font-bold truncate min-w-0">Your Workspaces</h1>
           <CreateWorkspaceDialog />
         </div>
         <WorkspaceList workspaceListData={data} />
