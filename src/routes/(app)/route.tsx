@@ -66,6 +66,7 @@ export function DashboardLayout() {
                 </p>
               )}
             </div>
+
             <ThemeSwitcher />
           </header>
           <div className="flex-1 overflow-auto p-2 sm:p-4">
