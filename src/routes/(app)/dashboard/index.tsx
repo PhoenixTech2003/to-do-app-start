@@ -8,6 +8,7 @@ import { StateHandler } from '@/components/app/state-handler'
 import { DashboardLoadingSkeleton } from '@/components/app/dashboard/dashboard-loading-skeleton'
 import { NoWorkspacesEmptyState } from '@/components/app/dashboard/no-workspaces-empty-state'
 import { DashboardPageSkeleton } from '@/components/app/dashboard/dashboard-page-skeleton'
+import { SearchInput } from '@/components/app/search-box'
 
 export const Route = createFileRoute('/(app)/dashboard/')({
   loader: async (opts) => {
@@ -35,9 +36,12 @@ function DashboardPage() {
       errorTitle="Failed to load workspaces"
       errorDescription="An error occurred while loading your workspaces. Please try again."
     >
-      <div className="space-y-4">
+      <div className="space-y-4 pb-24">
+        <SearchInput />
         <div className="flex items-center justify-between gap-2">
-          <h1 className="text-xl sm:text-3xl font-bold truncate min-w-0">Your Workspaces</h1>
+          <h1 className="text-xl sm:text-3xl font-bold truncate min-w-0">
+            Your Workspaces
+          </h1>
           <CreateWorkspaceDialog />
         </div>
         <WorkspaceList workspaceListData={data} />

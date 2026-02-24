@@ -1,4 +1,8 @@
 import { Outlet, createFileRoute } from '@tanstack/react-router'
+import { getToken, onMessage } from 'firebase/messaging'
+import { useEffect } from 'react'
+import { toast } from 'sonner'
+import { BellIcon } from 'lucide-react'
 import {
   SidebarInset,
   SidebarProvider,
@@ -8,6 +12,8 @@ import { AppSidebar } from '@/components/app/dashboard/app-sidebar'
 import { authClient } from '@/lib/auth-client'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
 import { usePomoBackgroundTimer } from '@/hooks/use-pomo-background-timer'
+import { env } from '@/env'
+import { getFirebaseMessaging } from '@/firebase/firebase-config'
 
 export const Route = createFileRoute('/(app)')({
   component: DashboardLayout,
@@ -15,7 +21,35 @@ export const Route = createFileRoute('/(app)')({
 
 export function DashboardLayout() {
   const { isPending, isRefetching, data } = authClient.useSession()
+
   usePomoBackgroundTimer()
+
+  useEffect(() => {
+    const messaging = getFirebaseMessaging()
+    if (!messaging) return
+
+    Notification.requestPermission().then((permission) => {
+      if (permission === 'granted') {
+        getToken(messaging, { vapidKey: env.VITE_APP_VAPID_KEY }).then(
+          (token) => {
+            console.log('Token generated:', token)
+          },
+        )
+      } else if (permission === 'denied') {
+        console.warn('Notification permission denied')
+      }
+    })
+
+    const unsubscribe = onMessage(messaging, (payload) => {
+      toast.info(payload.notification?.title, {
+        icon: <BellIcon />,
+        description: payload.notification?.body,
+      })
+    })
+
+    return () => unsubscribe()
+  }, [])
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -27,7 +61,9 @@ export function DashboardLayout() {
               {isPending || isRefetching ? (
                 <p>loading...</p>
               ) : (
-                <p className="text-sm sm:text-lg truncate">Welcome back, {data?.user.name}</p>
+                <p className="text-sm sm:text-lg truncate">
+                  Welcome back, {data?.user.name}
+                </p>
               )}
             </div>
             <ThemeSwitcher />
