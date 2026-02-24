@@ -12,6 +12,7 @@ import { Toaster } from 'sonner'
 import { createServerFn } from '@tanstack/react-start'
 import { ConvexBetterAuthProvider } from '@convex-dev/better-auth/react'
 
+import { hotkeysDevtoolsPlugin } from '@tanstack/react-hotkeys-devtools'
 import appCss from '../styles.css?url'
 import type { ConvexQueryClient } from '@convex-dev/react-query'
 import type { QueryClient } from '@tanstack/react-query'
@@ -103,6 +104,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             position: 'bottom-right',
           }}
           plugins={[
+            hotkeysDevtoolsPlugin(),
             {
               name: 'Tanstack Router',
               render: <TanStackRouterDevtoolsPanel />,
