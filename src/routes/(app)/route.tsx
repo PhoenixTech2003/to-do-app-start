@@ -3,6 +3,8 @@ import { getToken, onMessage } from 'firebase/messaging'
 import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { BellIcon } from 'lucide-react'
+import { useConvexMutation } from '@convex-dev/react-query'
+import { api } from 'convex/_generated/api'
 import {
   SidebarInset,
   SidebarProvider,
@@ -21,7 +23,9 @@ export const Route = createFileRoute('/(app)')({
 
 export function DashboardLayout() {
   const { isPending, isRefetching, data } = authClient.useSession()
-
+  const createPushNotificationToken = useConvexMutation(
+    api.notifications.mutation.createPushNotificationToken,
+  )
   usePomoBackgroundTimer()
 
   useEffect(() => {
@@ -31,8 +35,8 @@ export function DashboardLayout() {
     Notification.requestPermission().then((permission) => {
       if (permission === 'granted') {
         getToken(messaging, { vapidKey: env.VITE_APP_VAPID_KEY }).then(
-          (token) => {
-            console.log('Token generated:', token)
+          async (token) => {
+            await createPushNotificationToken({ token })
           },
         )
       } else if (permission === 'denied') {
