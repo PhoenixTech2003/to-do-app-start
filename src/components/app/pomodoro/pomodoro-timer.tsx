@@ -1,5 +1,8 @@
 import { Pause, Play, Plus, RotateCcw, SkipForward } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { convexQuery, useConvexAction } from '@convex-dev/react-query'
+import { api } from 'convex/_generated/api'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { PomodoroSettingsDialog } from './pomodoro-settings-dialog'
 import {
   DEFAULT_SETTINGS,
@@ -21,6 +24,12 @@ import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 
 export function PomodoroTimer() {
+  const { data: pushNotificationToken } = useSuspenseQuery(
+    convexQuery(api.notifications.queries.getPushNotificationToken),
+  )
+  const sendPushNotification = useConvexAction(
+    api.notifications.actions.sendPushNotification,
+  )
   const rawSettings = useLiveQuery(() => db.pomodoroSettings.get(1))
   const settings = rawSettings ?? DEFAULT_SETTINGS
   const rawState = useLiveQuery(() => db.pomodoroState.get(1))
@@ -64,10 +73,20 @@ export function PomodoroTimer() {
     })
   }
 
+  async function handlePhaseComplete(completed: string, next: string) {
+    if (pushNotificationToken.data?.token) {
+      await sendPushNotification({
+        token: pushNotificationToken.data.token,
+        title: `${completed} complete`,
+        body: `Time for ${next}. Press play when you're ready.`,
+      })
+    }
+  }
+
   async function handleSkip() {
     const current = await db.pomodoroState.get(1)
     if (current) {
-      await advancePhase(current)
+      await advancePhase(current, handlePhaseComplete)
     }
   }
 

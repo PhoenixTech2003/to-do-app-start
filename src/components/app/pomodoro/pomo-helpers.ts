@@ -1,4 +1,3 @@
-import { toast } from 'sonner'
 import type { Phase, PomodoroSettings, PomodoroTimerState } from '@/dexie/db'
 import { db } from '@/dexie/db'
 
@@ -111,7 +110,12 @@ export async function createRound(
   return newId as number
 }
 
-export async function advancePhase(current: PomodoroTimerState) {
+export type OnPhaseComplete = (completed: string, next: string) => void
+
+export async function advancePhase(
+  current: PomodoroTimerState,
+  onPhaseComplete?: OnPhaseComplete,
+) {
   playNotificationSound()
   const cfg = await getSettings()
 
@@ -122,9 +126,8 @@ export async function advancePhase(current: PomodoroTimerState) {
         ? 'Long Break'
         : 'Short Break'
       : 'Focus'
-  toast.success(`${completedLabel} complete`, {
-    description: `Time for ${nextLabel}. Press play when you're ready.`,
-  })
+
+  onPhaseComplete?.(completedLabel, nextLabel)
 
   if (current.phase === 'focus') {
     const nextCompleted = current.completedPomos + 1

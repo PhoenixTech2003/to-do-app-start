@@ -1,3 +1,5 @@
+'use node'
+
 import { v } from 'convex/values'
 import { cert, getApps, initializeApp } from 'firebase-admin/app'
 import { getMessaging } from 'firebase-admin/messaging'
@@ -19,7 +21,7 @@ export const sendPushNotification = action({
     const { token, title, body } = args
 
     const result = await getMessaging().send({
-      notification: { title, body },
+      data: { title, body },
       token,
     })
 

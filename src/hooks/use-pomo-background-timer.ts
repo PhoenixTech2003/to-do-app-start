@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '@/dexie/db'
+import type { OnPhaseComplete } from '@/components/app/pomodoro/pomo-helpers'
 import {
   DEFAULT_SETTINGS,
   advancePhase,
   ensureState,
   saveState,
 } from '@/components/app/pomodoro/pomo-helpers'
+import { db } from '@/dexie/db'
 
 /**
  * Runs the pomodoro tick interval at the app-layout level so the timer
@@ -14,7 +15,7 @@ import {
  * When secondsLeft reaches 0, advancePhase is called which plays the
  * notification sound and pauses the timer (isRunning → false).
  */
-export function usePomoBackgroundTimer() {
+export function usePomoBackgroundTimer(onPhaseComplete?: OnPhaseComplete) {
   const rawState = useLiveQuery(() => db.pomodoroState.get(1))
   const rawSettings = useLiveQuery(() => db.pomodoroSettings.get(1))
   const settings = rawSettings ?? DEFAULT_SETTINGS
@@ -22,6 +23,8 @@ export function usePomoBackgroundTimer() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const catchUpDoneRef = useRef(false)
   const lastSavedTickRef = useRef(0)
+  const onPhaseCompleteRef = useRef(onPhaseComplete)
+  onPhaseCompleteRef.current = onPhaseComplete
 
   useEffect(() => {
     ensureState(settings)
@@ -66,7 +69,7 @@ export function usePomoBackgroundTimer() {
     const now = Date.now()
 
     if (next <= 0) {
-      await advancePhase(current)
+      await advancePhase(current, onPhaseCompleteRef.current)
     } else {
       const shouldPersistTick = now - lastSavedTickRef.current >= 5000
       if (shouldPersistTick) {
@@ -88,7 +91,7 @@ export function usePomoBackgroundTimer() {
       await saveState({ secondsLeft: remaining, lastTickAt: Date.now() })
     } else {
       // Phase ended while the app was closed — advance once and pause
-      await advancePhase(current)
+      await advancePhase(current, onPhaseCompleteRef.current)
     }
   }
 }

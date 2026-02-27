@@ -16,8 +16,8 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   const title = payload.notification?.title || 'New Notification';
   const options = {
-    body: payload.notification?.body || '',
-    icon: payload.notification?.icon || '/favicon.png',
+    body: payload.data?.body || '',
+    icon: payload.data?.icon || '/favicon.png',
   };
   self.registration.showNotification(title, options);
 });
