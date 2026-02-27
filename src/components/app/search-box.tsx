@@ -17,7 +17,7 @@ export function SearchInput() {
   }, [visible])
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 flex justify-center px-4 py-4">
+    <div className="fixed top-0 left-0 right-0 flex justify-center px-4 py-4">
       {visible && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
