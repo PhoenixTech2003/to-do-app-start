@@ -1,8 +1,15 @@
 import { Outlet, createFileRoute } from '@tanstack/react-router'
 import { getToken, onMessage } from 'firebase/messaging'
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { toast } from 'sonner'
 import { BellIcon } from 'lucide-react'
+import {
+  convexQuery,
+  useConvexAction,
+  useConvexMutation,
+} from '@convex-dev/react-query'
+import { api } from 'convex/_generated/api'
+import { useQuery } from '@tanstack/react-query'
 import {
   SidebarInset,
   SidebarProvider,
@@ -21,8 +28,30 @@ export const Route = createFileRoute('/(app)')({
 
 export function DashboardLayout() {
   const { isPending, isRefetching, data } = authClient.useSession()
+  const createPushNotificationToken = useConvexMutation(
+    api.notifications.mutation.createPushNotificationToken,
+  )
+  const sendPushNotification = useConvexAction(
+    api.notifications.actions.sendPushNotification,
+  )
+  const { data: pushTokenData } = useQuery(
+    convexQuery(api.notifications.queries.getPushNotificationToken),
+  )
 
-  usePomoBackgroundTimer()
+  const onPhaseComplete = useCallback(
+    (completed: string, next: string) => {
+      const token = pushTokenData?.data?.token
+      if (!token) return
+      sendPushNotification({
+        token,
+        title: `${completed} complete`,
+        body: `Time for ${next}. Press play when you're ready.`,
+      })
+    },
+    [pushTokenData?.data?.token, sendPushNotification],
+  )
+
+  usePomoBackgroundTimer(onPhaseComplete)
 
   useEffect(() => {
     const messaging = getFirebaseMessaging()
@@ -31,8 +60,8 @@ export function DashboardLayout() {
     Notification.requestPermission().then((permission) => {
       if (permission === 'granted') {
         getToken(messaging, { vapidKey: env.VITE_APP_VAPID_KEY }).then(
-          (token) => {
-            console.log('Token generated:', token)
+          async (token) => {
+            await createPushNotificationToken({ token })
           },
         )
       } else if (permission === 'denied') {
@@ -41,9 +70,9 @@ export function DashboardLayout() {
     })
 
     const unsubscribe = onMessage(messaging, (payload) => {
-      toast.info(payload.notification?.title, {
+      toast.info(payload.data?.title, {
         icon: <BellIcon />,
-        description: payload.notification?.body,
+        description: payload.data?.body,
       })
     })
 
@@ -66,7 +95,6 @@ export function DashboardLayout() {
                 </p>
               )}
             </div>
-
             <ThemeSwitcher />
           </header>
           <div className="flex-1 overflow-auto p-2 sm:p-4">
