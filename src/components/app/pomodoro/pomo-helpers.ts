@@ -15,7 +15,7 @@ export const DEFAULT_STATE: PomodoroTimerState = {
   secondsLeft: 25 * 60,
   completedPomos: 0,
   isRunning: false,
-  lastTickAt: null,
+  phaseStartedAt: null,
 }
 
 export function getPhaseDuration(
@@ -30,6 +30,19 @@ export function getPhaseDuration(
     case 'longBreak':
       return s.longBreakDuration * 60
   }
+}
+
+export function getSecondsLeft(
+  state: PomodoroTimerState,
+  settings: Omit<PomodoroSettings, 'id'>,
+  now = Date.now(),
+): number {
+  if (!state.isRunning || !state.phaseStartedAt) {
+    return state.secondsLeft
+  }
+  const duration = getPhaseDuration(state.phase, settings)
+  const elapsed = Math.floor((now - state.phaseStartedAt) / 1000)
+  return Math.max(0, duration - elapsed)
 }
 
 export function phaseLabel(phase: Phase) {
@@ -80,6 +93,24 @@ export async function getSettings() {
 
 export async function saveState(patch: Partial<PomodoroTimerState>) {
   await db.pomodoroState.update(1, patch)
+}
+
+export async function pauseTimer(
+  state: PomodoroTimerState,
+  settings: Omit<PomodoroSettings, 'id'>,
+) {
+  const secondsLeft = getSecondsLeft(state, settings)
+  await saveState({ secondsLeft, isRunning: false })
+}
+
+export async function resumeTimer() {
+  const current = await db.pomodoroState.get(1)
+  if (!current || current.isRunning) return
+  const settings = await getSettings()
+  const duration = getPhaseDuration(current.phase, settings)
+  const now = Date.now()
+  const phaseStartedAt = now - (duration - current.secondsLeft) * 1000
+  await saveState({ phaseStartedAt, isRunning: true })
 }
 
 export async function ensureState(settings: Omit<PomodoroSettings, 'id'>) {
@@ -136,6 +167,8 @@ export async function advancePhase(
 
   onPhaseComplete?.(completedLabel, nextLabel)
 
+  const now = Date.now()
+
   if (current.phase === 'focus') {
     const nextCompleted = current.completedPomos + 1
     const roundId = current.roundId
@@ -146,22 +179,23 @@ export async function advancePhase(
         const isRoundDone = nextCompleted >= round.totalPomos
         await db.pomodoroRounds.update(roundId, {
           completedPomos: nextCompleted,
-          ...(isRoundDone && { status: 'completed', finishedAt: Date.now() }),
+          ...(isRoundDone && { status: 'completed', finishedAt: now }),
         })
       }
     }
 
     const isLongBreak = nextCompleted % cfg.pomosBeforeLongBreak === 0
     const nextPhase: Phase = isLongBreak ? 'longBreak' : 'shortBreak'
+    const nextDuration = getPhaseDuration(nextPhase, cfg)
 
     await db.pomodoroState.put({
       id: 1,
       roundId,
       phase: nextPhase,
-      secondsLeft: getPhaseDuration(nextPhase, cfg),
+      secondsLeft: nextDuration,
       completedPomos: nextCompleted,
       isRunning: false,
-      lastTickAt: null,
+      phaseStartedAt: null,
     })
   } else {
     let nextRoundId = current.roundId
@@ -175,15 +209,17 @@ export async function advancePhase(
       nextRoundId = await createRound(cfg)
     }
 
+    const focusDuration = getPhaseDuration('focus', cfg)
+
     await db.pomodoroState.put({
       id: 1,
       roundId: nextRoundId,
       phase: 'focus',
-      secondsLeft: getPhaseDuration('focus', cfg),
+      secondsLeft: focusDuration,
       completedPomos:
         nextRoundId !== current.roundId ? 0 : current.completedPomos,
       isRunning: false,
-      lastTickAt: null,
+      phaseStartedAt: null,
     })
   }
 }
@@ -191,6 +227,7 @@ export async function advancePhase(
 export async function startNewRound() {
   const cfg = await getSettings()
   const currentState = await db.pomodoroState.get(1)
+  const duration = getPhaseDuration('focus', cfg)
 
   if (currentState?.roundId) {
     const currentRound = await db.pomodoroRounds.get(currentState.roundId)
@@ -208,9 +245,9 @@ export async function startNewRound() {
     id: 1,
     roundId: newRoundId,
     phase: 'focus',
-    secondsLeft: getPhaseDuration('focus', cfg),
+    secondsLeft: duration,
     completedPomos: 0,
     isRunning: false,
-    lastTickAt: null,
+    phaseStartedAt: null,
   })
 }

@@ -19,6 +19,7 @@ import { AppSidebar } from '@/components/app/dashboard/app-sidebar'
 import { authClient } from '@/lib/auth-client'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
 import { usePomoBackgroundTimer } from '@/hooks/use-pomo-background-timer'
+import { playNotificationSound } from '@/components/app/pomodoro/pomo-helpers'
 import { env } from '@/env'
 import { getFirebaseMessaging } from '@/firebase/firebase-config'
 
@@ -76,7 +77,17 @@ export function DashboardLayout() {
       })
     })
 
-    return () => unsubscribe()
+    const onSwMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'PLAY_POMO_SOUND') {
+        playNotificationSound()
+      }
+    }
+    navigator.serviceWorker.addEventListener('message', onSwMessage)
+
+    return () => {
+      unsubscribe()
+      navigator.serviceWorker.removeEventListener('message', onSwMessage)
+    }
   }, [])
 
   return (

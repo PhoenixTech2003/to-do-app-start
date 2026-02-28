@@ -14,10 +14,17 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || 'New Notification';
+  const title = payload.notification?.title || payload.data?.title || 'New Notification';
   const options = {
     body: payload.data?.body || '',
     icon: payload.data?.icon || '/favicon.png',
   };
   self.registration.showNotification(title, options);
+
+  // Ask open tabs to play the notification sound (SW cannot play audio directly)
+  self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+    clients.forEach((client) => {
+      client.postMessage({ type: 'PLAY_POMO_SOUND' });
+    });
+  });
 });

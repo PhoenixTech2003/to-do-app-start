@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Pause, Play, Plus, RotateCcw, SkipForward } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { convexQuery, useConvexAction } from '@convex-dev/react-query'
@@ -10,10 +11,13 @@ import {
   advancePhase,
   createRound,
   getPhaseDuration,
+  getSecondsLeft,
   getSettings,
+  pauseTimer,
   phaseBg,
   phaseColor,
   phaseLabel,
+  resumeTimer,
   saveState,
   startNewRound,
 } from './pomo-helpers'
@@ -35,41 +39,63 @@ export function PomodoroTimer() {
   const rawState = useLiveQuery(() => db.pomodoroState.get(1))
   const state = rawState ?? DEFAULT_STATE
 
+  const [, setTick] = useState(0)
+  useEffect(() => {
+    if (!state.isRunning) return
+    const id = setInterval(() => setTick((t) => t + 1), 1000)
+    return () => clearInterval(id)
+  }, [state.isRunning])
+
+  const displaySeconds = getSecondsLeft(state, settings)
+  const totalDuration = getPhaseDuration(state.phase, settings)
+  const progress =
+    totalDuration > 0
+      ? ((totalDuration - displaySeconds) / totalDuration) * 100
+      : 0
+  const minutes = Math.floor(displaySeconds / 60)
+  const seconds = displaySeconds % 60
+  const display = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+
   async function switchTo(p: Phase) {
-    await db.pomodoroState.put({
-      id: 1,
-      roundId: state.roundId,
+    const duration = getPhaseDuration(p, settings)
+    await db.pomodoroState.update(1, {
       phase: p,
-      secondsLeft: getPhaseDuration(p, settings),
-      completedPomos: state.completedPomos,
+      secondsLeft: duration,
       isRunning: false,
-      lastTickAt: null,
+      phaseStartedAt: null,
     })
   }
 
   async function handlePlayPause() {
     if (state.isRunning) {
-      await saveState({ isRunning: false, lastTickAt: null })
+      await pauseTimer(state, settings)
     } else {
       if (!state.roundId) {
         const cfg = await getSettings()
         const newRoundId = await createRound(cfg)
-        await saveState({
+        const duration = getPhaseDuration('focus', cfg)
+        const now = Date.now()
+        await db.pomodoroState.put({
+          id: 1,
           roundId: newRoundId,
+          phase: 'focus',
+          secondsLeft: duration,
+          completedPomos: 0,
           isRunning: true,
-          lastTickAt: Date.now(),
+          phaseStartedAt: now,
         })
       } else {
-        await saveState({ isRunning: true, lastTickAt: Date.now() })
+        await resumeTimer()
       }
     }
   }
 
   async function handleReset() {
+    const duration = getPhaseDuration(state.phase, settings)
     await saveState({
-      secondsLeft: getPhaseDuration(state.phase, settings),
+      secondsLeft: duration,
       isRunning: false,
-      lastTickAt: null,
+      phaseStartedAt: null,
     })
   }
 
@@ -92,22 +118,15 @@ export function PomodoroTimer() {
 
   async function handleSettingsSave(next: Omit<PomodoroSettings, 'id'>) {
     await db.pomodoroSettings.put({ id: 1, ...next })
-    await db.pomodoroState.put({
-      id: 1,
-      roundId: state.roundId,
+    const duration = next.pomoDuration * 60
+    await db.pomodoroState.update(1, {
       phase: 'focus',
-      secondsLeft: next.pomoDuration * 60,
+      secondsLeft: duration,
       completedPomos: 0,
       isRunning: false,
-      lastTickAt: null,
+      phaseStartedAt: null,
     })
   }
-
-  const totalDuration = getPhaseDuration(state.phase, settings)
-  const progress = ((totalDuration - state.secondsLeft) / totalDuration) * 100
-  const minutes = Math.floor(state.secondsLeft / 60)
-  const seconds = state.secondsLeft % 60
-  const display = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 
   return (
     <div className="flex flex-col items-center gap-6 sm:gap-8">
