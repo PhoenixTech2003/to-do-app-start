@@ -60,7 +60,7 @@ export const Route = createRootRouteWithContext<{
   beforeLoad: async (ctx) => {
     const token = await ctx.context.queryClient.ensureQueryData({
       queryKey: ['auth', 'token'],
-      queryFn: () => getAuth(),
+      queryFn: async () => (await getAuth()) ?? null,
       staleTime: 60_000,
       revalidateIfStale: true,
     })
