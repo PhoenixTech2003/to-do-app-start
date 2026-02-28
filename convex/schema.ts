@@ -5,7 +5,12 @@ export default defineSchema({
   workspace: defineTable({
     title: v.string(),
     createdBy: v.string(),
-  }).index('createdBy', ['createdBy']),
+  })
+    .index('createdBy', ['createdBy'])
+    .searchIndex('title', {
+      searchField: 'title',
+      filterFields: ['createdBy'],
+    }),
   lists: defineTable({
     title: v.string(),
     workspaceId: v.id('workspace'),
