@@ -1,5 +1,6 @@
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useEffect, useRef, useState } from 'react'
 import { convexQuery } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
 import z from 'zod'
@@ -19,14 +20,6 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute('/(app)/dashboard/')({
   validateSearch: zodValidator(searchSchema),
-  loaderDeps: ({ search: { searchTerm } }) => ({ searchTerm }),
-  loader: async (opts) => {
-    await opts.context.queryClient.ensureQueryData(
-      convexQuery(api.dashboard.queries.getUserWorkspaces, {
-        searchTerm: opts.deps.searchTerm,
-      }),
-    )
-  },
   pendingComponent: DashboardPageSkeleton,
   component: DashboardPage,
 })
@@ -34,24 +27,52 @@ export const Route = createFileRoute('/(app)/dashboard/')({
 function DashboardPage() {
   const navigate = useNavigate()
   const { searchTerm } = Route.useSearch()
-  const { data, isFetching, isError, error, isLoading } = useSuspenseQuery(
+  const [localSearch, setLocalSearch] = useState(searchTerm ?? '')
+  const pendingSearchRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    const urlValue = searchTerm ?? ''
+    if (
+      pendingSearchRef.current !== null &&
+      urlValue !== pendingSearchRef.current
+    ) {
+      return
+    }
+    pendingSearchRef.current = null
+    setLocalSearch(urlValue)
+  }, [searchTerm])
+
+  const {
+    data = [],
+    isFetching,
+    isError,
+    error,
+    isLoading,
+  } = useQuery(
     convexQuery(api.dashboard.queries.getUserWorkspaces, {
       searchTerm: searchTerm,
     }),
   )
   const handleSearch = (q: string) => {
+    pendingSearchRef.current = q
     navigate({
       to: '/dashboard',
       search: { searchTerm: q },
+      replace: true,
     })
   }
   const debouncer = useDebouncer(handleSearch, {
     wait: 200,
   })
 
+  const onSearchChange = (q: string) => {
+    setLocalSearch(q)
+    debouncer.maybeExecute(q)
+  }
+
   return (
     <>
-      <SearchInput searchTerm={searchTerm} onSearch={debouncer.maybeExecute} />
+      <SearchInput searchTerm={localSearch} onSearch={onSearchChange} />
       <StateHandler
         isLoading={isLoading}
         isFetching={isFetching}
