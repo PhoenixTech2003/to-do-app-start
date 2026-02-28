@@ -112,11 +112,18 @@ export async function createRound(
 
 export type OnPhaseComplete = (completed: string, next: string) => void
 
+export interface AdvancePhaseOptions {
+  silent?: boolean
+}
+
 export async function advancePhase(
   current: PomodoroTimerState,
   onPhaseComplete?: OnPhaseComplete,
+  options?: AdvancePhaseOptions,
 ) {
-  playNotificationSound()
+  if (!options?.silent) {
+    playNotificationSound()
+  }
   const cfg = await getSettings()
 
   const completedLabel = phaseLabel(current.phase)

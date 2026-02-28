@@ -6,6 +6,7 @@ import { api } from 'convex/_generated/api'
 import z from 'zod'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { useDebouncer } from '@tanstack/react-pacer'
+import { formatForDisplay } from '@tanstack/react-hotkeys'
 import { CreateWorkspaceDialog } from '@/components/app/dashboard/create-workspace-dialog'
 import { WorkspaceList } from '@/components/app/dashboard/workspace-list'
 import { StateHandler } from '@/components/app/state-handler'
@@ -89,7 +90,10 @@ function DashboardPage() {
             <h1 className="text-xl sm:text-3xl font-bold truncate min-w-0">
               Your Workspaces
             </h1>
-            <CreateWorkspaceDialog />
+            <div className="flex items-center font-bold gap-4">
+              <p>{`${formatForDisplay('Mod+K')} to open search`}</p>
+              <CreateWorkspaceDialog />
+            </div>
           </div>
           <WorkspaceList workspaceListData={data} />
         </div>

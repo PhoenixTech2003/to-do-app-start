@@ -22,7 +22,6 @@ export function usePomoBackgroundTimer(onPhaseComplete?: OnPhaseComplete) {
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const catchUpDoneRef = useRef(false)
-  const lastSavedTickRef = useRef(0)
   const onPhaseCompleteRef = useRef(onPhaseComplete)
   onPhaseCompleteRef.current = onPhaseComplete
 
@@ -43,7 +42,7 @@ export function usePomoBackgroundTimer(onPhaseComplete?: OnPhaseComplete) {
     }
   }, [rawState])
 
-  // Tick every second while running
+  // Tick every second while running (time-based: recovers from tab throttling)
   useEffect(() => {
     const isRunning = rawState?.isRunning ?? false
     if (!isRunning) {
@@ -61,23 +60,32 @@ export function usePomoBackgroundTimer(onPhaseComplete?: OnPhaseComplete) {
     }
   }, [rawState?.isRunning])
 
+  // Catch up when tab becomes visible (browsers throttle intervals when hidden)
+  useEffect(() => {
+    async function onVisibilityChange() {
+      if (document.visibilityState !== 'visible') return
+      const current = await db.pomodoroState.get(1)
+      if (!current?.isRunning || !current.lastTickAt) return
+      const elapsed = Math.floor((Date.now() - current.lastTickAt) / 1000)
+      if (elapsed > 0) catchUpOnVisible(elapsed)
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
+  }, [])
+
   async function tick() {
     const current = await db.pomodoroState.get(1)
     if (!current || !current.isRunning) return
 
-    const next = current.secondsLeft - 1
     const now = Date.now()
+    const lastTick = current.lastTickAt ?? now
+    const elapsed = Math.floor((now - lastTick) / 1000)
+    const remaining = current.secondsLeft - elapsed
 
-    if (next <= 0) {
+    if (remaining <= 0) {
       await advancePhase(current, onPhaseCompleteRef.current)
     } else {
-      const shouldPersistTick = now - lastSavedTickRef.current >= 5000
-      if (shouldPersistTick) {
-        lastSavedTickRef.current = now
-        await saveState({ secondsLeft: next, lastTickAt: now })
-      } else {
-        await saveState({ secondsLeft: next })
-      }
+      await saveState({ secondsLeft: remaining, lastTickAt: now })
     }
   }
 
@@ -90,8 +98,20 @@ export function usePomoBackgroundTimer(onPhaseComplete?: OnPhaseComplete) {
     if (remaining > 0) {
       await saveState({ secondsLeft: remaining, lastTickAt: Date.now() })
     } else {
-      // Phase ended while the app was closed — advance once and pause
       await advancePhase(current, onPhaseCompleteRef.current)
+    }
+  }
+
+  async function catchUpOnVisible(elapsedSeconds: number) {
+    const current = await db.pomodoroState.get(1)
+    if (!current || !current.isRunning) return
+
+    const remaining = current.secondsLeft - elapsedSeconds
+
+    if (remaining > 0) {
+      await saveState({ secondsLeft: remaining, lastTickAt: Date.now() })
+    } else {
+      await advancePhase(current, onPhaseCompleteRef.current, { silent: true })
     }
   }
 }
