@@ -7,13 +7,19 @@ import { Input } from '../ui/input'
 interface SearchInputProps {
   searchTerm: string | undefined
   onSearch: (searchTerm: string) => void
+  placeholder?: string
 }
 
-export function SearchInput({ searchTerm, onSearch }: SearchInputProps) {
+export function SearchInput({
+  searchTerm,
+  onSearch,
+  placeholder = 'Search workspaces...',
+}: SearchInputProps) {
   const [visible, setVisible] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useHotkey('Mod+K', () => setVisible((prev) => !prev))
+  useHotkey('Escape', () => setVisible(false))
 
   useEffect(() => {
     if (visible) {
@@ -36,7 +42,7 @@ export function SearchInput({ searchTerm, onSearch }: SearchInputProps) {
             ref={inputRef}
             value={searchTerm}
             type="search"
-            placeholder="Search workspaces..."
+            placeholder={placeholder}
             className="h-14 w-full pl-12 pr-5 text-base rounded-2xl border-2 border-primary/30 bg-card/80 shadow-xl shadow-black/10 backdrop-blur-xl ring-2 ring-primary/10 focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] dark:bg-card/70 dark:border-primary/40 dark:shadow-black/20"
             aria-label="Search"
             onChange={(e) => onSearch(e.target.value)}

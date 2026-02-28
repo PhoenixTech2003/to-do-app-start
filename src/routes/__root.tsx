@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import {
   HeadContent,
   Outlet,
@@ -7,6 +8,7 @@ import {
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
+import { initTabSafeTimers } from '@vorthain/tab-safe-timers'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from 'sonner'
 import { createServerFn } from '@tanstack/react-start'
@@ -81,6 +83,15 @@ export const Route = createRootRouteWithContext<{
 
 function RootComponent() {
   const context = useRouteContext({ from: Route.id })
+
+  useEffect(() => {
+    try {
+      initTabSafeTimers()
+    } catch {
+      // Tab-safe timers not available (e.g. worker unsupported); native timers used
+    }
+  }, [])
+
   return (
     <ConvexBetterAuthProvider
       client={context.convexQueryClient.convexClient}

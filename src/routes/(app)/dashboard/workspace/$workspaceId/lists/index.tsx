@@ -52,7 +52,9 @@ function WorkspaceListsPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-2">
           <BackButton />
-          <h1 className="text-xl sm:text-3xl font-bold truncate min-w-0">{data.workspaceDetails?.title}</h1>
+          <h1 className="text-xl sm:text-3xl font-bold truncate min-w-0">
+            {data.workspaceDetails?.title}
+          </h1>
           <div className="flex gap-2 shrink-0">
             {data.workspaceDetails?._id && (
               <CreateListDialog workspaceId={data.workspaceDetails._id} />
