@@ -43,6 +43,7 @@ export function DashboardLayout() {
     (completed: string, next: string) => {
       const token = pushTokenData?.data?.token
       if (!token) return
+      playNotificationSound()
       sendPushNotification({
         token,
         title: `${completed} complete`,
@@ -77,16 +78,8 @@ export function DashboardLayout() {
       })
     })
 
-    const onSwMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'PLAY_POMO_SOUND') {
-        playNotificationSound()
-      }
-    }
-    navigator.serviceWorker.addEventListener('message', onSwMessage)
-
     return () => {
       unsubscribe()
-      navigator.serviceWorker.removeEventListener('message', onSwMessage)
     }
   }, [])
 
