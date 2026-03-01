@@ -21,10 +21,4 @@ messaging.onBackgroundMessage((payload) => {
   };
   self.registration.showNotification(title, options);
 
-  // Ask open tabs to play the notification sound (SW cannot play audio directly)
-  self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-    clients.forEach((client) => {
-      client.postMessage({ type: 'PLAY_POMO_SOUND' });
-    });
-  });
 });
