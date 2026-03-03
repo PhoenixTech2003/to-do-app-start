@@ -7,6 +7,7 @@ import z from 'zod'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { useDebouncer } from '@tanstack/react-pacer'
 import { formatForDisplay } from '@tanstack/react-hotkeys'
+import { Search } from 'lucide-react'
 import { CreateWorkspaceDialog } from '@/components/app/dashboard/create-workspace-dialog'
 import { WorkspaceList } from '@/components/app/dashboard/workspace-list'
 import { StateHandler } from '@/components/app/state-handler'
@@ -14,6 +15,8 @@ import { DashboardLoadingSkeleton } from '@/components/app/dashboard/dashboard-l
 import { NoWorkspacesEmptyState } from '@/components/app/dashboard/no-workspaces-empty-state'
 import { DashboardPageSkeleton } from '@/components/app/dashboard/dashboard-page-skeleton'
 import { SearchInput } from '@/components/app/search-box'
+import { Button } from '@/components/ui/button'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 const searchSchema = z.object({
   searchTerm: z.string().optional(),
@@ -27,8 +30,10 @@ export const Route = createFileRoute('/(app)/dashboard/')({
 
 function DashboardPage() {
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const { searchTerm } = Route.useSearch()
   const [localSearch, setLocalSearch] = useState(searchTerm ?? '')
+  const [searchOpen, setSearchOpen] = useState(false)
   const pendingSearchRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -73,7 +78,13 @@ function DashboardPage() {
 
   return (
     <>
-      <SearchInput searchTerm={localSearch} onSearch={onSearchChange} />
+      <SearchInput
+        searchTerm={localSearch}
+        onSearch={onSearchChange}
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        alwaysVisible={isMobile}
+      />
       <StateHandler
         isLoading={isLoading}
         isFetching={isFetching}
@@ -90,8 +101,17 @@ function DashboardPage() {
             <h1 className="text-xl sm:text-3xl font-bold truncate min-w-0">
               Your Workspaces
             </h1>
-            <div className="flex items-center font-bold gap-4">
-              <p>{`${formatForDisplay('Mod+K')} to open search`}</p>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:inline-flex gap-1.5"
+                onClick={() => setSearchOpen(true)}
+                aria-label="Open search"
+              >
+                <Search className="h-4 w-4" />
+                {formatForDisplay('Mod+K')}
+              </Button>
               <CreateWorkspaceDialog />
             </div>
           </div>
