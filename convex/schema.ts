@@ -16,6 +16,10 @@ export default defineSchema({
     workspaceId: v.id('workspace'),
     createdBy: v.string(),
   })
+    .searchIndex('title', {
+      searchField: 'title',
+      filterFields: ['createdBy', 'workspaceId'],
+    })
     .index('createdBy', ['createdBy'])
     .index('workspaceId', ['workspaceId'])
     .index('createdBy_workspaceId', ['createdBy', 'workspaceId']),
