@@ -20,7 +20,7 @@ export const getUserWorkspaces = query({
     const loggedInUserWorkspaces = await ctx.db
       .query('workspace')
       .withSearchIndex('title', (q) =>
-        q.search('title', args.searchTerm ?? 'i').eq('createdBy', userId),
+        q.search('title', args.searchTerm ?? '').eq('createdBy', userId),
       )
       .collect()
     return loggedInUserWorkspaces
