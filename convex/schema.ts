@@ -43,6 +43,10 @@ export default defineSchema({
     ),
     createdBy: v.string(),
   })
+    .searchIndex('title', {
+      searchField: 'title',
+      filterFields: ['listId', 'createdBy', 'status', 'priority', 'dueDate'],
+    })
     .index('by_listId', ['listId'])
     .index('by_list_id_createdBy', ['listId', 'createdBy'])
     .index('by_due_date', ['dueDate'])

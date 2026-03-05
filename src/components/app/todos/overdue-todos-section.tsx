@@ -10,6 +10,8 @@ import { Empty } from '@/components/ui/empty'
 
 interface OverdueTodosSectionProps {
   listId: Id<'lists'>
+  searchTerm?: string
+  priority?: string
 }
 
 function OverdueTodosLoadingSkeleton() {
@@ -34,10 +36,16 @@ function OverdueTodosEmptyState() {
   )
 }
 
-export function OverdueTodosSection({ listId }: OverdueTodosSectionProps) {
+export function OverdueTodosSection({
+  listId,
+  searchTerm,
+  priority,
+}: OverdueTodosSectionProps) {
   const { data, isLoading, isFetching, isError, error } = useQuery(
     convexQuery(api.todos.queries.GetOverDueTodos, {
       listId,
+      searchTerm: searchTerm || undefined,
+      priority: priority === 'all' ? undefined : priority,
     }),
   )
 

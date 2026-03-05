@@ -46,20 +46,40 @@ export const GetAllTodos = query({
 export const GetPendingTodos = query({
   args: {
     listId: v.id('lists'),
+    searchTerm: v.optional(v.string()),
+    priority: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const loggedInUser = await authComponent.getAuthUser(ctx)
     const loggedInUserId = loggedInUser._id
 
-    const todos = await ctx.db
-      .query('todos')
-      .withIndex('by_status_createdBy_listId', (q) =>
-        q
-          .eq('status', 'pending')
-          .eq('createdBy', loggedInUserId)
-          .eq('listId', args.listId),
-      )
-      .collect()
+    let todosQuery
+    if (args.searchTerm) {
+      todosQuery = ctx.db
+        .query('todos')
+        .withSearchIndex('title', (q) =>
+          q
+            .search('title', args.searchTerm!)
+            .eq('listId', args.listId)
+            .eq('createdBy', loggedInUserId)
+            .eq('status', 'pending')
+        )
+    } else {
+      todosQuery = ctx.db
+        .query('todos')
+        .withIndex('by_status_createdBy_listId', (q) =>
+          q
+            .eq('status', 'pending')
+            .eq('createdBy', loggedInUserId)
+            .eq('listId', args.listId),
+        )
+    }
+
+    if (args.priority) {
+      todosQuery = todosQuery.filter((q) => q.eq(q.field('priority'), args.priority))
+    }
+
+    const todos = await todosQuery.collect()
     return {
       todos,
     }
@@ -68,19 +88,40 @@ export const GetPendingTodos = query({
 export const GetCompletedTodos = query({
   args: {
     listId: v.id('lists'),
+    searchTerm: v.optional(v.string()),
+    priority: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const loggedInUser = await authComponent.getAuthUser(ctx)
     const loggedInUserId = loggedInUser._id
-    const todos = await ctx.db
-      .query('todos')
-      .withIndex('by_status_createdBy_listId', (q) =>
-        q
-          .eq('status', 'completed')
-          .eq('createdBy', loggedInUserId)
-          .eq('listId', args.listId),
-      )
-      .collect()
+
+    let todosQuery
+    if (args.searchTerm) {
+      todosQuery = ctx.db
+        .query('todos')
+        .withSearchIndex('title', (q) =>
+          q
+            .search('title', args.searchTerm!)
+            .eq('listId', args.listId)
+            .eq('createdBy', loggedInUserId)
+            .eq('status', 'completed')
+        )
+    } else {
+      todosQuery = ctx.db
+        .query('todos')
+        .withIndex('by_status_createdBy_listId', (q) =>
+          q
+            .eq('status', 'completed')
+            .eq('createdBy', loggedInUserId)
+            .eq('listId', args.listId),
+        )
+    }
+
+    if (args.priority) {
+      todosQuery = todosQuery.filter((q) => q.eq(q.field('priority'), args.priority))
+    }
+
+    const todos = await todosQuery.collect()
     return {
       todos,
     }
@@ -90,20 +131,41 @@ export const GetCompletedTodos = query({
 export const GetOverDueTodos = query({
   args: {
     listId: v.id('lists'),
+    searchTerm: v.optional(v.string()),
+    priority: v.optional(v.string()),
   },
 
   handler: async (ctx, args) => {
     const loggedInUser = await authComponent.getAuthUser(ctx)
     const loggedInUserId = loggedInUser._id
-    const todos = await ctx.db
-      .query('todos')
-      .withIndex('by_status_createdBy_listId', (q) =>
-        q
-          .eq('status', 'overdue')
-          .eq('createdBy', loggedInUserId)
-          .eq('listId', args.listId),
-      )
-      .collect()
+
+    let todosQuery
+    if (args.searchTerm) {
+      todosQuery = ctx.db
+        .query('todos')
+        .withSearchIndex('title', (q) =>
+          q
+            .search('title', args.searchTerm!)
+            .eq('listId', args.listId)
+            .eq('createdBy', loggedInUserId)
+            .eq('status', 'overdue')
+        )
+    } else {
+      todosQuery = ctx.db
+        .query('todos')
+        .withIndex('by_status_createdBy_listId', (q) =>
+          q
+            .eq('status', 'overdue')
+            .eq('createdBy', loggedInUserId)
+            .eq('listId', args.listId),
+        )
+    }
+
+    if (args.priority) {
+      todosQuery = todosQuery.filter((q) => q.eq(q.field('priority'), args.priority))
+    }
+
+    const todos = await todosQuery.collect()
     return {
       todos,
     }
