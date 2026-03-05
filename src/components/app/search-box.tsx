@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { Search, FilterX } from 'lucide-react'
 import { useHotkey } from '@tanstack/react-hotkeys'
 import { motion, AnimatePresence } from 'motion/react'
@@ -43,6 +44,7 @@ export function SearchInput({
 }: SearchInputProps) {
   const [internalOpen, setInternalOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const isMobile = useIsMobile()
 
   const isControlled = controlledOpen !== undefined
   const visible = alwaysVisible || (isControlled ? controlledOpen : internalOpen)
@@ -66,10 +68,10 @@ export function SearchInput({
   useHotkey('Escape', closeOpen)
 
   useEffect(() => {
-    if (visible) {
+    if (visible && !isMobile) {
       inputRef.current?.focus()
     }
-  }, [visible])
+  }, [visible, isMobile])
 
   const handleReset = () => {
     onSearch('')

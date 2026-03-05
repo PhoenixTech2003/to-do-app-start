@@ -14,7 +14,6 @@ import {
   getSecondsLeft,
   getSettings,
   pauseTimer,
-  phaseBg,
   phaseColor,
   phaseLabel,
   resumeTimer,
@@ -24,7 +23,6 @@ import {
 import type { Phase, PomodoroSettings } from '@/dexie/db'
 import { db } from '@/dexie/db'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 
 export function PomodoroTimer() {
@@ -128,19 +126,21 @@ export function PomodoroTimer() {
     })
   }
 
+  const circumference = 2 * Math.PI * 90
+
   return (
-    <div className="flex flex-col items-center gap-6 sm:gap-8">
+    <div className="flex flex-col items-center gap-4">
       {/* Phase tabs */}
-      <div className="flex gap-1 rounded-lg bg-muted p-1">
+      <div className="flex border border-border rounded-md overflow-hidden">
         {(['focus', 'shortBreak', 'longBreak'] as const).map((p) => (
           <button
             key={p}
             onClick={() => switchTo(p)}
             className={cn(
-              'rounded-md px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium transition-colors',
+              'px-3 py-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider transition-colors border-r border-border last:border-r-0',
               state.phase === p
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground',
+                ? 'bg-foreground text-background'
+                : 'text-muted-foreground hover:text-foreground hover:bg-accent',
             )}
           >
             {phaseLabel(p)}
@@ -151,7 +151,7 @@ export function PomodoroTimer() {
       {/* Timer ring */}
       <div className="relative flex items-center justify-center">
         <svg
-          className="h-48 w-48 sm:h-64 sm:w-64 -rotate-90"
+          className="h-44 w-44 sm:h-52 sm:w-52 -rotate-90"
           viewBox="0 0 200 200"
         >
           <circle
@@ -160,8 +160,8 @@ export function PomodoroTimer() {
             r="90"
             fill="none"
             stroke="currentColor"
-            className="text-muted/40"
-            strokeWidth="6"
+            className="text-border"
+            strokeWidth="2"
           />
           <circle
             cx="100"
@@ -173,105 +173,88 @@ export function PomodoroTimer() {
               'transition-all duration-1000',
               phaseColor(state.phase),
             )}
-            strokeWidth="6"
+            strokeWidth="2"
             strokeLinecap="round"
-            strokeDasharray={2 * Math.PI * 90}
-            strokeDashoffset={2 * Math.PI * 90 * (1 - progress / 100)}
+            strokeDasharray={circumference}
+            strokeDashoffset={circumference * (1 - progress / 100)}
           />
         </svg>
         <div className="absolute flex flex-col items-center">
-          <span
-            className={cn(
-              'text-5xl sm:text-7xl font-bold tabular-nums tracking-tight',
-              phaseColor(state.phase),
-            )}
-          >
+          <span className="font-mono text-4xl sm:text-5xl font-bold tabular-nums tracking-tighter">
             {display}
           </span>
-          <span className="text-xs sm:text-sm text-muted-foreground mt-1">
+          <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground mt-1.5">
             {phaseLabel(state.phase)}
           </span>
         </div>
       </div>
 
-      {/* Session progress bar */}
-      <div className="w-full max-w-xs space-y-2">
-        <Progress
-          value={progress}
-          className={cn(
-            'h-2',
-            `[&>[data-slot=progress-indicator]]:${phaseBg(state.phase)}`,
-          )}
-        />
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>
-            Session{' '}
-            {(state.completedPomos % settings.pomosBeforeLongBreak) +
-              (state.phase === 'focus' ? 1 : 0)}{' '}
-            / {settings.pomosBeforeLongBreak}
-          </span>
-          <span>{state.completedPomos} completed</span>
+      {/* Session dots + counter in one row */}
+      <div className="flex items-center gap-3">
+        <div className="flex gap-1.5">
+          {Array.from({ length: settings.pomosBeforeLongBreak }).map((_, i) => (
+            <div
+              key={i}
+              className={cn(
+                'h-1.5 w-1.5 rounded-full transition-colors',
+                i < state.completedPomos % settings.pomosBeforeLongBreak ||
+                  (state.completedPomos > 0 &&
+                    state.completedPomos % settings.pomosBeforeLongBreak === 0 &&
+                    state.phase !== 'focus')
+                  ? 'bg-primary'
+                  : 'bg-border',
+              )}
+            />
+          ))}
         </div>
-      </div>
-
-      {/* Session dots */}
-      <div className="flex gap-2">
-        {Array.from({ length: settings.pomosBeforeLongBreak }).map((_, i) => (
-          <div
-            key={i}
-            className={cn(
-              'h-3 w-3 rounded-full border-2 transition-colors',
-              i < state.completedPomos % settings.pomosBeforeLongBreak ||
-                (state.completedPomos > 0 &&
-                  state.completedPomos % settings.pomosBeforeLongBreak === 0 &&
-                  state.phase !== 'focus')
-                ? 'bg-primary border-primary'
-                : 'border-muted-foreground/40',
-            )}
-          />
-        ))}
+        <span className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider">
+          {(state.completedPomos % settings.pomosBeforeLongBreak) + (state.phase === 'focus' ? 1 : 0)}/{settings.pomosBeforeLongBreak}
+        </span>
       </div>
 
       {/* Controls */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-2">
         <Button
           variant="outline"
           size="icon"
+          className="h-8 w-8 rounded-md"
           onClick={startNewRound}
           aria-label="New Round"
           title="New Round"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-3.5 w-3.5" />
         </Button>
         <Button
           variant="outline"
           size="icon"
+          className="h-8 w-8 rounded-md"
           onClick={handleReset}
           aria-label="Reset"
           title="Reset"
         >
-          <RotateCcw className="h-4 w-4" />
+          <RotateCcw className="h-3.5 w-3.5" />
         </Button>
         <Button
           size="lg"
-          className="h-14 w-14 rounded-full"
+          className="h-11 w-11 rounded-full"
           onClick={handlePlayPause}
           aria-label={state.isRunning ? 'Pause' : 'Start'}
         >
           {state.isRunning ? (
-            <Pause className="h-6 w-6" />
+            <Pause className="h-4 w-4" />
           ) : (
-            <Play className="h-6 w-6 ml-0.5" />
+            <Play className="h-4 w-4 ml-0.5" />
           )}
         </Button>
         <Button
           variant="outline"
           size="icon"
+          className="h-8 w-8 rounded-md"
           onClick={handleSkip}
           aria-label="Skip"
           title="Skip"
         >
-          <SkipForward className="h-4 w-4" />
+          <SkipForward className="h-3.5 w-3.5" />
         </Button>
         <PomodoroSettingsDialog
           settings={settings}
