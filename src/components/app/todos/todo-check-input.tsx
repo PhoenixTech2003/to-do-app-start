@@ -2,7 +2,9 @@ import { useConvexMutation } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
 import { isAfter, parse } from 'date-fns'
 import type { Todo } from '@/types/global'
-import { Checkbox } from '@/components/ui/checkbox'
+import { motion, AnimatePresence } from 'motion/react'
+import { CheckIcon } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface TodoCheckInputProps {
   todo: Todo
@@ -15,13 +17,10 @@ function getTodoStatus({
   status: 'pending' | 'completed' | 'overdue'
   dueDate?: Date
 }) {
-  // No due date: simple toggle (overdue also goes to completed)
   if (!dueDate) {
     return status === 'completed' ? 'pending' : 'completed'
   }
 
-  // Has due date: completing a todo goes back to pending or overdue based on date,
-  // otherwise mark as completed
   const now = new Date()
   if (status === 'completed') {
     return isAfter(now, dueDate) ? 'overdue' : 'pending'
@@ -35,17 +34,9 @@ export function TodoCheckInput({ todo }: TodoCheckInputProps) {
     api.todos.mutations.toggleTodoStatus,
   ).withOptimisticUpdate((localStore, args) => {
     const { todoId, status: newStatus } = args
-
-    const pendingData = localStore.getQuery(api.todos.queries.GetPendingTodos, {
-      listId: todo.listId,
-    })
-    const completedData = localStore.getQuery(
-      api.todos.queries.GetCompletedTodos,
-      { listId: todo.listId },
-    )
-    const overdueData = localStore.getQuery(api.todos.queries.GetOverDueTodos, {
-      listId: todo.listId,
-    })
+    const pendingData = localStore.getQuery(api.todos.queries.GetPendingTodos, { listId: todo.listId })
+    const completedData = localStore.getQuery(api.todos.queries.GetCompletedTodos, { listId: todo.listId })
+    const overdueData = localStore.getQuery(api.todos.queries.GetOverDueTodos, { listId: todo.listId })
 
     const findTodo = (data: { todos: Array<Todo> } | undefined) =>
       data?.todos.find((t) => t._id === todoId)
@@ -62,70 +53,33 @@ export function TodoCheckInput({ todo }: TodoCheckInputProps) {
       optimisticTodoItem: Todo,
     ) => (data ? { todos: [...data.todos, optimisticTodoItem] } : undefined)
 
-    const nextPending =
-      currentTodo.status === 'pending'
-        ? withoutTodo(pendingData)
-        : newStatus === 'pending'
-          ? withTodo(pendingData, optimisticTodo)
-          : pendingData
-    const nextCompleted =
-      currentTodo.status === 'completed'
-        ? withoutTodo(completedData)
-        : newStatus === 'completed'
-          ? withTodo(completedData, optimisticTodo)
-          : completedData
-    const nextOverdue =
-      currentTodo.status === 'overdue'
-        ? withoutTodo(overdueData)
-        : newStatus === 'overdue'
-          ? withTodo(overdueData, optimisticTodo)
-          : overdueData
+    const nextPending = currentTodo.status === 'pending' ? withoutTodo(pendingData) : newStatus === 'pending' ? withTodo(pendingData, optimisticTodo) : pendingData
+    const nextCompleted = currentTodo.status === 'completed' ? withoutTodo(completedData) : newStatus === 'completed' ? withTodo(completedData, optimisticTodo) : completedData
+    const nextOverdue = currentTodo.status === 'overdue' ? withoutTodo(overdueData) : newStatus === 'overdue' ? withTodo(overdueData, optimisticTodo) : overdueData
 
-    if (nextPending)
-      localStore.setQuery(
-        api.todos.queries.GetPendingTodos,
-        { listId: todo.listId },
-        nextPending,
-      )
-    if (nextCompleted)
-      localStore.setQuery(
-        api.todos.queries.GetCompletedTodos,
-        { listId: todo.listId },
-        nextCompleted,
-      )
-    if (nextOverdue)
-      localStore.setQuery(
-        api.todos.queries.GetOverDueTodos,
-        { listId: todo.listId },
-        nextOverdue,
-      )
+    if (nextPending) localStore.setQuery(api.todos.queries.GetPendingTodos, { listId: todo.listId }, nextPending)
+    if (nextCompleted) localStore.setQuery(api.todos.queries.GetCompletedTodos, { listId: todo.listId }, nextCompleted)
+    if (nextOverdue) localStore.setQuery(api.todos.queries.GetOverDueTodos, { listId: todo.listId }, nextOverdue)
 
-    // Today page: getTodosByDate returns all todos for a date; update in place
     if (todo.dueDate) {
-      const byDateData = localStore.getQuery(
-        api.globals.queries.getTodosByDate,
-        { date: todo.dueDate },
-      )
+      const byDateData = localStore.getQuery(api.globals.queries.getTodosByDate, { date: todo.dueDate })
       if (byDateData) {
-        const nextTodos = byDateData.todos.map((t) =>
-          t._id === todoId ? optimisticTodo : t,
-        )
-        localStore.setQuery(
-          api.globals.queries.getTodosByDate,
-          { date: todo.dueDate },
-          { todos: nextTodos },
-        )
+        const nextTodos = byDateData.todos.map((t) => t._id === todoId ? optimisticTodo : t)
+        localStore.setQuery(api.globals.queries.getTodosByDate, { date: todo.dueDate }, { todos: nextTodos })
       }
     }
   })
+
   const formattedDate =
     todo.dueDate && todo.dueTime
       ? parse(`${todo.dueDate} ${todo.dueTime}`, 'yyyy-MM-dd HH:mm', new Date())
       : undefined
 
+  const isCompleted = todo.status === 'completed'
+
   return (
-    <Checkbox
-      onCheckedChange={() =>
+    <button
+      onClick={() =>
         toggleTodo({
           todoId: todo._id,
           status: getTodoStatus({
@@ -134,9 +88,26 @@ export function TodoCheckInput({ todo }: TodoCheckInputProps) {
           }),
         })
       }
-      className="shrink-0"
-      checked={todo.status === 'completed'}
-      aria-label={`Mark ${todo.title} complete`}
-    />
+      className={cn(
+        "relative flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border-2 transition-colors duration-150",
+        isCompleted
+          ? "bg-primary border-primary"
+          : "bg-transparent border-border hover:border-primary"
+      )}
+      aria-label={`Mark ${todo.title} ${isCompleted ? 'incomplete' : 'complete'}`}
+    >
+      <AnimatePresence>
+        {isCompleted && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0 }}
+            transition={{ duration: 0.15 }}
+          >
+            <CheckIcon className="h-3 w-3 text-primary-foreground stroke-[3px]" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </button>
   )
 }

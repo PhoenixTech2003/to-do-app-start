@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { ScrollArea } from '@radix-ui/react-scroll-area'
-import { motion } from 'motion/react'
+import { AnimatePresence } from 'motion/react'
 import { convexQuery } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -97,7 +97,7 @@ function TodayPage() {
   const completedTodos = data.todos.filter((t: any) => t.status === 'completed')
 
   return (
-    <div className="p-3 sm:p-6 flex flex-col h-full">
+    <div className="p-4 sm:p-6 flex flex-col h-full">
       <SearchInput
         searchTerm={localSearch}
         onSearch={onSearchChange}
@@ -117,101 +117,103 @@ function TodayPage() {
           navigate({ search: (prev: any) => ({ ...prev, status: val as any }), replace: true })
         }}
       />
-      <header className="mb-4 sm:mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-2 sm:gap-6 min-w-0">
+
+      <header className="mb-8 flex items-center justify-between">
+        <div className="flex items-center gap-4 min-w-0">
           <BackButton />
           <div className="min-w-0">
-            <h2 className="text-lg sm:text-2xl font-semibold truncate">Todos for today</h2>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Showing todos for today.
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Today</h2>
+            <p className="text-xs font-mono text-muted-foreground mt-0.5">
+              {format(new Date(), 'EEEE, MMMM do')}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1 sm:gap-3 shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            className="hidden sm:inline-flex gap-1.5"
-            onClick={() => setSearchOpen(true)}
-            aria-label="Open search"
-          >
-            <Search className="h-4 w-4" />
-            {formatForDisplay('Mod+K')}
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="hidden sm:inline-flex gap-2 h-8 px-3 rounded-md text-xs"
+          onClick={() => setSearchOpen(true)}
+          aria-label="Open search"
+        >
+          <Search className="h-3.5 w-3.5" />
+          <span className="font-mono text-[10px] text-muted-foreground">{formatForDisplay('Mod+K')}</span>
+        </Button>
       </header>
-      <ScrollArea className="w-full h-75">
-        <div className="space-y-6">
+
+      <ScrollArea className="flex-1 w-full">
+        <div className="space-y-8">
           {(!status || status === 'all' || status === 'pending') && (
-            <StateHandler
-              isFetching={isFetching}
-              isError={isError}
-              error={error}
-              isEmpty={pendingTodos.length === 0}
-              loadingSkeleton={
-                <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
-                  <h2 className="font-bold text-lg sm:text-xl">Pending Tasks</h2>
-                  <div className="space-y-4">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between pb-2 border-b border-border">
+                <div className="flex items-center gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-chart-4" />
+                  <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">Pending</h2>
+                </div>
+                <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">{pendingTodos.length}</span>
+              </div>
+
+              <StateHandler
+                isFetching={isFetching}
+                isError={isError}
+                error={error}
+                isEmpty={pendingTodos.length === 0}
+                loadingSkeleton={
+                  <div className="space-y-2">
                     {Array.from({ length: 3 }).map((_, i) => (
-                      <Skeleton key={i} className="h-20 w-full" />
+                      <Skeleton key={i} className="h-20 w-full rounded-md" />
                     ))}
                   </div>
+                }
+                emptyState={<Empty>No pending tasks for today</Empty>}
+                errorTitle="Failed to load pending tasks"
+                errorDescription="An error occurred. Please try again."
+              >
+                <div className="space-y-2">
+                  <AnimatePresence mode="popLayout">
+                    {pendingTodos.map((todo: any) => (
+                      <TodoCard key={todo._id} todo={todo} />
+                    ))}
+                  </AnimatePresence>
                 </div>
-              }
-              emptyState={
-                <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
-                  <h2 className="font-bold text-lg sm:text-xl">Pending Tasks</h2>
-                  <Empty>No pending tasks for today</Empty>
-                </div>
-              }
-              errorTitle="Failed to load today's pending tasks"
-              errorDescription="An error occurred while loading pending tasks. Please try again."
-            >
-              <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
-                <h2 className="font-bold text-lg sm:text-xl">Pending Tasks</h2>
-                {pendingTodos.map((todo: any) => (
-                  <motion.div key={todo._id} whileHover={{ scale: 1.03 }}>
-                    <TodoCard todo={todo} />
-                  </motion.div>
-                ))}
-              </div>
-            </StateHandler>
+              </StateHandler>
+            </div>
           )}
 
           {(!status || status === 'all' || status === 'completed') && (
-            <StateHandler
-              isFetching={isFetching}
-              isError={isError}
-              error={error}
-              isEmpty={completedTodos.length === 0}
-              loadingSkeleton={
-                <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
-                  <h2 className="font-bold text-lg sm:text-xl">Completed Tasks</h2>
-                  <div className="space-y-4">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between pb-2 border-b border-border">
+                <div className="flex items-center gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-chart-3" />
+                  <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">Completed</h2>
+                </div>
+                <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">{completedTodos.length}</span>
+              </div>
+
+              <StateHandler
+                isFetching={isFetching}
+                isError={isError}
+                error={error}
+                isEmpty={completedTodos.length === 0}
+                loadingSkeleton={
+                  <div className="space-y-2">
                     {Array.from({ length: 3 }).map((_, i) => (
-                      <Skeleton key={i} className="h-20 w-full" />
+                      <Skeleton key={i} className="h-20 w-full rounded-md" />
                     ))}
                   </div>
+                }
+                emptyState={<Empty>No completed tasks for today</Empty>}
+                errorTitle="Failed to load completed tasks"
+                errorDescription="An error occurred. Please try again."
+              >
+                <div className="space-y-2">
+                  <AnimatePresence mode="popLayout">
+                    {completedTodos.map((todo: any) => (
+                      <TodoCard key={todo._id} todo={todo} />
+                    ))}
+                  </AnimatePresence>
                 </div>
-              }
-              emptyState={
-                <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
-                  <h2 className="font-bold text-lg sm:text-xl">Completed Tasks</h2>
-                  <Empty>No completed tasks for today</Empty>
-                </div>
-              }
-              errorTitle="Failed to load today's completed tasks"
-              errorDescription="An error occurred while loading completed tasks. Please try again."
-            >
-              <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
-                <h2 className="font-bold text-lg sm:text-xl">Completed Tasks</h2>
-                {completedTodos.map((todo: any) => (
-                  <motion.div key={todo._id} whileHover={{ scale: 1.03 }}>
-                    <TodoCard todo={todo} />
-                  </motion.div>
-                ))}
-              </div>
-            </StateHandler>
+              </StateHandler>
+            </div>
           )}
         </div>
       </ScrollArea>

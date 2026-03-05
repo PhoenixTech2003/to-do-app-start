@@ -1,4 +1,4 @@
-import { motion } from 'motion/react'
+import { AnimatePresence } from 'motion/react'
 import { useQuery } from '@tanstack/react-query'
 import { convexQuery } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
@@ -16,11 +16,11 @@ interface CompletedTodosSectionProps {
 
 function CompletedTodosLoadingSkeleton() {
   return (
-    <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
-      <h2 className="font-bold text-lg sm:text-xl">Completed Tasks</h2>
-      <div className="space-y-4">
+    <div className="flex flex-col gap-3">
+      <Skeleton className="h-5 w-28 rounded" />
+      <div className="space-y-2">
         {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-20 w-full" />
+          <Skeleton key={i} className="h-20 w-full rounded-md" />
         ))}
       </div>
     </div>
@@ -29,8 +29,11 @@ function CompletedTodosLoadingSkeleton() {
 
 function CompletedTodosEmptyState() {
   return (
-    <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
-      <h2 className="font-bold text-lg sm:text-xl">Completed Tasks</h2>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2 pb-2 border-b border-border">
+        <div className="h-1.5 w-1.5 rounded-full bg-chart-3" />
+        <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">Completed</h2>
+      </div>
       <Empty>No completed tasks</Empty>
     </div>
   )
@@ -49,23 +52,33 @@ export function CompletedTodosSection({
     }),
   )
 
+  const todos = data?.todos ?? []
+
   return (
     <StateHandler
       isLoading={isLoading}
       isFetching={isFetching}
       isError={isError}
       error={error}
-      isEmpty={!data?.todos || data.todos.length === 0}
+      isEmpty={todos.length === 0}
       loadingSkeleton={<CompletedTodosLoadingSkeleton />}
       emptyState={<CompletedTodosEmptyState />}
     >
-      <div className="space-y-4 sm:space-y-6 p-2 sm:p-6">
-        <h2 className="font-bold text-lg sm:text-xl">Completed Tasks</h2>
-        {data?.todos.map((todo) => (
-          <motion.div key={todo._id} whileHover={{ scale: 1.03 }}>
-            <TodoCard key={todo._id} todo={todo} />
-          </motion.div>
-        ))}
+      <div className="flex flex-col gap-3 mb-8">
+        <div className="flex items-center justify-between pb-2 border-b border-border">
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-chart-3" />
+            <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">Completed</h2>
+          </div>
+          <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">{todos.length}</span>
+        </div>
+        <div className="space-y-2">
+          <AnimatePresence mode="popLayout">
+            {todos.map((todo) => (
+              <TodoCard key={todo._id} todo={todo} />
+            ))}
+          </AnimatePresence>
+        </div>
       </div>
     </StateHandler>
   )
