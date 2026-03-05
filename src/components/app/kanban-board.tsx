@@ -3,46 +3,50 @@ import { convexQuery, useConvexMutation } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
 import { toast } from 'sonner'
 import { isAfter, parse } from 'date-fns'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { KanbanLane } from './kanban-lane'
 import type { Todo } from '@/types/global'
 import type { Id } from 'convex/_generated/dataModel'
 
 interface KanbanBoardProps {
   listId: Id<'lists'>
+  searchTerm?: string
+  priority?: string
 }
 
-export function KanbanBoard({ listId }: KanbanBoardProps) {
-  const { data: pendingTodos } = useSuspenseQuery(
-    convexQuery(api.todos.queries.GetPendingTodos, {
-      listId,
-    }),
+export function KanbanBoard({ listId, searchTerm, priority }: KanbanBoardProps) {
+  const queryArgs = {
+    listId,
+    searchTerm: searchTerm || undefined,
+    priority: priority === 'all' ? undefined : priority,
+  }
+
+  const { data: pendingTodos } = useQuery(
+    convexQuery(api.todos.queries.GetPendingTodos, queryArgs),
   )
-  const { data: completedTodos } = useSuspenseQuery(
-    convexQuery(api.todos.queries.GetCompletedTodos, {
-      listId,
-    }),
+  const { data: completedTodos } = useQuery(
+    convexQuery(api.todos.queries.GetCompletedTodos, queryArgs),
   )
-  const { data: overdueTodos } = useSuspenseQuery(
-    convexQuery(api.todos.queries.GetOverDueTodos, {
-      listId,
-    }),
+  const { data: overdueTodos } = useQuery(
+    convexQuery(api.todos.queries.GetOverDueTodos, queryArgs),
   )
   const updateTodoStatus = useConvexMutation(
     api.todos.mutations.toggleTodoStatus,
   ).withOptimisticUpdate((localStore, args) => {
     const { todoId, status: newStatus } = args
 
-    const pendingData = localStore.getQuery(api.todos.queries.GetPendingTodos, {
-      listId,
-    })
+    const pendingData = localStore.getQuery(
+      api.todos.queries.GetPendingTodos,
+      queryArgs,
+    )
     const completedData = localStore.getQuery(
       api.todos.queries.GetCompletedTodos,
-      { listId },
+      queryArgs,
     )
-    const overdueData = localStore.getQuery(api.todos.queries.GetOverDueTodos, {
-      listId,
-    })
+    const overdueData = localStore.getQuery(
+      api.todos.queries.GetOverDueTodos,
+      queryArgs,
+    )
 
     const findTodo = (data: { todos: Array<Todo> } | undefined) =>
       data?.todos.find((t) => t._id === todoId)
@@ -79,19 +83,19 @@ export function KanbanBoard({ listId }: KanbanBoardProps) {
     if (nextPending)
       localStore.setQuery(
         api.todos.queries.GetPendingTodos,
-        { listId },
+        queryArgs,
         nextPending,
       )
     if (nextCompleted)
       localStore.setQuery(
         api.todos.queries.GetCompletedTodos,
-        { listId },
+        queryArgs,
         nextCompleted,
       )
     if (nextOverdue)
       localStore.setQuery(
         api.todos.queries.GetOverDueTodos,
-        { listId },
+        queryArgs,
         nextOverdue,
       )
   })
@@ -148,13 +152,13 @@ export function KanbanBoard({ listId }: KanbanBoardProps) {
     >
       <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-x-visible sm:snap-none sm:pb-0">
         <div className="min-w-[75vw] snap-center sm:min-w-0">
-          <KanbanLane title="Pending" todos={pendingTodos.todos} />
+          <KanbanLane title="Pending" todos={pendingTodos?.todos ?? []} />
         </div>
         <div className="min-w-[75vw] snap-center sm:min-w-0">
-          <KanbanLane title="Completed" todos={completedTodos.todos} />
+          <KanbanLane title="Completed" todos={completedTodos?.todos ?? []} />
         </div>
         <div className="min-w-[75vw] snap-center sm:min-w-0">
-          <KanbanLane title="Overdue" todos={overdueTodos.todos} />
+          <KanbanLane title="Overdue" todos={overdueTodos?.todos ?? []} />
         </div>
       </div>
     </DragDropProvider>

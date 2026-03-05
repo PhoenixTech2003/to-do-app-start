@@ -10,6 +10,8 @@ import { Empty } from '@/components/ui/empty'
 
 interface CompletedTodosSectionProps {
   listId: Id<'lists'>
+  searchTerm?: string
+  priority?: string
 }
 
 function CompletedTodosLoadingSkeleton() {
@@ -34,10 +36,16 @@ function CompletedTodosEmptyState() {
   )
 }
 
-export function CompletedTodosSection({ listId }: CompletedTodosSectionProps) {
+export function CompletedTodosSection({
+  listId,
+  searchTerm,
+  priority,
+}: CompletedTodosSectionProps) {
   const { data, isLoading, isFetching, isError, error } = useQuery(
     convexQuery(api.todos.queries.GetCompletedTodos, {
       listId,
+      searchTerm: searchTerm || undefined,
+      priority: priority === 'all' ? undefined : priority,
     }),
   )
 

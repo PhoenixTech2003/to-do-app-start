@@ -10,6 +10,8 @@ import { Empty } from '@/components/ui/empty'
 
 interface PendingTodosSectionProps {
   listId: Id<'lists'>
+  searchTerm?: string
+  priority?: string
 }
 
 function PendingTodosLoadingSkeleton() {
@@ -34,10 +36,16 @@ function PendingTodosEmptyState() {
   )
 }
 
-export function PendingTodosSection({ listId }: PendingTodosSectionProps) {
+export function PendingTodosSection({
+  listId,
+  searchTerm,
+  priority,
+}: PendingTodosSectionProps) {
   const { data, isLoading, isFetching, isError, error } = useQuery(
     convexQuery(api.todos.queries.GetPendingTodos, {
       listId,
+      searchTerm: searchTerm || undefined,
+      priority: priority === 'all' ? undefined : priority,
     }),
   )
 
