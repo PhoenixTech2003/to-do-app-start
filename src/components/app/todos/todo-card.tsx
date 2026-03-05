@@ -1,11 +1,12 @@
 import { format } from 'date-fns'
 import { forwardRef, useState } from 'react'
+import { motion } from 'motion/react'
 import { TodoSheet } from './todo-sheet'
 import { TodoCheckInput } from './todo-check-input'
 import type { Todo } from '@/types/global'
 import { cn, truncateText } from '@/lib/utils'
-import { Card, CardContent } from '@/components/ui/card'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { CalendarIcon, ClockIcon } from 'lucide-react'
 
 interface TodoCardProps {
   todo: Todo
@@ -16,76 +17,91 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
     const [sheetIsOpen, setSheetIsOpen] = useState(false)
     const isMobile = useIsMobile()
 
-    function setSheetIsOpenHanlder(value: boolean) {
-      setSheetIsOpen(value)
-    }
-
     const title = isMobile ? truncateText(todo.title) : todo.title
     const description = isMobile
       ? truncateText(todo.description)
       : todo.description
 
+    const priorityBorder: Record<string, string> = {
+      high: 'border-l-destructive',
+      medium: 'border-l-chart-4',
+      low: 'border-l-chart-2',
+      none: 'border-l-border',
+    }
+
     return (
       <TodoSheet
         isOpen={sheetIsOpen}
-        setIsOpen={setSheetIsOpenHanlder}
+        setIsOpen={setSheetIsOpen}
         todo={todo}
       >
-        <Card
+        <motion.div
           ref={ref}
-          key={todo._id}
+          layout
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.2 }}
           onClick={() => setSheetIsOpen(true)}
-          className="flex-row items-start justify-between gap-2 sm:gap-4 p-2 sm:p-4 rounded-lg bg-card/50"
+          className={cn(
+            "group relative flex flex-col gap-2 p-4 bg-card border border-border rounded-md cursor-pointer transition-colors duration-200 hover:bg-accent border-l-[3px]",
+            priorityBorder[todo.priority] || priorityBorder.none,
+            todo.status === 'completed' && 'opacity-50'
+          )}
         >
-          <CardContent className="flex flex-1 hover:cursor-pointer justify-between gap-2 sm:gap-4 p-2 sm:p-4 min-w-0">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex gap-3 flex-1 min-w-0">
+              <div onClick={(e) => e.stopPropagation()} className="mt-0.5">
                 <TodoCheckInput todo={todo} />
               </div>
-              <div className="min-w-0">
-                <div
+              <div className="flex flex-col min-w-0 gap-1">
+                <h3
                   className={cn(
-                    'text-sm font-medium truncate',
-                    todo.status === 'completed' &&
-                      'line-through text-muted-foreground',
+                    'text-sm font-medium leading-tight',
+                    todo.status === 'completed' && 'line-through text-muted-foreground'
                   )}
                 >
                   {title}
-                </div>
-                <div className="text-xs text-muted-foreground mt-1 truncate">
-                  {description}
-                </div>
-                <div
-                  className={cn(
-                    'text-xs mt-2',
-                    todo.status === 'overdue'
-                      ? 'text-red-600 dark:text-red-400 font-medium'
-                      : 'text-muted-foreground',
-                  )}
-                >
-                  <p className="truncate">
-                    Due:{' '}
-                    {todo.dueDate && format(todo.dueDate, 'dd MMM, yyyy')}
-                    {todo.dueTime && ` at ${todo.dueTime}`}
+                </h3>
+                {description && (
+                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                    {description}
                   </p>
-                </div>
+                )}
               </div>
             </div>
-            <div className="shrink-0 self-center">
-              <span
-                className={`px-2 py-1 text-xs rounded-full font-medium tracking-wide ${
-                  todo.priority === 'high'
-                    ? 'bg-red-600 dark:bg-red-700 text-white'
-                    : todo.priority === 'medium'
-                      ? 'bg-yellow-400 dark:bg-yellow-500 text-black dark:text-black'
-                      : 'bg-green-600 dark:bg-green-700 text-white'
-                }`}
+
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">
+              {todo.priority !== 'none' ? todo.priority : ''}
+            </span>
+          </div>
+
+          {(todo.dueDate || todo.dueTime) && (
+            <div className="flex items-center gap-3 pl-8">
+              <div
+                className={cn(
+                  'flex items-center gap-3 font-mono text-[11px]',
+                  todo.status === 'overdue'
+                    ? 'text-destructive'
+                    : 'text-muted-foreground'
+                )}
               >
-                {todo.priority}
-              </span>
+                {todo.dueDate && (
+                  <span className="flex items-center gap-1">
+                    <CalendarIcon className="h-3 w-3" />
+                    {format(todo.dueDate, 'dd MMM yyyy')}
+                  </span>
+                )}
+                {todo.dueTime && (
+                  <span className="flex items-center gap-1">
+                    <ClockIcon className="h-3 w-3" />
+                    {todo.dueTime}
+                  </span>
+                )}
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </motion.div>
       </TodoSheet>
     )
   },

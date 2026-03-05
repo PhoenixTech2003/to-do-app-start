@@ -88,20 +88,20 @@ export function DashboardLayout() {
       <AppSidebar />
       <main className="flex flex-1 flex-col min-h-screen">
         <SidebarInset className="flex flex-col flex-1">
-          <header className="flex items-center gap-2 sm:gap-4 border-b px-3 sm:px-4 py-2">
+          <header className="flex items-center gap-4 px-6 h-14 sticky top-0 z-30 bg-background border-b border-border">
             <SidebarTrigger />
             <div className="flex-1 min-w-0">
               {isPending || isRefetching ? (
-                <p>loading...</p>
+                <span className="text-muted-foreground text-sm">loading…</span>
               ) : (
-                <p className="text-sm sm:text-lg truncate">
-                  Welcome back, {data?.user.name}
+                <p className="text-sm truncate text-muted-foreground">
+                  Welcome back, <span className="text-foreground font-medium">{data?.user.name}</span>
                 </p>
               )}
             </div>
             <ThemeSwitcher />
           </header>
-          <div className="flex-1 overflow-auto p-2 sm:p-4">
+          <div className="flex-1 overflow-auto p-4 sm:p-6 pb-20 sm:pb-6">
             <Outlet />
           </div>
         </SidebarInset>

@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap');
 @import "tailwindcss";
 
 @import "tw-animate-css";
@@ -6,73 +7,74 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.5rem;
+  --background: #F5F3EE;
+  --foreground: #1A1A1A;
+  --card: #FDFCFA;
+  --card-foreground: #1A1A1A;
+  --popover: #FDFCFA;
+  --popover-foreground: #1A1A1A;
+  --primary: #E8553A;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EBE7E0;
+  --secondary-foreground: #1A1A1A;
+  --muted: #EBE7E0;
+  --muted-foreground: #6B6B6B;
+  --accent: #EBE7E0;
+  --accent-foreground: #1A1A1A;
+  --destructive: #D44332;
+  --destructive-foreground: #FFFFFF;
+  --border: #DBD7D0;
+  --input: #DBD7D0;
+  --ring: #E8553A;
+  --chart-1: #E8553A;
+  --chart-2: #2E6ACC;
+  --chart-3: #228B63;
+  --chart-4: #CC8F2E;
+  --chart-5: #7A2ECC;
+  --sidebar: #F8F6F2;
+  --sidebar-foreground: #1A1A1A;
+  --sidebar-primary: #E8553A;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #EBE7E0;
+  --sidebar-accent-foreground: #1A1A1A;
+  --sidebar-border: #DBD7D0;
+  --sidebar-ring: #E8553A;
 }
 
 .dark {
-  /* Warm dark theme - maintaining the cozy, friendly aesthetic */
-  --background: oklch(0.12 0.01 260); /* Deep warm dark - slightly purple/blue tint */
-  --foreground: oklch(0.95 0.01 260); /* Soft warm white */
-  --card: oklch(0.18 0.01 260); /* Slightly lighter dark for cards */
-  --card-foreground: oklch(0.95 0.01 260);
-  --popover: oklch(0.18 0.01 260);
-  --popover-foreground: oklch(0.95 0.01 260);
-  --primary: oklch(0.88 0.02 240); /* Soft warm light for primary */
-  --primary-foreground: oklch(0.15 0.01 260);
-  --secondary: oklch(0.25 0.015 260); /* Warm dark gray */
-  --secondary-foreground: oklch(0.95 0.01 260);
-  --muted: oklch(0.22 0.01 260); /* Muted warm dark */
-  --muted-foreground: oklch(0.65 0.01 260); /* Softer muted text */
-  --accent: oklch(0.25 0.015 260);
-  --accent-foreground: oklch(0.95 0.01 260);
-  --destructive: oklch(0.65 0.18 25); /* Warmer red for dark mode */
-  --border: oklch(0.25 0.01 260 / 50%); /* Subtle warm borders */
-  --input: oklch(0.22 0.01 260 / 60%); /* Warm input backgrounds */
-  --ring: oklch(0.55 0.02 240); /* Soft warm ring color */
-  --chart-1: oklch(0.55 0.18 240); /* Warm blue */
-  --chart-2: oklch(0.65 0.15 160); /* Warm green */
-  --chart-3: oklch(0.75 0.12 70); /* Warm yellow */
-  --chart-4: oklch(0.60 0.20 300); /* Warm purple */
-  --chart-5: oklch(0.65 0.18 20); /* Warm orange */
-  --sidebar: oklch(0.16 0.01 260); /* Slightly lighter than background */
-  --sidebar-foreground: oklch(0.95 0.01 260);
-  --sidebar-primary: oklch(0.55 0.18 240); /* Warm blue accent */
-  --sidebar-primary-foreground: oklch(0.95 0.01 260);
-  --sidebar-accent: oklch(0.22 0.01 260);
-  --sidebar-accent-foreground: oklch(0.95 0.01 260);
-  --sidebar-border: oklch(0.25 0.01 260 / 50%);
-  --sidebar-ring: oklch(0.55 0.02 240);
+  --background: #111111;
+  --foreground: #F0EDE8;
+  --card: #1A1A1A;
+  --card-foreground: #F0EDE8;
+  --popover: #1A1A1A;
+  --popover-foreground: #F0EDE8;
+  --primary: #E8553A;
+  --primary-foreground: #FFFFFF;
+  --secondary: #222222;
+  --secondary-foreground: #F0EDE8;
+  --muted: #222222;
+  --muted-foreground: #777777;
+  --accent: #222222;
+  --accent-foreground: #F0EDE8;
+  --destructive: #E8553A;
+  --destructive-foreground: #FFFFFF;
+  --border: #2A2A2A;
+  --input: #2A2A2A;
+  --ring: #E8553A;
+  --chart-1: #E8553A;
+  --chart-2: #5A9BF0;
+  --chart-3: #4DD89D;
+  --chart-4: #F0C85A;
+  --chart-5: #AA5AF0;
+  --sidebar: #161616;
+  --sidebar-foreground: #F0EDE8;
+  --sidebar-primary: #E8553A;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #222222;
+  --sidebar-accent-foreground: #F0EDE8;
+  --sidebar-border: #2A2A2A;
+  --sidebar-ring: #E8553A;
 }
 
 @theme inline {
@@ -117,8 +119,19 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
-    @apply bg-background text-foreground;
-    font-family: 'Patrick Hand', cursive;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Satoshi', system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .editorial-rule {
+    @apply border-b border-border;
   }
 }

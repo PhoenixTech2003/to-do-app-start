@@ -99,6 +99,7 @@ export function KanbanBoard({ listId, searchTerm, priority }: KanbanBoardProps) 
         nextOverdue,
       )
   })
+
   function getTodoStatus({
     status,
     dueDate,
@@ -106,20 +107,16 @@ export function KanbanBoard({ listId, searchTerm, priority }: KanbanBoardProps) 
     status: 'pending' | 'completed' | 'overdue'
     dueDate?: Date
   }) {
-    // No due date: simple toggle (overdue also goes to completed)
     if (!dueDate) {
       return status === 'completed' ? 'pending' : 'completed'
     }
-
-    // Has due date: completing a todo goes back to pending or overdue based on date,
-    // otherwise mark as completed
     const now = new Date()
     if (status === 'completed') {
       return isAfter(now, dueDate) ? 'overdue' : 'pending'
     }
-
     return 'completed'
   }
+
   return (
     <DragDropProvider
       onDragEnd={(e) => {
@@ -144,20 +141,20 @@ export function KanbanBoard({ listId, searchTerm, priority }: KanbanBoardProps) 
         })
 
         toast.promise(todoPromise, {
-          loading: 'Updating Todo....',
-          success: 'Todo updated successfully',
-          error: 'Failed to updated todo',
+          loading: 'Updating todo…',
+          success: 'Todo updated',
+          error: 'Failed to update todo',
         })
       }}
     >
       <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-x-visible sm:snap-none sm:pb-0">
-        <div className="min-w-[75vw] snap-center sm:min-w-0">
+        <div className="min-w-[80vw] snap-center sm:min-w-0">
           <KanbanLane title="Pending" todos={pendingTodos?.todos ?? []} />
         </div>
-        <div className="min-w-[75vw] snap-center sm:min-w-0">
+        <div className="min-w-[80vw] snap-center sm:min-w-0">
           <KanbanLane title="Completed" todos={completedTodos?.todos ?? []} />
         </div>
-        <div className="min-w-[75vw] snap-center sm:min-w-0">
+        <div className="min-w-[80vw] snap-center sm:min-w-0">
           <KanbanLane title="Overdue" todos={overdueTodos?.todos ?? []} />
         </div>
       </div>

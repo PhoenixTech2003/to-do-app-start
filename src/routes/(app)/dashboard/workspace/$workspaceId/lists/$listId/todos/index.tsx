@@ -92,7 +92,7 @@ function RouteComponent() {
   }
 
   return (
-    <div className="p-3 sm:p-6 flex flex-col min-w-0">
+    <div className="p-4 sm:p-6 flex flex-col min-w-0">
       <SearchInput
         searchTerm={localSearch}
         onSearch={onSearchChange}
@@ -111,31 +111,30 @@ function RouteComponent() {
           navigate({ search: (prev: any) => ({ ...prev, status: val as any }), replace: true })
         }}
       />
-      <header className="mb-4 sm:mb-6 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 sm:gap-6 min-w-0">
+
+      <header className="mb-8 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4 min-w-0">
           <BackButton />
           <div className="min-w-0">
-            <h2 className="text-lg sm:text-2xl font-semibold flex items-center gap-2 truncate">
-              <span className="truncate">{data.title} List</span>
-              {isFetching ? (
-                <Spinner className="text-muted-foreground shrink-0" />
-              ) : null}
+            <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2 truncate tracking-tight">
+              {data.title}
+              {isFetching && <Spinner className="text-muted-foreground h-4 w-4 shrink-0" />}
             </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Showing todos for this list.
+            <p className="text-xs font-mono text-muted-foreground mt-0.5">
+              {data.title} list
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             variant="outline"
             size="sm"
-            className="hidden sm:inline-flex gap-1.5"
+            className="hidden sm:inline-flex gap-2 h-8 px-3 rounded-md text-xs"
             onClick={() => setSearchOpen(true)}
             aria-label="Open search"
           >
-            <Search className="h-4 w-4" />
-            {formatForDisplay('Mod+K')}
+            <Search className="h-3.5 w-3.5" />
+            <span className="font-mono text-[10px] text-muted-foreground">{formatForDisplay('Mod+K')}</span>
           </Button>
           <ViewModeTrigger
             mode={view}
@@ -145,6 +144,7 @@ function RouteComponent() {
           <CreateTodoDialog listId={listId as Id<'lists'>} />
         </div>
       </header>
+
       {isError ? (
         <Alert variant="destructive" className="mb-4">
           <AlertTitle>Failed to load list</AlertTitle>
@@ -155,6 +155,7 @@ function RouteComponent() {
           </AlertDescription>
         </Alert>
       ) : null}
+
       <section className="min-w-0 overflow-hidden">
         {view === 'kanban' && <KanbanBoard listId={listId as Id<'lists'>} searchTerm={searchTerm} priority={priority} />}
 
