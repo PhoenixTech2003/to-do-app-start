@@ -11,21 +11,22 @@ export const Route = createFileRoute('/(app)/pomodoro/')({
 
 function PomodoroPage() {
   return (
-    <div className="p-3 sm:p-6 flex flex-col">
-      <header className="mb-4 sm:mb-6 flex items-center gap-2 sm:gap-6">
+    <div className="flex flex-col h-[calc(100svh-3.5rem-3rem)] overflow-hidden">
+      <header className="mb-4 flex items-center gap-4 shrink-0">
         <BackButton />
         <div className="min-w-0">
-          <h2 className="text-lg sm:text-2xl font-semibold">Pomodoro</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Stay focused, take breaks.
-          </p>
+          <h2 className="text-xl font-bold tracking-tight">Pomodoro</h2>
+          <p className="text-xs font-mono text-muted-foreground mt-0.5">Focus · Break · Repeat</p>
         </div>
       </header>
-      <div className="grid gap-6 md:grid-cols-[2fr_1fr] md:items-start">
-        <div className="flex items-start justify-center pt-4 sm:pt-8">
+
+      <div className="flex-1 min-h-0 grid gap-4 lg:grid-cols-[1fr_260px] items-stretch">
+        <div className="flex items-center justify-center min-h-0">
           <PomodoroTimer />
         </div>
-        <PomodoroRoundHistory />
+        <div className="hidden lg:flex min-h-0">
+          <PomodoroRoundHistory />
+        </div>
       </div>
     </div>
   )
