@@ -135,3 +135,69 @@
     @apply border-b border-border;
   }
 }
+
+/* Sonner toast overrides – match TwoDo aesthetic */
+[data-sonner-toaster] {
+  font-family: 'Satoshi', system-ui, sans-serif !important;
+  --border-radius: var(--radius) !important;
+}
+
+[data-sonner-toaster][data-sonner-theme='light'] {
+  --normal-bg: var(--card) !important;
+  --normal-border: var(--border) !important;
+  --normal-text: var(--foreground) !important;
+
+  --success-bg: color-mix(in srgb, var(--chart-3) 12%, var(--card)) !important;
+  --success-border: color-mix(in srgb, var(--chart-3) 35%, var(--border)) !important;
+  --success-text: var(--chart-3) !important;
+
+  --info-bg: color-mix(in srgb, var(--primary) 10%, var(--card)) !important;
+  --info-border: color-mix(in srgb, var(--primary) 25%, var(--border)) !important;
+  --info-text: var(--primary) !important;
+
+  --warning-bg: color-mix(in srgb, var(--chart-4) 12%, var(--card)) !important;
+  --warning-border: color-mix(in srgb, var(--chart-4) 35%, var(--border)) !important;
+  --warning-text: var(--chart-4) !important;
+
+  --error-bg: color-mix(in srgb, var(--destructive) 10%, var(--card)) !important;
+  --error-border: color-mix(in srgb, var(--destructive) 30%, var(--border)) !important;
+  --error-text: var(--destructive) !important;
+}
+
+[data-sonner-toaster][data-sonner-theme='dark'] {
+  --normal-bg: var(--card) !important;
+  --normal-border: var(--border) !important;
+  --normal-text: var(--foreground) !important;
+
+  --success-bg: color-mix(in srgb, var(--chart-3) 15%, var(--card)) !important;
+  --success-border: color-mix(in srgb, var(--chart-3) 30%, var(--border)) !important;
+  --success-text: var(--chart-3) !important;
+
+  --info-bg: color-mix(in srgb, var(--primary) 15%, var(--card)) !important;
+  --info-border: color-mix(in srgb, var(--primary) 25%, var(--border)) !important;
+  --info-text: var(--primary) !important;
+
+  --warning-bg: color-mix(in srgb, var(--chart-4) 15%, var(--card)) !important;
+  --warning-border: color-mix(in srgb, var(--chart-4) 25%, var(--border)) !important;
+  --warning-text: var(--chart-4) !important;
+
+  --error-bg: color-mix(in srgb, var(--destructive) 15%, var(--card)) !important;
+  --error-border: color-mix(in srgb, var(--destructive) 25%, var(--border)) !important;
+  --error-text: hsl(360, 100%, 75%) !important;
+}
+
+[data-sonner-toaster][data-sonner-theme='light'] [data-sonner-toast][data-styled='true'] {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.02) !important;
+}
+
+[data-sonner-toaster][data-sonner-theme='dark'] [data-sonner-toast][data-styled='true'] {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-sonner-toast][data-styled='true'] [data-description] {
+  color: var(--muted-foreground) !important;
+}
+
+[data-rich-colors='true'][data-sonner-toast][data-styled='true'] [data-description] {
+  opacity: 0.9;
+}
