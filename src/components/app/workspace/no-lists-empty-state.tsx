@@ -12,18 +12,18 @@ export function NoListsEmptyState({
   workspaceId,
 }: NoListsEmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center space-y-6 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700 bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 px-4 py-16 sm:px-6 lg:px-8">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900">
-        <ListTodo className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+    <div className="flex flex-col items-center justify-center gap-6 rounded-xl border-2 border-dashed border-border bg-card/60 px-4 py-16 sm:px-6 lg:px-8 shadow-sm">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-chart-2/10">
+        <ListTodo className="h-8 w-8 text-chart-2" />
       </div>
 
-      <div className="space-y-2 text-center">
-        <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+      <div className="space-y-2 text-center max-w-md">
+        <h3 className="text-xl sm:text-2xl font-bold text-foreground">
           No Lists Yet
         </h3>
-        <p className="text-base text-slate-500 dark:text-slate-400">
+        <p className="text-sm sm:text-base text-muted-foreground">
           Create your first list in{' '}
-          <span className="font-semibold text-slate-900 dark:text-slate-100">
+          <span className="font-semibold text-foreground">
             {workspaceName}
           </span>{' '}
           to start managing your tasks.
