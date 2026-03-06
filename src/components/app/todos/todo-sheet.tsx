@@ -24,6 +24,9 @@ import {
 } from '@/components/ui/sheet'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
+interface TodoCheckInputProps {
+  todo: Todo
+}
 interface TodoSheetProps {
   children: React.ReactNode
   todo: Todo
@@ -56,7 +59,55 @@ export function TodoSheet({
 
   const updateSubtask = useConvexMutation(api.todos.mutations.updateSubTask)
   const deleteSubtask = useConvexMutation(api.todos.mutations.deleteSubTask)
-  const deleteTodo = useConvexMutation(api.todos.mutations.deleteTodo)
+  const deleteTodo = useConvexMutation(
+    api.todos.mutations.deleteTodo,
+  ).withOptimisticUpdate((localStore, mutationArgs) => {
+    const { todoId: mutationTodoId } = mutationArgs
+    const listArgs = {
+      listId: todo.listId, // Using `todo.listId` from component props as `deleteTodo` mutation doesn't pass `listId`
+      paginationOpts: { numItems: 6, cursor: null },
+    }
+
+    const removeTodo = (queryData: { page: Array<Todo> } | undefined) =>
+      queryData
+        ? {
+            ...queryData,
+            page: queryData.page.filter((t: Todo) => t._id !== mutationTodoId),
+          }
+        : undefined
+
+    const pendingData = localStore.getQuery(
+      api.todos.queries.GetPendingTodos,
+      listArgs,
+    )
+    const completedData = localStore.getQuery(
+      api.todos.queries.GetCompletedTodos,
+      listArgs,
+    )
+    const overdueData = localStore.getQuery(
+      api.todos.queries.GetOverDueTodos,
+      listArgs,
+    )
+
+    if (pendingData)
+      localStore.setQuery(api.todos.queries.GetPendingTodos, listArgs, {
+        ...removeTodo(pendingData),
+        isDone: false,
+        continueCursor: 'optimistic',
+      } as any)
+    if (completedData)
+      localStore.setQuery(api.todos.queries.GetCompletedTodos, listArgs, {
+        ...removeTodo(completedData),
+        isDone: false,
+        continueCursor: 'optimistic',
+      } as any)
+    if (overdueData)
+      localStore.setQuery(api.todos.queries.GetOverDueTodos, listArgs, {
+        ...removeTodo(overdueData),
+        isDone: false,
+        continueCursor: 'optimistic',
+      } as any)
+  })
 
   const handleToggle = (id: Id<'subTasks'>, checked: boolean) => {
     updateSubtask({ subTaskId: id, completed: checked })
@@ -92,7 +143,9 @@ export function TodoSheet({
             </div>
             <SheetTitle className="truncate">{todo.title}</SheetTitle>
           </div>
-          <SheetDescription className="line-clamp-3">{todo.description}</SheetDescription>
+          <SheetDescription className="line-clamp-3">
+            {todo.description}
+          </SheetDescription>
           <div className="flex items-center gap-2 text-sm">
             {todo.dueDate && <Calendar size={16} className="shrink-0" />}
             {todo.dueDate && (

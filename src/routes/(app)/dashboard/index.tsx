@@ -1,20 +1,20 @@
-import { useQuery } from '@tanstack/react-query'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useEffect, useRef, useState } from 'react'
-import { convexQuery } from '@convex-dev/react-query'
+import { Search } from 'lucide-react'
 import { api } from 'convex/_generated/api'
-import z from 'zod'
-import { zodValidator } from '@tanstack/zod-adapter'
+import { usePaginatedQuery } from 'convex/react'
+import { useEffect, useRef, useState } from 'react'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useDebouncer } from '@tanstack/react-pacer'
 import { formatForDisplay } from '@tanstack/react-hotkeys'
-import { Search } from 'lucide-react'
+import { zodValidator } from '@tanstack/zod-adapter'
+import { z } from 'zod'
 import { CreateWorkspaceDialog } from '@/components/app/dashboard/create-workspace-dialog'
-import { WorkspaceList } from '@/components/app/dashboard/workspace-list'
-import { StateHandler } from '@/components/app/state-handler'
 import { DashboardLoadingSkeleton } from '@/components/app/dashboard/dashboard-loading-skeleton'
-import { NoWorkspacesEmptyState } from '@/components/app/dashboard/no-workspaces-empty-state'
 import { DashboardPageSkeleton } from '@/components/app/dashboard/dashboard-page-skeleton'
+import { NoWorkspacesEmptyState } from '@/components/app/dashboard/no-workspaces-empty-state'
+import { PaginationController } from '@/components/app/pagination-controller'
 import { SearchInput } from '@/components/app/search-box'
+import { StateHandler } from '@/components/app/state-handler'
+import { WorkspaceList } from '@/components/app/dashboard/workspace-list'
 import { Button } from '@/components/ui/button'
 import { useIsMobile } from '@/hooks/use-mobile'
 
@@ -48,17 +48,24 @@ function DashboardPage() {
     setLocalSearch(urlValue)
   }, [searchTerm])
 
+  const [refreshKey, setRefreshKey] = useState(0)
   const {
-    data = [],
-    isFetching,
-    isError,
-    error,
-    isLoading,
-  } = useQuery(
-    convexQuery(api.dashboard.queries.getUserWorkspaces, {
+    results: data,
+    status: paginationStatus,
+    loadMore,
+  } = usePaginatedQuery(
+    api.dashboard.queries.getUserWorkspaces,
+    {
       searchTerm: searchTerm,
-    }),
+      refreshKey,
+    },
+    { initialNumItems: 6 },
   )
+
+  const isLoading = paginationStatus === 'LoadingFirstPage'
+  const isFetching = paginationStatus === 'LoadingMore'
+  const isError = false // handled by convex if needed, but usePaginatedQuery doesn't return isError directly in the same way as useQuery
+  const error = null
   const handleSearch = (q: string) => {
     pendingSearchRef.current = q
     navigate({
@@ -116,6 +123,15 @@ function DashboardPage() {
             </div>
           </div>
           <WorkspaceList workspaceListData={data} />
+          <PaginationController
+            status={paginationStatus}
+            loadMore={loadMore}
+            isFetching={isFetching}
+            resultsCount={data.length}
+            label="Workspaces"
+            onToggleShowFewer={() => setRefreshKey((prev) => prev + 1)}
+            initialNumItems={6}
+          />
         </div>
       </StateHandler>
     </>

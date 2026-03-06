@@ -5,6 +5,12 @@ import { convexQuery } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
+import { formatForDisplay } from '@tanstack/react-hotkeys'
+import { useDebouncer } from '@tanstack/react-pacer'
+import { useEffect, useRef, useState } from 'react'
+import { Search } from 'lucide-react'
+import { zodValidator } from '@tanstack/zod-adapter'
+import { z } from 'zod'
 import { BackButton } from '@/components/app/back-button'
 import { TodoCard } from '@/components/app/todos/todo-card'
 import { TodosPageSkeleton } from '@/components/app/todos/todos-page-skeleton'
@@ -12,14 +18,8 @@ import { StateHandler } from '@/components/app/state-handler'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Empty } from '@/components/ui/empty'
 
-import { formatForDisplay } from '@tanstack/react-hotkeys'
-import { useDebouncer } from '@tanstack/react-pacer'
-import { useEffect, useRef, useState } from 'react'
 import { SearchInput } from '@/components/app/search-box'
 import { Button } from '@/components/ui/button'
-import { Search } from 'lucide-react'
-import { zodValidator } from '@tanstack/zod-adapter'
-import { z } from 'zod'
 
 const todaySearchSchema = z.object({
   searchTerm: z.string().optional(),
@@ -32,7 +32,7 @@ export const Route = createFileRoute('/(app)/today/')({
     today: format(new Date(), 'yyyy-LL-dd'),
     searchTerm,
     priority,
-    status
+    status,
   }),
   loader: async (opts) => {
     await opts.context.queryClient.ensureQueryData(
@@ -109,12 +109,18 @@ function TodayPage() {
         priority={localPriority}
         onPriorityChange={(val) => {
           setLocalPriority(val as any)
-          navigate({ search: (prev: any) => ({ ...prev, priority: val as any }), replace: true })
+          navigate({
+            search: (prev: any) => ({ ...prev, priority: val as any }),
+            replace: true,
+          })
         }}
         status={localStatus}
         onStatusChange={(val) => {
           setLocalStatus(val as any)
-          navigate({ search: (prev: any) => ({ ...prev, status: val as any }), replace: true })
+          navigate({
+            search: (prev: any) => ({ ...prev, status: val as any }),
+            replace: true,
+          })
         }}
       />
 
@@ -122,7 +128,9 @@ function TodayPage() {
         <div className="flex items-center gap-4 min-w-0">
           <BackButton />
           <div className="min-w-0">
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Today</h2>
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+              Today
+            </h2>
             <p className="text-xs font-mono text-muted-foreground mt-0.5">
               {format(new Date(), 'EEEE, MMMM do')}
             </p>
@@ -136,7 +144,9 @@ function TodayPage() {
           aria-label="Open search"
         >
           <Search className="h-3.5 w-3.5" />
-          <span className="font-mono text-[10px] text-muted-foreground">{formatForDisplay('Mod+K')}</span>
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {formatForDisplay('Mod+K')}
+          </span>
         </Button>
       </header>
 
@@ -147,9 +157,13 @@ function TodayPage() {
               <div className="flex items-center justify-between pb-2 border-b border-border">
                 <div className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-chart-4" />
-                  <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">Pending</h2>
+                  <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                    Pending
+                  </h2>
                 </div>
-                <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">{pendingTodos.length}</span>
+                <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">
+                  {pendingTodos.length}
+                </span>
               </div>
 
               <StateHandler
@@ -184,9 +198,13 @@ function TodayPage() {
               <div className="flex items-center justify-between pb-2 border-b border-border">
                 <div className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-chart-3" />
-                  <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">Completed</h2>
+                  <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                    Completed
+                  </h2>
                 </div>
-                <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">{completedTodos.length}</span>
+                <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">
+                  {completedTodos.length}
+                </span>
               </div>
 
               <StateHandler

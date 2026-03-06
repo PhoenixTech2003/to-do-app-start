@@ -1,4 +1,5 @@
 import { convexQuery } from '@convex-dev/react-query'
+import { usePaginatedQuery } from 'convex/react'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
@@ -8,6 +9,7 @@ import { Search } from 'lucide-react'
 import { api } from 'convex/_generated/api'
 import { z } from 'zod'
 import { zodValidator } from '@tanstack/zod-adapter'
+import { AnimatePresence, motion } from 'motion/react'
 import type { Id } from 'convex/_generated/dataModel'
 import { ListCard } from '@/components/app/workspace/list-card'
 import { StateHandler } from '@/components/app/state-handler'
@@ -19,6 +21,7 @@ import { BackButton } from '@/components/app/back-button'
 import { SearchInput } from '@/components/app/search-box'
 import { Button } from '@/components/ui/button'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { PaginationController } from '@/components/app/pagination-controller'
 
 const searchSchema = z.object({
   searchTerm: z.string().optional(),
@@ -39,6 +42,7 @@ function WorkspaceListsPage() {
   const { searchTerm } = Route.useSearch()
   const [localSearch, setLocalSearch] = useState(searchTerm ?? '')
   const [searchOpen, setSearchOpen] = useState(false)
+  const [showFewer, _setShowFewer] = useState(false)
   const pendingSearchRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -54,17 +58,37 @@ function WorkspaceListsPage() {
   }, [searchTerm])
 
   const {
-    data = { lists: [], workspaceDetails: null },
-    isFetching,
-    isError,
-    error,
-    isLoading,
+    data: workspaceDetails,
+    isLoading: isLoadingWorkspace,
+    isError: isErrorWorkspace,
+    error: errorWorkspace,
   } = useQuery(
-    convexQuery(api.workspace.queries.getAllUserWorkspaceLists, {
+    convexQuery(api.workspace.queries.GetWorkspaceDetails, {
       workspaceId: workspaceId as Id<'workspace'>,
-      searchTerm: searchTerm,
     }),
   )
+
+  const [refreshKey, setRefreshKey] = useState(0)
+  const {
+    results: lists,
+    status: paginationStatus,
+    loadMore,
+  } = usePaginatedQuery(
+    api.workspace.queries.GetWorkspaceLists,
+    {
+      workspaceId: workspaceId as Id<'workspace'>,
+      searchTerm: searchTerm,
+      refreshKey,
+    },
+    { initialNumItems: 6 },
+  )
+
+  const isLoading =
+    isLoadingWorkspace || paginationStatus === 'LoadingFirstPage'
+  const isError = isErrorWorkspace
+  const error = errorWorkspace
+  const isFetching = paginationStatus === 'LoadingMore'
+  const displayedLists = lists
 
   const handleSearch = (q: string) => {
     pendingSearchRef.current = q
@@ -99,50 +123,82 @@ function WorkspaceListsPage() {
         isFetching={isFetching}
         isError={isError}
         error={error}
-        isEmpty={data.lists.length === 0}
+        isEmpty={lists.length === 0}
         loadingSkeleton={<WorkspaceLoadingSkeleton />}
-      emptyState={
-        <NoListsEmptyState
-          workspaceName={data.workspaceDetails?.title}
-          workspaceId={workspaceId as Id<'workspace'>}
-        />
-      }
-      errorTitle="Failed to load lists"
-      errorDescription="An error occurred while loading your workspace lists. Please try again."
-    >
-      <div className="space-y-4 pb-24">
-        <div className="flex items-center justify-between gap-2">
-          <BackButton />
-          <h1 className="text-xl sm:text-3xl font-bold truncate min-w-0">
-            {data.workspaceDetails?.title}
-          </h1>
-          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              className="hidden sm:inline-flex gap-1.5"
-              onClick={() => setSearchOpen(true)}
-              aria-label="Open search"
-            >
-              <Search className="h-4 w-4" />
-              {formatForDisplay('Mod+K')}
-            </Button>
-            {data.workspaceDetails?._id && (
-              <CreateListDialog workspaceId={data.workspaceDetails._id} />
-            )}
+        emptyState={
+          <NoListsEmptyState
+            workspaceName={workspaceDetails?.title}
+            workspaceId={workspaceId as Id<'workspace'>}
+          />
+        }
+        errorTitle="Failed to load lists"
+        errorDescription="An error occurred while loading your workspace lists. Please try again."
+      >
+        <div className="space-y-4 pb-24">
+          <div className="flex items-center justify-between gap-2">
+            <BackButton />
+            <h1 className="text-xl sm:text-3xl font-bold truncate min-w-0">
+              {workspaceDetails?.title}
+            </h1>
+            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:inline-flex gap-1.5"
+                onClick={() => setSearchOpen(true)}
+                aria-label="Open search"
+              >
+                <Search className="h-4 w-4" />
+                {formatForDisplay('Mod+K')}
+              </Button>
+              {workspaceDetails?._id && (
+                <CreateListDialog workspaceId={workspaceDetails._id} />
+              )}
+            </div>
           </div>
+          <motion.div
+            layout
+            className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+          >
+            <AnimatePresence mode="popLayout">
+              {displayedLists.map(
+                (listDetails: { _id: string; title: string }, index) => (
+                  <motion.div
+                    key={listDetails._id}
+                    layout
+                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{
+                      opacity: 0,
+                      scale: 0.95,
+                      transition: { duration: 0.1 },
+                    }}
+                    transition={{
+                      duration: 0.4,
+                      delay: showFewer ? 0 : index * 0.05,
+                      ease: [0.21, 1.11, 0.81, 0.99],
+                    }}
+                  >
+                    <ListCard
+                      listTitle={listDetails.title}
+                      listItem={listDetails}
+                    />
+                  </motion.div>
+                ),
+              )}
+            </AnimatePresence>
+          </motion.div>
+          <PaginationController
+            status={paginationStatus}
+            loadMore={loadMore}
+            isFetching={isFetching}
+            resultsCount={lists.length}
+            label="Lists"
+            onToggleShowFewer={() => setRefreshKey((prev) => prev + 1)}
+            initialNumItems={9}
+          />
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {data.lists.map((listDetails) => (
-            <ListCard
-              key={listDetails._id}
-              listTitle={listDetails.title}
-              listItem={listDetails}
-            />
-          ))}
-        </div>
-      </div>
-    </StateHandler>
+      </StateHandler>
     </>
   )
 }

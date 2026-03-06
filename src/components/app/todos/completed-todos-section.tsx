@@ -1,7 +1,7 @@
-import { AnimatePresence } from 'motion/react'
-import { useQuery } from '@tanstack/react-query'
-import { convexQuery } from '@convex-dev/react-query'
+import { usePaginatedQuery } from 'convex/react'
+import { useState } from 'react'
 import { api } from 'convex/_generated/api'
+import { PaginationController } from '../pagination-controller'
 import { StateHandler } from '../state-handler'
 import { TodoCard } from './todo-card'
 import type { Id } from 'convex/_generated/dataModel'
@@ -32,7 +32,9 @@ function CompletedTodosEmptyState() {
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2 pb-2 border-b border-border">
         <div className="h-1.5 w-1.5 rounded-full bg-chart-3" />
-        <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">Completed</h2>
+        <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+          Completed
+        </h2>
       </div>
       <Empty>No completed tasks</Empty>
     </div>
@@ -44,15 +46,26 @@ export function CompletedTodosSection({
   searchTerm,
   priority,
 }: CompletedTodosSectionProps) {
-  const { data, isLoading, isFetching, isError, error } = useQuery(
-    convexQuery(api.todos.queries.GetCompletedTodos, {
+  const [refreshKey, setRefreshKey] = useState(0)
+  const {
+    results: todos,
+    status: paginationStatus,
+    loadMore,
+  } = usePaginatedQuery(
+    api.todos.queries.GetCompletedTodos,
+    {
       listId,
       searchTerm: searchTerm || undefined,
       priority: priority === 'all' ? undefined : priority,
-    }),
+      refreshKey,
+    },
+    { initialNumItems: 6 },
   )
 
-  const todos = data?.todos ?? []
+  const isLoading = paginationStatus === 'LoadingFirstPage'
+  const isFetching = paginationStatus === 'LoadingMore'
+  const isError = false
+  const error = null
 
   return (
     <StateHandler
@@ -68,17 +81,28 @@ export function CompletedTodosSection({
         <div className="flex items-center justify-between pb-2 border-b border-border">
           <div className="flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-chart-3" />
-            <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">Completed</h2>
+            <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+              Completed
+            </h2>
           </div>
-          <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">{todos.length}</span>
+          <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">
+            {todos.length}
+          </span>
         </div>
         <div className="space-y-2">
-          <AnimatePresence mode="popLayout">
-            {todos.map((todo) => (
-              <TodoCard key={todo._id} todo={todo} />
-            ))}
-          </AnimatePresence>
+          {todos.map((todo) => (
+            <TodoCard key={todo._id} todo={todo} />
+          ))}
         </div>
+        <PaginationController
+          status={paginationStatus}
+          loadMore={loadMore}
+          isFetching={isFetching}
+          resultsCount={todos.length}
+          label="Completed Todos"
+          onToggleShowFewer={() => setRefreshKey((prev: number) => prev + 1)}
+          initialNumItems={6}
+        />
       </div>
     </StateHandler>
   )

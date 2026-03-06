@@ -1,10 +1,14 @@
 import { useConvexMutation } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
 import { isAfter, parse } from 'date-fns'
-import type { Todo } from '@/types/global'
-import { motion, AnimatePresence } from 'motion/react'
 import { CheckIcon } from 'lucide-react'
+import { AnimatePresence, motion } from 'motion/react'
+import type { Todo } from '@/types/global'
 import { cn } from '@/lib/utils'
+
+interface StateHandlerProps {
+  isFetching?: boolean
+}
 
 interface TodoCheckInputProps {
   todo: Todo
@@ -34,38 +38,96 @@ export function TodoCheckInput({ todo }: TodoCheckInputProps) {
     api.todos.mutations.toggleTodoStatus,
   ).withOptimisticUpdate((localStore, args) => {
     const { todoId, status: newStatus } = args
-    const pendingData = localStore.getQuery(api.todos.queries.GetPendingTodos, { listId: todo.listId })
-    const completedData = localStore.getQuery(api.todos.queries.GetCompletedTodos, { listId: todo.listId })
-    const overdueData = localStore.getQuery(api.todos.queries.GetOverDueTodos, { listId: todo.listId })
+    const listArgs = {
+      listId: todo.listId,
+      paginationOpts: { numItems: 6, cursor: null },
+    }
 
-    const findTodo = (data: { todos: Array<Todo> } | undefined) =>
-      data?.todos.find((t) => t._id === todoId)
+    const pendingData = localStore.getQuery(
+      api.todos.queries.GetPendingTodos,
+      listArgs,
+    )
+    const completedData = localStore.getQuery(
+      api.todos.queries.GetCompletedTodos,
+      listArgs,
+    )
+    const overdueData = localStore.getQuery(
+      api.todos.queries.GetOverDueTodos,
+      listArgs,
+    )
+
+    const findTodo = (data: { page: Array<Todo> } | undefined) =>
+      data?.page.find((t) => t._id === todoId)
+
     const currentTodo =
       findTodo(pendingData) ?? findTodo(completedData) ?? findTodo(overdueData)
     if (!currentTodo) return
 
     const optimisticTodo = { ...currentTodo, status: newStatus } as Todo
 
-    const withoutTodo = (data: { todos: Array<Todo> } | undefined) =>
-      data ? { todos: data.todos.filter((t) => t._id !== todoId) } : undefined
+    const withoutTodo = (data: { page: Array<Todo> } | undefined) =>
+      data
+        ? { ...data, page: data.page.filter((t: Todo) => t._id !== todoId) }
+        : undefined
+
     const withTodo = (
-      data: { todos: Array<Todo> } | undefined,
+      data: { page: Array<Todo> } | undefined,
       optimisticTodoItem: Todo,
-    ) => (data ? { todos: [...data.todos, optimisticTodoItem] } : undefined)
+    ) =>
+      data ? { ...data, page: [optimisticTodoItem, ...data.page] } : undefined
 
-    const nextPending = currentTodo.status === 'pending' ? withoutTodo(pendingData) : newStatus === 'pending' ? withTodo(pendingData, optimisticTodo) : pendingData
-    const nextCompleted = currentTodo.status === 'completed' ? withoutTodo(completedData) : newStatus === 'completed' ? withTodo(completedData, optimisticTodo) : completedData
-    const nextOverdue = currentTodo.status === 'overdue' ? withoutTodo(overdueData) : newStatus === 'overdue' ? withTodo(overdueData, optimisticTodo) : overdueData
+    const nextPending =
+      currentTodo.status === 'pending'
+        ? withoutTodo(pendingData)
+        : newStatus === 'pending'
+          ? withTodo(pendingData, optimisticTodo)
+          : pendingData
+    const nextCompleted =
+      currentTodo.status === 'completed'
+        ? withoutTodo(completedData)
+        : newStatus === 'completed'
+          ? withTodo(completedData, optimisticTodo)
+          : completedData
+    const nextOverdue =
+      currentTodo.status === 'overdue'
+        ? withoutTodo(overdueData)
+        : newStatus === 'overdue'
+          ? withTodo(overdueData, optimisticTodo)
+          : overdueData
 
-    if (nextPending) localStore.setQuery(api.todos.queries.GetPendingTodos, { listId: todo.listId }, nextPending)
-    if (nextCompleted) localStore.setQuery(api.todos.queries.GetCompletedTodos, { listId: todo.listId }, nextCompleted)
-    if (nextOverdue) localStore.setQuery(api.todos.queries.GetOverDueTodos, { listId: todo.listId }, nextOverdue)
+    if (nextPending)
+      localStore.setQuery(api.todos.queries.GetPendingTodos, listArgs, {
+        ...nextPending,
+        isDone: false,
+        continueCursor: 'optimistic',
+      })
+    if (nextCompleted)
+      localStore.setQuery(api.todos.queries.GetCompletedTodos, listArgs, {
+        ...nextCompleted,
+        isDone: false,
+        continueCursor: 'optimistic',
+      })
+    if (nextOverdue)
+      localStore.setQuery(api.todos.queries.GetOverDueTodos, listArgs, {
+        ...nextOverdue,
+        isDone: false,
+        continueCursor: 'optimistic',
+      })
 
     if (todo.dueDate) {
-      const byDateData = localStore.getQuery(api.globals.queries.getTodosByDate, { date: todo.dueDate })
+      const byDateData = localStore.getQuery(
+        api.globals.queries.getTodosByDate,
+        { date: todo.dueDate },
+      )
       if (byDateData) {
-        const nextTodos = byDateData.todos.map((t) => t._id === todoId ? optimisticTodo : t)
-        localStore.setQuery(api.globals.queries.getTodosByDate, { date: todo.dueDate }, { todos: nextTodos })
+        const nextTodos = byDateData.todos.map((t) =>
+          t._id === todoId ? optimisticTodo : t,
+        )
+        localStore.setQuery(
+          api.globals.queries.getTodosByDate,
+          { date: todo.dueDate },
+          { todos: nextTodos },
+        )
       }
     }
   })
@@ -89,10 +151,10 @@ export function TodoCheckInput({ todo }: TodoCheckInputProps) {
         })
       }
       className={cn(
-        "relative flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border-2 transition-colors duration-150",
+        'relative flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border-2 transition-colors duration-150',
         isCompleted
-          ? "bg-primary border-primary"
-          : "bg-transparent border-border hover:border-primary"
+          ? 'bg-primary border-primary'
+          : 'bg-transparent border-border hover:border-primary',
       )}
       aria-label={`Mark ${todo.title} ${isCompleted ? 'incomplete' : 'complete'}`}
     >
