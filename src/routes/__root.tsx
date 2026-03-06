@@ -10,7 +10,6 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { initTabSafeTimers } from '@vorthain/tab-safe-timers'
 import { ThemeProvider } from 'next-themes'
-import { Toaster } from 'sonner'
 import { createServerFn } from '@tanstack/react-start'
 import { ConvexBetterAuthProvider } from '@convex-dev/better-auth/react'
 
@@ -18,6 +17,7 @@ import { hotkeysDevtoolsPlugin } from '@tanstack/react-hotkeys-devtools'
 import appCss from '../styles.css?url'
 import type { ConvexQueryClient } from '@convex-dev/react-query'
 import type { QueryClient } from '@tanstack/react-query'
+import { ThemeToaster } from '@/components/ui/theme-toaster'
 import { authClient } from '@/lib/auth-client'
 import { getToken } from '@/lib/auth-server'
 
@@ -127,7 +127,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             },
           ]}
         />
-        <Toaster richColors position="top-center" />
+        <ThemeToaster />
         <Scripts />
       </body>
     </html>

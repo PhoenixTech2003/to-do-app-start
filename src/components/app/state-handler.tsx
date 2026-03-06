@@ -37,8 +37,11 @@ export function StateHandler({
   // Show error alert if there's an error
   if (isError) {
     return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
+      <Alert
+        variant="destructive"
+        className="rounded-xl border-2 border-destructive/20 bg-card"
+      >
+        <AlertCircle className="h-4 w-4 shrink-0" />
         <AlertTitle>{errorTitle}</AlertTitle>
         <AlertDescription>
           {error?.message || errorDescription}
