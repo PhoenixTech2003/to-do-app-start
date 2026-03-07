@@ -68,7 +68,6 @@ function WorkspaceListsPage() {
     }),
   )
 
-  const [refreshKey, setRefreshKey] = useState(0)
   const {
     results: lists,
     status: paginationStatus,
@@ -78,7 +77,6 @@ function WorkspaceListsPage() {
     {
       workspaceId: workspaceId as Id<'workspace'>,
       searchTerm: searchTerm,
-      refreshKey,
     },
     { initialNumItems: 6 },
   )
@@ -161,8 +159,7 @@ function WorkspaceListsPage() {
             className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
           >
             <AnimatePresence mode="popLayout">
-              {displayedLists.map(
-                (listDetails: { _id: string; title: string }, index) => (
+              {displayedLists.map((listDetails, index) => (
                   <motion.div
                     key={listDetails._id}
                     layout
@@ -191,10 +188,8 @@ function WorkspaceListsPage() {
           <PaginationController
             status={paginationStatus}
             loadMore={loadMore}
-            isFetching={isFetching}
             resultsCount={lists.length}
             label="Lists"
-            onToggleShowFewer={() => setRefreshKey((prev) => prev + 1)}
             initialNumItems={9}
           />
         </div>

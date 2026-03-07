@@ -48,24 +48,21 @@ function DashboardPage() {
     setLocalSearch(urlValue)
   }, [searchTerm])
 
-  const [refreshKey, setRefreshKey] = useState(0)
   const {
     results: data,
     status: paginationStatus,
     loadMore,
   } = usePaginatedQuery(
     api.dashboard.queries.getUserWorkspaces,
-    {
-      searchTerm: searchTerm,
-      refreshKey,
-    },
+    { searchTerm: searchTerm },
     { initialNumItems: 6 },
   )
 
   const isLoading = paginationStatus === 'LoadingFirstPage'
   const isFetching = paginationStatus === 'LoadingMore'
-  const isError = false // handled by convex if needed, but usePaginatedQuery doesn't return isError directly in the same way as useQuery
+  const isError = false
   const error = null
+
   const handleSearch = (q: string) => {
     pendingSearchRef.current = q
     navigate({
@@ -126,10 +123,8 @@ function DashboardPage() {
           <PaginationController
             status={paginationStatus}
             loadMore={loadMore}
-            isFetching={isFetching}
             resultsCount={data.length}
             label="Workspaces"
-            onToggleShowFewer={() => setRefreshKey((prev) => prev + 1)}
             initialNumItems={6}
           />
         </div>

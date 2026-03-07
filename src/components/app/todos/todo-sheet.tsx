@@ -24,9 +24,6 @@ import {
 } from '@/components/ui/sheet'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
-interface TodoCheckInputProps {
-  todo: Todo
-}
 interface TodoSheetProps {
   children: React.ReactNode
   todo: Todo
@@ -63,50 +60,32 @@ export function TodoSheet({
     api.todos.mutations.deleteTodo,
   ).withOptimisticUpdate((localStore, mutationArgs) => {
     const { todoId: mutationTodoId } = mutationArgs
-    const listArgs = {
-      listId: todo.listId, // Using `todo.listId` from component props as `deleteTodo` mutation doesn't pass `listId`
-      paginationOpts: { numItems: 6, cursor: null },
+
+    const removeTodoFromQueries = (
+      queryRef: typeof api.todos.queries.GetPendingTodos,
+    ) => {
+      const queries = localStore.getAllQueries(queryRef)
+      for (const { args: qArgs, value } of queries) {
+        if (qArgs.listId !== todo.listId) continue
+        if (!value) continue
+
+        const pageContainsTodo = value.page.some(
+          (t) => t._id === mutationTodoId,
+        )
+        if (!pageContainsTodo) continue
+
+        localStore.setQuery(queryRef, qArgs, {
+          ...value,
+          page: value.page.filter((t: Todo) => t._id !== mutationTodoId),
+          isDone: false,
+          continueCursor: 'optimistic',
+        })
+      }
     }
 
-    const removeTodo = (queryData: { page: Array<Todo> } | undefined) =>
-      queryData
-        ? {
-            ...queryData,
-            page: queryData.page.filter((t: Todo) => t._id !== mutationTodoId),
-          }
-        : undefined
-
-    const pendingData = localStore.getQuery(
-      api.todos.queries.GetPendingTodos,
-      listArgs,
-    )
-    const completedData = localStore.getQuery(
-      api.todos.queries.GetCompletedTodos,
-      listArgs,
-    )
-    const overdueData = localStore.getQuery(
-      api.todos.queries.GetOverDueTodos,
-      listArgs,
-    )
-
-    if (pendingData)
-      localStore.setQuery(api.todos.queries.GetPendingTodos, listArgs, {
-        ...removeTodo(pendingData),
-        isDone: false,
-        continueCursor: 'optimistic',
-      } as any)
-    if (completedData)
-      localStore.setQuery(api.todos.queries.GetCompletedTodos, listArgs, {
-        ...removeTodo(completedData),
-        isDone: false,
-        continueCursor: 'optimistic',
-      } as any)
-    if (overdueData)
-      localStore.setQuery(api.todos.queries.GetOverDueTodos, listArgs, {
-        ...removeTodo(overdueData),
-        isDone: false,
-        continueCursor: 'optimistic',
-      } as any)
+    removeTodoFromQueries(api.todos.queries.GetPendingTodos)
+    removeTodoFromQueries(api.todos.queries.GetCompletedTodos)
+    removeTodoFromQueries(api.todos.queries.GetOverDueTodos)
   })
 
   const handleToggle = (id: Id<'subTasks'>, checked: boolean) => {

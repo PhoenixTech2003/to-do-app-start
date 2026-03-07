@@ -1,9 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { ScrollArea } from '@radix-ui/react-scroll-area'
 import { AnimatePresence } from 'motion/react'
-import { convexQuery } from '@convex-dev/react-query'
+import { useQuery } from 'convex/react'
 import { api } from 'convex/_generated/api'
-import { useSuspenseQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { formatForDisplay } from '@tanstack/react-hotkeys'
 import { useDebouncer } from '@tanstack/react-pacer'
@@ -34,14 +33,8 @@ export const Route = createFileRoute('/(app)/today/')({
     priority,
     status,
   }),
-  loader: async (opts) => {
-    await opts.context.queryClient.ensureQueryData(
-      convexQuery(api.globals.queries.getTodosByDate, {
-        date: opts.deps.today,
-        searchTerm: opts.deps.searchTerm,
-        priority: opts.deps.priority === 'all' ? undefined : opts.deps.priority,
-      }),
-    )
+  loader: async () => {
+    // Data fetched via Convex useQuery for optimistic update support
   },
   pendingComponent: TodosPageSkeleton,
   component: TodayPage,
@@ -51,13 +44,11 @@ function TodayPage() {
   const deps = Route.useLoaderDeps()
   const { searchTerm, priority, status } = Route.useSearch()
   const navigate = Route.useNavigate()
-  const { data, isFetching, isError, error } = useSuspenseQuery(
-    convexQuery(api.globals.queries.getTodosByDate, {
-      date: deps.today,
-      searchTerm: deps.searchTerm,
-      priority: deps.priority === 'all' ? undefined : deps.priority,
-    }),
-  )
+  const data = useQuery(api.globals.queries.getTodosByDate, {
+    date: deps.today,
+    searchTerm: deps.searchTerm,
+    priority: deps.priority === 'all' ? undefined : deps.priority,
+  })
 
   const [localSearch, setLocalSearch] = useState(searchTerm ?? '')
   const [localPriority, setLocalPriority] = useState(priority ?? 'all')
@@ -93,8 +84,9 @@ function TodayPage() {
     debouncer.maybeExecute(q)
   }
 
-  const pendingTodos = data.todos.filter((t: any) => t.status === 'pending')
-  const completedTodos = data.todos.filter((t: any) => t.status === 'completed')
+  const todos = data?.todos ?? []
+  const pendingTodos = todos.filter((t: any) => t.status === 'pending')
+  const completedTodos = todos.filter((t: any) => t.status === 'completed')
 
   return (
     <div className="p-4 sm:p-6 flex flex-col h-full">
@@ -167,9 +159,9 @@ function TodayPage() {
               </div>
 
               <StateHandler
-                isFetching={isFetching}
-                isError={isError}
-                error={error}
+                isLoading={data === undefined}
+                isError={false}
+                error={null}
                 isEmpty={pendingTodos.length === 0}
                 loadingSkeleton={
                   <div className="space-y-2">
@@ -208,9 +200,9 @@ function TodayPage() {
               </div>
 
               <StateHandler
-                isFetching={isFetching}
-                isError={isError}
-                error={error}
+                isLoading={data === undefined}
+                isError={false}
+                error={null}
                 isEmpty={completedTodos.length === 0}
                 loadingSkeleton={
                   <div className="space-y-2">

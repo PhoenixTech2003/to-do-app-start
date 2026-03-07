@@ -10,7 +10,6 @@ interface KanbanLaneProps {
   status: 'LoadingFirstPage' | 'CanLoadMore' | 'LoadingMore' | 'Exhausted'
   loadMore: (n: number) => void
   initialNumItems?: number
-  onShowLess?: () => void
 }
 
 const statusDot: Record<string, string> = {
@@ -25,7 +24,6 @@ export function KanbanLane({
   status,
   loadMore,
   initialNumItems = 6,
-  onShowLess,
 }: KanbanLaneProps) {
   const { ref, isDropTarget } = useDroppable({
     id: title,
@@ -72,11 +70,9 @@ export function KanbanLane({
         <PaginationController
           status={status}
           loadMore={loadMore}
-          isFetching={status === 'LoadingMore'}
           resultsCount={todos.length}
           label={`${title} Todos`}
           initialNumItems={initialNumItems}
-          onToggleShowFewer={onShowLess}
         />
       </div>
     </div>

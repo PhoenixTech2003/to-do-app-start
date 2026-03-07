@@ -1,5 +1,4 @@
 import { usePaginatedQuery } from 'convex/react'
-import { useState } from 'react'
 import { api } from 'convex/_generated/api'
 import { PaginationController } from '../pagination-controller'
 import { StateHandler } from '../state-handler'
@@ -46,10 +45,10 @@ export function OverdueTodosSection({
   searchTerm,
   priority,
 }: OverdueTodosSectionProps) {
-  const [refreshKey, setRefreshKey] = useState(0)
   const {
     results: todos,
     status: paginationStatus,
+    isLoading: isPaginatedLoading,
     loadMore,
   } = usePaginatedQuery(
     api.todos.queries.GetOverDueTodos,
@@ -57,13 +56,12 @@ export function OverdueTodosSection({
       listId,
       searchTerm: searchTerm || undefined,
       priority: priority === 'all' ? undefined : priority,
-      refreshKey,
     },
     { initialNumItems: 6 },
   )
 
   const isLoading = paginationStatus === 'LoadingFirstPage'
-  const isFetching = paginationStatus === 'LoadingMore'
+  const isFetching = isPaginatedLoading
   const isError = false
   const error = null
 
@@ -97,10 +95,8 @@ export function OverdueTodosSection({
         <PaginationController
           status={paginationStatus}
           loadMore={loadMore}
-          isFetching={isFetching}
           resultsCount={todos.length}
           label="Overdue Todos"
-          onToggleShowFewer={() => setRefreshKey((prev: number) => prev + 1)}
           initialNumItems={6}
         />
       </div>
