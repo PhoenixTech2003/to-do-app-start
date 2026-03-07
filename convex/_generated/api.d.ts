@@ -19,6 +19,7 @@ import type * as notifications_mutation from "../notifications/mutation.js";
 import type * as notifications_queries from "../notifications/queries.js";
 import type * as todos_mutations from "../todos/mutations.js";
 import type * as todos_queries from "../todos/queries.js";
+import type * as webhooks_whatsapp_actions from "../webhooks/whatsapp/actions.js";
 import type * as workspace_mutations from "../workspace/mutations.js";
 import type * as workspace_queries from "../workspace/queries.js";
 
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   "notifications/queries": typeof notifications_queries;
   "todos/mutations": typeof todos_mutations;
   "todos/queries": typeof todos_queries;
+  "webhooks/whatsapp/actions": typeof webhooks_whatsapp_actions;
   "workspace/mutations": typeof workspace_mutations;
   "workspace/queries": typeof workspace_queries;
 }>;
