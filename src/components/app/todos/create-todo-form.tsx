@@ -28,7 +28,43 @@ export function CreateTodoForm({
   listId,
   setCreateDialogIsOpen,
 }: CreateTodoFormProps) {
-  const addTodo = useConvexMutation(api.todos.mutations.createTodo)
+  const addTodo = useConvexMutation(
+    api.todos.mutations.createTodo,
+  ).withOptimisticUpdate((localStore, args) => {
+    const { listId: argsListId, title, description, dueDate, priority } = args
+    const dueDateStr = dueDate ? dueDate.split('T')[0] : undefined
+    const dueTimeStr = dueDate ? dueDate.split('T')[1] : undefined
+
+    const optimisticTodo = {
+      _id: 'optimistic' + Math.random(),
+      _creationTime: Date.now(),
+      listId: argsListId,
+      title,
+      description,
+      status: 'pending',
+      dueDate: dueDateStr,
+      dueTime: dueTimeStr,
+      priority,
+    } as any
+
+    const pendingQueries = localStore.getAllQueries(
+      api.todos.queries.GetPendingTodos,
+    )
+    for (const { args: qArgs, value } of pendingQueries) {
+      if (qArgs.listId !== argsListId) continue
+      if (!value) continue
+
+      const isFirstPage = !(qArgs.paginationOpts as { cursor?: string }).cursor
+      if (!isFirstPage) continue
+
+      localStore.setQuery(api.todos.queries.GetPendingTodos, qArgs, {
+        ...value,
+        page: [optimisticTodo, ...value.page],
+        isDone: false,
+        continueCursor: 'optimistic',
+      })
+    }
+  })
 
   const defaultValues: z.input<typeof createTodoFormSchema> = {
     title: '',

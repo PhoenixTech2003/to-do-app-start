@@ -1,7 +1,6 @@
-import { AnimatePresence } from 'motion/react'
-import { useQuery } from '@tanstack/react-query'
-import { convexQuery } from '@convex-dev/react-query'
+import { usePaginatedQuery } from 'convex/react'
 import { api } from 'convex/_generated/api'
+import { PaginationController } from '../pagination-controller'
 import { StateHandler } from '../state-handler'
 import { TodoCard } from './todo-card'
 import type { Id } from 'convex/_generated/dataModel'
@@ -32,7 +31,9 @@ function OverdueTodosEmptyState() {
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2 pb-2 border-b border-border">
         <div className="h-1.5 w-1.5 rounded-full bg-destructive" />
-        <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">Overdue</h2>
+        <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+          Overdue
+        </h2>
       </div>
       <Empty>No overdue tasks</Empty>
     </div>
@@ -44,15 +45,25 @@ export function OverdueTodosSection({
   searchTerm,
   priority,
 }: OverdueTodosSectionProps) {
-  const { data, isLoading, isFetching, isError, error } = useQuery(
-    convexQuery(api.todos.queries.GetOverDueTodos, {
+  const {
+    results: todos,
+    status: paginationStatus,
+    isLoading: isPaginatedLoading,
+    loadMore,
+  } = usePaginatedQuery(
+    api.todos.queries.GetOverDueTodos,
+    {
       listId,
       searchTerm: searchTerm || undefined,
       priority: priority === 'all' ? undefined : priority,
-    }),
+    },
+    { initialNumItems: 6 },
   )
 
-  const todos = data?.todos ?? []
+  const isLoading = paginationStatus === 'LoadingFirstPage'
+  const isFetching = isPaginatedLoading
+  const isError = false
+  const error = null
 
   return (
     <StateHandler
@@ -68,17 +79,26 @@ export function OverdueTodosSection({
         <div className="flex items-center justify-between pb-2 border-b border-border">
           <div className="flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-destructive" />
-            <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">Overdue</h2>
+            <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+              Overdue
+            </h2>
           </div>
-          <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">{todos.length}</span>
+          <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">
+            {todos.length}
+          </span>
         </div>
         <div className="space-y-2">
-          <AnimatePresence mode="popLayout">
-            {todos.map((todo) => (
-              <TodoCard key={todo._id} todo={todo} />
-            ))}
-          </AnimatePresence>
+          {todos.map((todo) => (
+            <TodoCard key={todo._id} todo={todo} />
+          ))}
         </div>
+        <PaginationController
+          status={paginationStatus}
+          loadMore={loadMore}
+          resultsCount={todos.length}
+          label="Overdue Todos"
+          initialNumItems={6}
+        />
       </div>
     </StateHandler>
   )

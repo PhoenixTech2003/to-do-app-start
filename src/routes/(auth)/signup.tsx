@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { motion } from 'motion/react'
@@ -37,11 +37,13 @@ function SignUpPage() {
 
         <div className="max-w-sm">
           <h2 className="text-4xl font-bold tracking-tight leading-tight mb-4">
-            Organize your work,<br />simplify your life.
+            Organize your work,
+            <br />
+            simplify your life.
           </h2>
           <p className="text-background/60 text-sm leading-relaxed">
-            Join thousands of people who've traded chaos for clarity with a minimal,
-            focused task manager.
+            Join thousands of people who've traded chaos for clarity with a
+            minimal, focused task manager.
           </p>
         </div>
 
@@ -93,7 +95,10 @@ function SignUpPage() {
           <div className="mt-8 pt-6 border-t border-border">
             <p className="text-xs text-muted-foreground">
               Already have an account?{' '}
-              <a href="/signin" className="text-primary font-semibold hover:underline">
+              <a
+                href="/signin"
+                className="text-primary font-semibold hover:underline"
+              >
                 Sign in
               </a>
             </p>

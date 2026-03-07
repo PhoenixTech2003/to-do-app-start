@@ -1,5 +1,12 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { ArrowRight, Check, Zap, Users, BarChart3, Sparkles } from 'lucide-react'
+import {
+  ArrowRight,
+  BarChart3,
+  Check,
+  Sparkles,
+  Users,
+  Zap,
+} from 'lucide-react'
 import { motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
@@ -31,10 +38,14 @@ function LandingPage() {
           <div className="flex items-center gap-3">
             <ThemeSwitcher />
             <Link to="/signup" className="hidden sm:inline-block">
-              <Button variant="ghost" size="sm" className="text-sm h-8">Sign In</Button>
+              <Button variant="ghost" size="sm" className="text-sm h-8">
+                Sign In
+              </Button>
             </Link>
             <Link to="/signup">
-              <Button size="sm" className="text-sm h-8">Get Started</Button>
+              <Button size="sm" className="text-sm h-8">
+                Get Started
+              </Button>
             </Link>
           </div>
         </div>
@@ -80,7 +91,11 @@ function LandingPage() {
               </Button>
             </Link>
             <Link to="/signup">
-              <Button variant="outline" size="lg" className="h-12 px-8 text-sm font-semibold">
+              <Button
+                variant="outline"
+                size="lg"
+                className="h-12 px-8 text-sm font-semibold"
+              >
                 See how it works
               </Button>
             </Link>
@@ -99,7 +114,10 @@ function LandingPage() {
             'Real-time collaboration',
             'Dark mode',
           ].map((item) => (
-            <span key={item} className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+            <span
+              key={item}
+              className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1.5"
+            >
               <Check className="h-3 w-3 text-primary" />
               {item}
             </span>
@@ -121,7 +139,9 @@ function LandingPage() {
               Why TwoDo
             </p>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-              Everything you need,<br />nothing you don't.
+              Everything you need,
+              <br />
+              nothing you don't.
             </h2>
           </motion.div>
 
@@ -171,8 +191,12 @@ function LandingPage() {
                     0{i + 1}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold mb-2 tracking-tight">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{feature.desc}</p>
+                <h3 className="text-lg font-bold mb-2 tracking-tight">
+                  {feature.title}
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {feature.desc}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -189,7 +213,9 @@ function LandingPage() {
           className="max-w-2xl mx-auto text-center"
         >
           <h2 className="text-3xl sm:text-5xl font-bold tracking-tight mb-6">
-            Ready to simplify<br />your workflow?
+            Ready to simplify
+            <br />
+            your workflow?
           </h2>
           <p className="text-muted-foreground text-lg mb-10 max-w-md mx-auto">
             Join thousands of people who've traded chaos for clarity.

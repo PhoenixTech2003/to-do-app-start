@@ -1,12 +1,12 @@
 import { format } from 'date-fns'
 import { forwardRef, useState } from 'react'
 import { motion } from 'motion/react'
+import { CalendarIcon, ClockIcon } from 'lucide-react'
 import { TodoSheet } from './todo-sheet'
 import { TodoCheckInput } from './todo-check-input'
 import type { Todo } from '@/types/global'
 import { cn, truncateText } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { CalendarIcon, ClockIcon } from 'lucide-react'
 
 interface TodoCardProps {
   todo: Todo
@@ -30,11 +30,7 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
     }
 
     return (
-      <TodoSheet
-        isOpen={sheetIsOpen}
-        setIsOpen={setSheetIsOpen}
-        todo={todo}
-      >
+      <TodoSheet isOpen={sheetIsOpen} setIsOpen={setSheetIsOpen} todo={todo}>
         <motion.div
           ref={ref}
           layout
@@ -44,9 +40,9 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
           transition={{ duration: 0.2 }}
           onClick={() => setSheetIsOpen(true)}
           className={cn(
-            "group relative flex flex-col gap-2 p-4 bg-card border border-border rounded-md cursor-pointer transition-colors duration-200 hover:bg-accent border-l-[3px]",
+            'group relative flex flex-col gap-2 p-4 bg-card border border-border rounded-md cursor-pointer transition-colors duration-200 hover:bg-accent border-l-[3px]',
             priorityBorder[todo.priority] || priorityBorder.none,
-            todo.status === 'completed' && 'opacity-50'
+            todo.status === 'completed' && 'opacity-50',
           )}
         >
           <div className="flex items-start justify-between gap-4">
@@ -58,7 +54,8 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
                 <h3
                   className={cn(
                     'text-sm font-medium leading-tight',
-                    todo.status === 'completed' && 'line-through text-muted-foreground'
+                    todo.status === 'completed' &&
+                      'line-through text-muted-foreground',
                   )}
                 >
                   {title}
@@ -83,7 +80,7 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
                   'flex items-center gap-3 font-mono text-[11px]',
                   todo.status === 'overdue'
                     ? 'text-destructive'
-                    : 'text-muted-foreground'
+                    : 'text-muted-foreground',
                 )}
               >
                 {todo.dueDate && (

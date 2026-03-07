@@ -15,7 +15,6 @@ interface StateHandlerProps {
 }
 
 export function StateHandler({
-  isFetching,
   isError,
   error,
   isLoading,
@@ -26,8 +25,8 @@ export function StateHandler({
   errorDescription = 'An error occurred while loading the data. Please try again.',
   children,
 }: StateHandlerProps) {
-  // Show loading skeleton if loading or fetching
-  if (isLoading || isFetching) {
+  // Show loading skeleton only on initial load
+  if (isLoading) {
     if (loadingSkeleton) {
       return <>{loadingSkeleton}</>
     }

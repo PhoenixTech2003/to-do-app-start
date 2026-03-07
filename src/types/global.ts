@@ -1,14 +1,14 @@
 import type { api } from 'convex/_generated/api'
 
 export type WorkspacesList =
-  typeof api.dashboard.queries.getUserWorkspaces._returnType
+  typeof api.dashboard.queries.getUserWorkspaces._returnType['page']
 
 export type ListItems =
-  typeof api.workspace.queries.getAllUserWorkspaceLists._returnType
+  typeof api.workspace.queries.GetWorkspaceLists._returnType['page']
 
 export type WorkspaceItem = WorkspacesList[number]
 
-export type ListItem = ListItems['lists'][number]
+export type ListItem = ListItems[number]
 
 export type TodosPageData = typeof api.todos.queries.GetAllTodos._returnType
 

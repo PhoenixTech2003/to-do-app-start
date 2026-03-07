@@ -1,9 +1,8 @@
 import { DragDropProvider } from '@dnd-kit/react'
-import { convexQuery, useConvexMutation } from '@convex-dev/react-query'
-import { api } from 'convex/_generated/api'
-import { toast } from 'sonner'
 import { isAfter, parse } from 'date-fns'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, usePaginatedQuery } from 'convex/react'
+import { toast } from 'sonner'
+import { api } from 'convex/_generated/api'
 import { KanbanLane } from './kanban-lane'
 import type { Todo } from '@/types/global'
 import type { Id } from 'convex/_generated/dataModel'
@@ -14,90 +13,144 @@ interface KanbanBoardProps {
   priority?: string
 }
 
-export function KanbanBoard({ listId, searchTerm, priority }: KanbanBoardProps) {
+export function KanbanBoard({
+  listId,
+  searchTerm,
+  priority,
+}: KanbanBoardProps) {
   const queryArgs = {
     listId,
     searchTerm: searchTerm || undefined,
     priority: priority === 'all' ? undefined : priority,
   }
 
-  const { data: pendingTodos } = useQuery(
-    convexQuery(api.todos.queries.GetPendingTodos, queryArgs),
+  const {
+    results: pendingTodosPage,
+    status: pendingStatus,
+    loadMore: loadMorePending,
+  } = usePaginatedQuery(
+    api.todos.queries.GetPendingTodos,
+    queryArgs,
+    { initialNumItems: 6 },
   )
-  const { data: completedTodos } = useQuery(
-    convexQuery(api.todos.queries.GetCompletedTodos, queryArgs),
+  const {
+    results: completedTodosPage,
+    status: completedStatus,
+    loadMore: loadMoreCompleted,
+  } = usePaginatedQuery(
+    api.todos.queries.GetCompletedTodos,
+    queryArgs,
+    { initialNumItems: 6 },
   )
-  const { data: overdueTodos } = useQuery(
-    convexQuery(api.todos.queries.GetOverDueTodos, queryArgs),
+  const {
+    results: overdueTodosPage,
+    status: overdueStatus,
+    loadMore: loadMoreOverdue,
+  } = usePaginatedQuery(
+    api.todos.queries.GetOverDueTodos,
+    queryArgs,
+    { initialNumItems: 6 },
   )
-  const updateTodoStatus = useConvexMutation(
+
+  const updateTodoStatus = useMutation(
     api.todos.mutations.toggleTodoStatus,
   ).withOptimisticUpdate((localStore, args) => {
     const { todoId, status: newStatus } = args
 
-    const pendingData = localStore.getQuery(
+    const findTodoInQueries = (
+      queryResults: Array<{
+        args: Record<string, unknown>
+        value: { page: Array<Todo> } | undefined
+      }>,
+    ) => {
+      for (const { args: qArgs, value } of queryResults) {
+        if (qArgs.listId !== listId) continue
+        const found = value?.page.find((t) => t._id === todoId)
+        if (found) return { found, args: qArgs, value }
+      }
+      return null
+    }
+
+    const pendingQueries = localStore.getAllQueries(
       api.todos.queries.GetPendingTodos,
-      queryArgs,
     )
-    const completedData = localStore.getQuery(
+    const completedQueries = localStore.getAllQueries(
       api.todos.queries.GetCompletedTodos,
-      queryArgs,
     )
-    const overdueData = localStore.getQuery(
+    const overdueQueries = localStore.getAllQueries(
       api.todos.queries.GetOverDueTodos,
-      queryArgs,
     )
 
-    const findTodo = (data: { todos: Array<Todo> } | undefined) =>
-      data?.todos.find((t) => t._id === todoId)
+    const pendingMatch = findTodoInQueries(pendingQueries)
+    const completedMatch = findTodoInQueries(completedQueries)
+    const overdueMatch = findTodoInQueries(overdueQueries)
+
     const currentTodo =
-      findTodo(pendingData) ?? findTodo(completedData) ?? findTodo(overdueData)
+      pendingMatch?.found ?? completedMatch?.found ?? overdueMatch?.found
     if (!currentTodo) return
 
     const optimisticTodo = { ...currentTodo, status: newStatus } as Todo
 
-    const withoutTodo = (data: { todos: Array<Todo> } | undefined) =>
-      data ? { todos: data.todos.filter((t) => t._id !== todoId) } : undefined
-    const withTodo = (data: { todos: Array<Todo> } | undefined, todo: Todo) =>
-      data ? { todos: [...data.todos, todo] } : undefined
+    const updateQueriesForType = (
+      queries: Array<{
+        args: Record<string, unknown>
+        value: { page: Array<Todo> } | undefined
+      }>,
+      queryRef: typeof api.todos.queries.GetPendingTodos,
+      isSource: boolean,
+      isTarget: boolean,
+    ) => {
+      for (const { args: qArgs, value } of queries) {
+        if (qArgs.listId !== listId) continue
+        if (!value) continue
 
-    const nextPending =
-      currentTodo.status === 'pending'
-        ? withoutTodo(pendingData)
-        : newStatus === 'pending'
-          ? withTodo(pendingData, optimisticTodo)
-          : pendingData
-    const nextCompleted =
-      currentTodo.status === 'completed'
-        ? withoutTodo(completedData)
-        : newStatus === 'completed'
-          ? withTodo(completedData, optimisticTodo)
-          : completedData
-    const nextOverdue =
-      currentTodo.status === 'overdue'
-        ? withoutTodo(overdueData)
-        : newStatus === 'overdue'
-          ? withTodo(overdueData, optimisticTodo)
-          : overdueData
+        const isFirstPage = !(qArgs.paginationOpts as { cursor?: string })
+          .cursor
+        const pageContainsTodo = value.page.some((t) => t._id === todoId)
 
-    if (nextPending)
-      localStore.setQuery(
-        api.todos.queries.GetPendingTodos,
-        queryArgs,
-        nextPending,
-      )
-    if (nextCompleted)
-      localStore.setQuery(
-        api.todos.queries.GetCompletedTodos,
-        queryArgs,
-        nextCompleted,
-      )
-    if (nextOverdue)
-      localStore.setQuery(
-        api.todos.queries.GetOverDueTodos,
-        queryArgs,
-        nextOverdue,
-      )
+        let nextValue: {
+          page: Array<Todo>
+          isDone?: boolean
+          continueCursor?: string
+        }
+        if (isSource && pageContainsTodo) {
+          nextValue = {
+            ...value,
+            page: value.page.filter((t) => t._id !== todoId),
+            isDone: false,
+            continueCursor: 'optimistic',
+          }
+        } else if (isTarget && isFirstPage) {
+          nextValue = {
+            ...value,
+            page: [optimisticTodo, ...value.page],
+            isDone: false,
+            continueCursor: 'optimistic',
+          }
+        } else continue
+
+        localStore.setQuery(queryRef, qArgs as any, nextValue as any)
+      }
+    }
+
+    updateQueriesForType(
+      pendingQueries,
+      api.todos.queries.GetPendingTodos,
+      !!pendingMatch,
+      newStatus === 'pending',
+    )
+    updateQueriesForType(
+      completedQueries,
+      api.todos.queries.GetCompletedTodos,
+      !!completedMatch,
+      newStatus === 'completed',
+    )
+    updateQueriesForType(
+      overdueQueries,
+      api.todos.queries.GetOverDueTodos,
+      !!overdueMatch,
+      newStatus === 'overdue',
+    )
   })
 
   function getTodoStatus({
@@ -120,12 +173,18 @@ export function KanbanBoard({ listId, searchTerm, priority }: KanbanBoardProps) 
   return (
     <DragDropProvider
       onDragEnd={(e) => {
-        const todo = e.operation.source?.data as Todo
-        const formattedDate = parse(
-          `${todo.dueDate} ${todo.dueTime}`,
-          'yyyy-MM-dd HH:mm',
-          new Date(),
-        )
+        const todo = e.operation.source?.data as Todo | undefined
+        if (!todo) return
+
+        const formattedDate =
+          todo.dueDate && todo.dueTime
+            ? parse(
+                `${todo.dueDate} ${todo.dueTime}`,
+                'yyyy-MM-dd HH:mm',
+                new Date(),
+              )
+            : undefined
+
         const containerStatus = e.operation.target?.id.toString().toLowerCase()
         if (containerStatus === todo.status) {
           return
@@ -149,13 +208,31 @@ export function KanbanBoard({ listId, searchTerm, priority }: KanbanBoardProps) 
     >
       <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-x-visible sm:snap-none sm:pb-0">
         <div className="min-w-[80vw] snap-center sm:min-w-0">
-          <KanbanLane title="Pending" todos={pendingTodos?.todos ?? []} />
+          <KanbanLane
+            title="Pending"
+            todos={pendingTodosPage}
+            status={pendingStatus}
+            loadMore={loadMorePending}
+            initialNumItems={6}
+          />
         </div>
         <div className="min-w-[80vw] snap-center sm:min-w-0">
-          <KanbanLane title="Completed" todos={completedTodos?.todos ?? []} />
+          <KanbanLane
+            title="Completed"
+            todos={completedTodosPage}
+            status={completedStatus}
+            loadMore={loadMoreCompleted}
+            initialNumItems={6}
+          />
         </div>
         <div className="min-w-[80vw] snap-center sm:min-w-0">
-          <KanbanLane title="Overdue" todos={overdueTodos?.todos ?? []} />
+          <KanbanLane
+            title="Overdue"
+            todos={overdueTodosPage}
+            status={overdueStatus}
+            loadMore={loadMoreOverdue}
+            initialNumItems={6}
+          />
         </div>
       </div>
     </DragDropProvider>

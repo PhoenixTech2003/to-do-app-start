@@ -1,10 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { ScrollArea } from '@radix-ui/react-scroll-area'
 import { AnimatePresence } from 'motion/react'
-import { convexQuery } from '@convex-dev/react-query'
+import { useQuery } from 'convex/react'
 import { api } from 'convex/_generated/api'
-import { useSuspenseQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
+import { formatForDisplay } from '@tanstack/react-hotkeys'
+import { useDebouncer } from '@tanstack/react-pacer'
+import { useEffect, useRef, useState } from 'react'
+import { Search } from 'lucide-react'
+import { zodValidator } from '@tanstack/zod-adapter'
+import { z } from 'zod'
 import { BackButton } from '@/components/app/back-button'
 import { TodoCard } from '@/components/app/todos/todo-card'
 import { TodosPageSkeleton } from '@/components/app/todos/todos-page-skeleton'
@@ -12,14 +17,8 @@ import { StateHandler } from '@/components/app/state-handler'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Empty } from '@/components/ui/empty'
 
-import { formatForDisplay } from '@tanstack/react-hotkeys'
-import { useDebouncer } from '@tanstack/react-pacer'
-import { useEffect, useRef, useState } from 'react'
 import { SearchInput } from '@/components/app/search-box'
 import { Button } from '@/components/ui/button'
-import { Search } from 'lucide-react'
-import { zodValidator } from '@tanstack/zod-adapter'
-import { z } from 'zod'
 
 const todaySearchSchema = z.object({
   searchTerm: z.string().optional(),
@@ -32,16 +31,10 @@ export const Route = createFileRoute('/(app)/today/')({
     today: format(new Date(), 'yyyy-LL-dd'),
     searchTerm,
     priority,
-    status
+    status,
   }),
-  loader: async (opts) => {
-    await opts.context.queryClient.ensureQueryData(
-      convexQuery(api.globals.queries.getTodosByDate, {
-        date: opts.deps.today,
-        searchTerm: opts.deps.searchTerm,
-        priority: opts.deps.priority === 'all' ? undefined : opts.deps.priority,
-      }),
-    )
+  loader: async () => {
+    // Data fetched via Convex useQuery for optimistic update support
   },
   pendingComponent: TodosPageSkeleton,
   component: TodayPage,
@@ -51,13 +44,11 @@ function TodayPage() {
   const deps = Route.useLoaderDeps()
   const { searchTerm, priority, status } = Route.useSearch()
   const navigate = Route.useNavigate()
-  const { data, isFetching, isError, error } = useSuspenseQuery(
-    convexQuery(api.globals.queries.getTodosByDate, {
-      date: deps.today,
-      searchTerm: deps.searchTerm,
-      priority: deps.priority === 'all' ? undefined : deps.priority,
-    }),
-  )
+  const data = useQuery(api.globals.queries.getTodosByDate, {
+    date: deps.today,
+    searchTerm: deps.searchTerm,
+    priority: deps.priority === 'all' ? undefined : deps.priority,
+  })
 
   const [localSearch, setLocalSearch] = useState(searchTerm ?? '')
   const [localPriority, setLocalPriority] = useState(priority ?? 'all')
@@ -93,8 +84,9 @@ function TodayPage() {
     debouncer.maybeExecute(q)
   }
 
-  const pendingTodos = data.todos.filter((t: any) => t.status === 'pending')
-  const completedTodos = data.todos.filter((t: any) => t.status === 'completed')
+  const todos = data?.todos ?? []
+  const pendingTodos = todos.filter((t: any) => t.status === 'pending')
+  const completedTodos = todos.filter((t: any) => t.status === 'completed')
 
   return (
     <div className="p-4 sm:p-6 flex flex-col h-full">
@@ -109,12 +101,18 @@ function TodayPage() {
         priority={localPriority}
         onPriorityChange={(val) => {
           setLocalPriority(val as any)
-          navigate({ search: (prev: any) => ({ ...prev, priority: val as any }), replace: true })
+          navigate({
+            search: (prev: any) => ({ ...prev, priority: val as any }),
+            replace: true,
+          })
         }}
         status={localStatus}
         onStatusChange={(val) => {
           setLocalStatus(val as any)
-          navigate({ search: (prev: any) => ({ ...prev, status: val as any }), replace: true })
+          navigate({
+            search: (prev: any) => ({ ...prev, status: val as any }),
+            replace: true,
+          })
         }}
       />
 
@@ -122,7 +120,9 @@ function TodayPage() {
         <div className="flex items-center gap-4 min-w-0">
           <BackButton />
           <div className="min-w-0">
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Today</h2>
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+              Today
+            </h2>
             <p className="text-xs font-mono text-muted-foreground mt-0.5">
               {format(new Date(), 'EEEE, MMMM do')}
             </p>
@@ -136,7 +136,9 @@ function TodayPage() {
           aria-label="Open search"
         >
           <Search className="h-3.5 w-3.5" />
-          <span className="font-mono text-[10px] text-muted-foreground">{formatForDisplay('Mod+K')}</span>
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {formatForDisplay('Mod+K')}
+          </span>
         </Button>
       </header>
 
@@ -147,15 +149,19 @@ function TodayPage() {
               <div className="flex items-center justify-between pb-2 border-b border-border">
                 <div className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-chart-4" />
-                  <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">Pending</h2>
+                  <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                    Pending
+                  </h2>
                 </div>
-                <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">{pendingTodos.length}</span>
+                <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">
+                  {pendingTodos.length}
+                </span>
               </div>
 
               <StateHandler
-                isFetching={isFetching}
-                isError={isError}
-                error={error}
+                isLoading={data === undefined}
+                isError={false}
+                error={null}
                 isEmpty={pendingTodos.length === 0}
                 loadingSkeleton={
                   <div className="space-y-2">
@@ -184,15 +190,19 @@ function TodayPage() {
               <div className="flex items-center justify-between pb-2 border-b border-border">
                 <div className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-chart-3" />
-                  <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">Completed</h2>
+                  <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                    Completed
+                  </h2>
                 </div>
-                <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">{completedTodos.length}</span>
+                <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">
+                  {completedTodos.length}
+                </span>
               </div>
 
               <StateHandler
-                isFetching={isFetching}
-                isError={isError}
-                error={error}
+                isLoading={data === undefined}
+                isError={false}
+                error={null}
                 isEmpty={completedTodos.length === 0}
                 loadingSkeleton={
                   <div className="space-y-2">

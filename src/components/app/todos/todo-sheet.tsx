@@ -56,7 +56,37 @@ export function TodoSheet({
 
   const updateSubtask = useConvexMutation(api.todos.mutations.updateSubTask)
   const deleteSubtask = useConvexMutation(api.todos.mutations.deleteSubTask)
-  const deleteTodo = useConvexMutation(api.todos.mutations.deleteTodo)
+  const deleteTodo = useConvexMutation(
+    api.todos.mutations.deleteTodo,
+  ).withOptimisticUpdate((localStore, mutationArgs) => {
+    const { todoId: mutationTodoId } = mutationArgs
+
+    const removeTodoFromQueries = (
+      queryRef: typeof api.todos.queries.GetPendingTodos,
+    ) => {
+      const queries = localStore.getAllQueries(queryRef)
+      for (const { args: qArgs, value } of queries) {
+        if (qArgs.listId !== todo.listId) continue
+        if (!value) continue
+
+        const pageContainsTodo = value.page.some(
+          (t) => t._id === mutationTodoId,
+        )
+        if (!pageContainsTodo) continue
+
+        localStore.setQuery(queryRef, qArgs, {
+          ...value,
+          page: value.page.filter((t: Todo) => t._id !== mutationTodoId),
+          isDone: false,
+          continueCursor: 'optimistic',
+        })
+      }
+    }
+
+    removeTodoFromQueries(api.todos.queries.GetPendingTodos)
+    removeTodoFromQueries(api.todos.queries.GetCompletedTodos)
+    removeTodoFromQueries(api.todos.queries.GetOverDueTodos)
+  })
 
   const handleToggle = (id: Id<'subTasks'>, checked: boolean) => {
     updateSubtask({ subTaskId: id, completed: checked })
@@ -92,7 +122,9 @@ export function TodoSheet({
             </div>
             <SheetTitle className="truncate">{todo.title}</SheetTitle>
           </div>
-          <SheetDescription className="line-clamp-3">{todo.description}</SheetDescription>
+          <SheetDescription className="line-clamp-3">
+            {todo.description}
+          </SheetDescription>
           <div className="flex items-center gap-2 text-sm">
             {todo.dueDate && <Calendar size={16} className="shrink-0" />}
             {todo.dueDate && (

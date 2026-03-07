@@ -4,6 +4,10 @@ import { convexQuery } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { z } from 'zod'
+import { Search } from 'lucide-react'
+import { formatForDisplay } from '@tanstack/react-hotkeys'
+import { useDebouncer } from '@tanstack/react-pacer'
+import { useEffect, useRef, useState } from 'react'
 import type { Id } from 'convex/_generated/dataModel'
 import { CreateTodoDialog } from '@/components/app/todos/create-todo-dialog'
 import { TodosPageSkeleton } from '@/components/app/todos/todos-page-skeleton'
@@ -18,10 +22,6 @@ import { ViewModeTrigger } from '@/components/app/todos/view-mode'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { SearchInput } from '@/components/app/search-box'
 import { Button } from '@/components/ui/button'
-import { Search } from 'lucide-react'
-import { formatForDisplay } from '@tanstack/react-hotkeys'
-import { useDebouncer } from '@tanstack/react-pacer'
-import { useEffect, useRef, useState } from 'react'
 
 const viewModeSchema = z.object({
   view: z.enum(['list', 'kanban']).default('list'),
@@ -103,12 +103,18 @@ function RouteComponent() {
         priority={localPriority}
         onPriorityChange={(val) => {
           setLocalPriority(val as any)
-          navigate({ search: (prev: any) => ({ ...prev, priority: val as any }), replace: true })
+          navigate({
+            search: (prev: any) => ({ ...prev, priority: val as any }),
+            replace: true,
+          })
         }}
         status={localStatus}
         onStatusChange={(val) => {
           setLocalStatus(val as any)
-          navigate({ search: (prev: any) => ({ ...prev, status: val as any }), replace: true })
+          navigate({
+            search: (prev: any) => ({ ...prev, status: val as any }),
+            replace: true,
+          })
         }}
       />
 
@@ -118,7 +124,9 @@ function RouteComponent() {
           <div className="min-w-0">
             <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2 truncate tracking-tight">
               {data.title}
-              {isFetching && <Spinner className="text-muted-foreground h-4 w-4 shrink-0" />}
+              {isFetching && (
+                <Spinner className="text-muted-foreground h-4 w-4 shrink-0" />
+              )}
             </h2>
             <p className="text-xs font-mono text-muted-foreground mt-0.5">
               {data.title} list
@@ -134,7 +142,9 @@ function RouteComponent() {
             aria-label="Open search"
           >
             <Search className="h-3.5 w-3.5" />
-            <span className="font-mono text-[10px] text-muted-foreground">{formatForDisplay('Mod+K')}</span>
+            <span className="font-mono text-[10px] text-muted-foreground">
+              {formatForDisplay('Mod+K')}
+            </span>
           </Button>
           <ViewModeTrigger
             mode={view}
@@ -157,18 +167,36 @@ function RouteComponent() {
       ) : null}
 
       <section className="min-w-0 overflow-hidden">
-        {view === 'kanban' && <KanbanBoard listId={listId as Id<'lists'>} searchTerm={searchTerm} priority={priority} />}
+        {view === 'kanban' && (
+          <KanbanBoard
+            listId={listId as Id<'lists'>}
+            searchTerm={searchTerm}
+            priority={priority}
+          />
+        )}
 
         {view === 'list' && (
           <div className="space-y-2">
             {(!status || status === 'all' || status === 'pending') && (
-              <PendingTodosSection listId={listId as Id<'lists'>} searchTerm={searchTerm} priority={priority} />
+              <PendingTodosSection
+                listId={listId as Id<'lists'>}
+                searchTerm={searchTerm}
+                priority={priority}
+              />
             )}
             {(!status || status === 'all' || status === 'overdue') && (
-              <OverdueTodosSection listId={listId as Id<'lists'>} searchTerm={searchTerm} priority={priority} />
+              <OverdueTodosSection
+                listId={listId as Id<'lists'>}
+                searchTerm={searchTerm}
+                priority={priority}
+              />
             )}
             {(!status || status === 'all' || status === 'completed') && (
-              <CompletedTodosSection listId={listId as Id<'lists'>} searchTerm={searchTerm} priority={priority} />
+              <CompletedTodosSection
+                listId={listId as Id<'lists'>}
+                searchTerm={searchTerm}
+                priority={priority}
+              />
             )}
           </div>
         )}

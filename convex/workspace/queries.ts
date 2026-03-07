@@ -1,11 +1,11 @@
 import { v } from 'convex/values'
+import { paginationOptsValidator } from "convex/server";
 import { query } from '../_generated/server'
 import { authComponent } from '../auth'
 import { verifyWorkspaceOnwership } from '../globals/helpers'
 
-export const getAllUserWorkspaceLists = query({
+export const GetWorkspaceDetails = query({
   args: {
-    searchTerm: v.optional(v.string()),
     workspaceId: v.id('workspace'),
   },
   handler: async (ctx, args) => {
@@ -22,20 +22,40 @@ export const getAllUserWorkspaceLists = query({
     }
 
     const workspaceDetails = await ctx.db.get('workspace', args.workspaceId)
+    return workspaceDetails
+  },
+})
+
+export const GetWorkspaceLists = query({
+  args: {
+    searchTerm: v.optional(v.string()),
+    workspaceId: v.id('workspace'),
+    refreshKey: v.optional(v.number()),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    const loggedInUser = await authComponent.getAuthUser(ctx)
+    const loggedInUserId = loggedInUser._id
+    const isOwnerOfWorkspace = await verifyWorkspaceOnwership({
+      ctx,
+      userId: loggedInUserId,
+      workspaceId: args.workspaceId,
+    })
+
+    if (!isOwnerOfWorkspace) {
+      throw new Error('You are not the owner of this workspace')
+    }
 
     if (!args.searchTerm) {
-      const lists = await ctx.db
+      return await ctx.db
         .query('lists')
         .withIndex('createdBy_workspaceId', (q) =>
           q.eq('createdBy', loggedInUserId).eq('workspaceId', args.workspaceId),
         )
-        .collect()
-      return {
-        workspaceDetails,
-        lists,
-      }
+        .paginate(args.paginationOpts)
     }
-    const lists = await ctx.db
+
+    return await ctx.db
       .query('lists')
       .withSearchIndex('title', (q) =>
         q
@@ -43,11 +63,6 @@ export const getAllUserWorkspaceLists = query({
           .eq('createdBy', loggedInUserId)
           .eq('workspaceId', args.workspaceId),
       )
-      .collect()
-
-    return {
-      workspaceDetails,
-      lists,
-    }
+      .paginate(args.paginationOpts)
   },
 })

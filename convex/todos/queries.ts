@@ -1,4 +1,5 @@
 import { v } from 'convex/values'
+import { paginationOptsValidator } from 'convex/server'
 import { query } from '../_generated/server'
 import { authComponent } from '../auth'
 
@@ -48,6 +49,8 @@ export const GetPendingTodos = query({
     listId: v.id('lists'),
     searchTerm: v.optional(v.string()),
     priority: v.optional(v.string()),
+    refreshKey: v.optional(v.number()),
+    paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
     const loggedInUser = await authComponent.getAuthUser(ctx)
@@ -79,10 +82,7 @@ export const GetPendingTodos = query({
       todosQuery = todosQuery.filter((q) => q.eq(q.field('priority'), args.priority))
     }
 
-    const todos = await todosQuery.collect()
-    return {
-      todos,
-    }
+    return await todosQuery.paginate(args.paginationOpts)
   },
 })
 export const GetCompletedTodos = query({
@@ -90,6 +90,8 @@ export const GetCompletedTodos = query({
     listId: v.id('lists'),
     searchTerm: v.optional(v.string()),
     priority: v.optional(v.string()),
+    refreshKey: v.optional(v.number()),
+    paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
     const loggedInUser = await authComponent.getAuthUser(ctx)
@@ -121,10 +123,7 @@ export const GetCompletedTodos = query({
       todosQuery = todosQuery.filter((q) => q.eq(q.field('priority'), args.priority))
     }
 
-    const todos = await todosQuery.collect()
-    return {
-      todos,
-    }
+    return await todosQuery.paginate(args.paginationOpts)
   },
 })
 
@@ -133,6 +132,8 @@ export const GetOverDueTodos = query({
     listId: v.id('lists'),
     searchTerm: v.optional(v.string()),
     priority: v.optional(v.string()),
+    refreshKey: v.optional(v.number()),
+    paginationOpts: paginationOptsValidator,
   },
 
   handler: async (ctx, args) => {
@@ -165,10 +166,7 @@ export const GetOverDueTodos = query({
       todosQuery = todosQuery.filter((q) => q.eq(q.field('priority'), args.priority))
     }
 
-    const todos = await todosQuery.collect()
-    return {
-      todos,
-    }
+    return await todosQuery.paginate(args.paginationOpts)
   },
 })
 export const GetAllSubtasks = query({
