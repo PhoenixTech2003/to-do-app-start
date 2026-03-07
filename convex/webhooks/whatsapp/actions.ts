@@ -1,5 +1,6 @@
 import { httpAction } from '../../_generated/server'
 import { internal } from '../../_generated/api'
+import type { WhatsAppWebhookPayload } from '../../../src/types/whatsapp'
 
 export const verifyWhatsappWebhookAction = httpAction(async (ctx, request) => {
   const url = new URL(request.url)
@@ -16,7 +17,7 @@ export const verifyWhatsappWebhookAction = httpAction(async (ctx, request) => {
 })
 
 export const handleWhatsappWebhookAction = httpAction(async (ctx, request) => {
-  const body = await request.json()
+  const body = (await request.json()) as WhatsAppWebhookPayload
 
   const requestSignature = request.headers.get('X-Hub-Signature-256')
   if (!requestSignature) {
@@ -42,6 +43,46 @@ export const handleWhatsappWebhookAction = httpAction(async (ctx, request) => {
       status: 400,
     })
   }
+  const userName = body.entry[0].changes[0].value.contacts?.[0]?.profile?.name
+  const message = body.entry[0].changes[0].value.messages?.[0]
+  const messageBody = message?.type === 'text' ? message.text.body : ''
+
+  const userPhoneNumber = body.entry[0].changes[0].value.contacts?.[0]?.wa_id
+  const aiResponse = await ctx.runAction(internal.agents.actions.T, {
+    messageBody,
+    usersName: userName,
+  })
+
+  const response = await fetch(
+    `${process.env.FACEBOOK_BASE_API!}/${process.env.WHATSAPP_PHONE_ID}/messages`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN!}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: userPhoneNumber,
+        type: 'text',
+        text: {
+          text: {
+            body: aiResponse,
+          },
+        },
+      }),
+    },
+  )
+
+  if (!response.ok) {
+    console.error('failed to send message', await response.text())
+    console.error(response.statusText)
+    return new Response(null, {
+      status: 500,
+    })
+  }
+
   console.log(JSON.stringify(body, null, 2))
   return new Response(null, {
     status: 200,
