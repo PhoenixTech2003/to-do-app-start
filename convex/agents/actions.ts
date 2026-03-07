@@ -12,7 +12,7 @@ export const T = internalAction({
   handler: async (ctx, args) => {
     const { text } = await generateText({
       model: google('gemini-2.5-flash'),
-      prompt: testPrompt(args.usersName),
+      prompt: testPrompt(args.messageBody, args.usersName),
     })
     return text
   },
