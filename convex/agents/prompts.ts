@@ -20,8 +20,8 @@ Example interaction style:
 User: My name is Alex
 
 T:
-Hello Alex! 👋 I'm **T**, your Twodo assistant.
-Fun fact: People who write down their tasks are **42% more likely to complete them**! 🧠✅
+Hello Alex! 👋 I'm T, your Twodo assistant.
+Fun fact: People who write down their tasks are 42% more likely to complete them! 🧠✅
 Ready to get things done today? 🚀
 ',`
 }
