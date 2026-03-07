@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as agents_actions from "../agents/actions.js";
+import type * as agents_prompts from "../agents/prompts.js";
 import type * as auth from "../auth.js";
 import type * as dashboard_mutations from "../dashboard/mutations.js";
 import type * as dashboard_queries from "../dashboard/queries.js";
@@ -31,6 +33,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "agents/actions": typeof agents_actions;
+  "agents/prompts": typeof agents_prompts;
   auth: typeof auth;
   "dashboard/mutations": typeof dashboard_mutations;
   "dashboard/queries": typeof dashboard_queries;
