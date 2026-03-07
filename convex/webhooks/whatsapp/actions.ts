@@ -43,11 +43,26 @@ export const handleWhatsappWebhookAction = httpAction(async (ctx, request) => {
       status: 400,
     })
   }
-  const userName = body.entry[0].changes[0].value.contacts?.[0]?.profile?.name
-  const message = body.entry[0].changes[0].value.messages?.[0]
+
+  // Only process incoming message events (ignore status updates, etc.)
+  const entry = body.entry[0]
+  const change = entry.changes[0]
+  if (change.field !== 'messages' || !change.value.messages?.length) {
+    return new Response(null, { status: 200 })
+  }
+
+  const value = change.value
+  const userName = value.contacts?.[0]?.profile?.name
+  const userPhoneNumber =
+    value.contacts?.[0]?.wa_id ?? value.messages?.[0]?.from
+  const message = value.messages?.[0]
   const messageBody = message?.type === 'text' ? message.text.body : ''
 
-  const userPhoneNumber = body.entry[0].changes[0].value.contacts?.[0]?.wa_id
+  if (!userPhoneNumber) {
+    console.error('could not determine recipient phone number')
+    return new Response(null, { status: 200 })
+  }
+
   const aiResponse = await ctx.runAction(internal.agents.actions.T, {
     messageBody,
     usersName: userName,
