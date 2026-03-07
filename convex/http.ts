@@ -7,7 +7,7 @@ const http = httpRouter()
 authComponent.registerRoutes(http, createAuth)
 
 http.route({
-  path: '/webhooks/whatsapp/verify',
+  path: '/webhooks/whatsapp/',
   method: 'GET',
   handler: verifyWhatsappWebhookAction,
 })
