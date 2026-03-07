@@ -42,7 +42,7 @@ export const handleWhatsappWebhookAction = httpAction(async (ctx, request) => {
       status: 400,
     })
   }
-
+  console.log(JSON.stringify(body, null, 2))
   return new Response(null, {
     status: 200,
   })
