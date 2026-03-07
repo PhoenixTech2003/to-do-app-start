@@ -67,9 +67,7 @@ export const handleWhatsappWebhookAction = httpAction(async (ctx, request) => {
         to: userPhoneNumber,
         type: 'text',
         text: {
-          text: {
-            body: aiResponse,
-          },
+          body: aiResponse,
         },
       }),
     },
