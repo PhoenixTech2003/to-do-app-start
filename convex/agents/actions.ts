@@ -15,7 +15,7 @@ export const T = internalAction({
   },
   handler: async (ctx, args) => {
     const agent = new ToolLoopAgent({
-      model: mistral('open-mistral-7b'),
+      model: mistral('mistral-large-latest'),
       instructions: systemPrompt(),
       tools: tools,
     })
