@@ -19,6 +19,8 @@ export const verifyWhatsappWebhookAction = httpAction(async (ctx, request) => {
 export const handleWhatsappWebhookAction = httpAction(async (ctx, request) => {
   const body = (await request.json()) as WhatsAppWebhookPayload
 
+  console.log(JSON.stringify(body, null, 2))
+
   const requestSignature = request.headers.get('X-Hub-Signature-256')
   if (!requestSignature) {
     console.error('could not find the request signature')
