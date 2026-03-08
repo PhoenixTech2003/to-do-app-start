@@ -61,4 +61,11 @@ export default defineSchema({
     token: v.string(),
     createdBy: v.string(),
   }).index('by_createdBy', ['createdBy']),
+  integrations: defineTable({
+    userId: v.string(),
+    userIntegrationId: v.string(),
+    type: v.union(v.literal('whatsapp')),
+  })
+    .index('by_userId', ['userId'])
+    .index('by_userIntegrationId', ['userIntegrationId']),
 })
