@@ -14,7 +14,7 @@ export const T = internalAction({
   },
   handler: async (ctx, args) => {
     const agent = new ToolLoopAgent({
-      model: google('gemma-3-12b-it'),
+      model: google('gemini-flash-lite-latest'),
       instructions: systemPrompt(),
       tools: tools,
     })
