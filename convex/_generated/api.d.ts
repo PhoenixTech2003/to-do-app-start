@@ -10,12 +10,14 @@
 
 import type * as agents_actions from "../agents/actions.js";
 import type * as agents_prompts from "../agents/prompts.js";
+import type * as agents_tools from "../agents/tools.js";
 import type * as auth from "../auth.js";
 import type * as dashboard_mutations from "../dashboard/mutations.js";
 import type * as dashboard_queries from "../dashboard/queries.js";
 import type * as globals_helpers from "../globals/helpers.js";
 import type * as globals_queries from "../globals/queries.js";
 import type * as http from "../http.js";
+import type * as integrations_queries from "../integrations/queries.js";
 import type * as notifications_actions from "../notifications/actions.js";
 import type * as notifications_mutation from "../notifications/mutation.js";
 import type * as notifications_queries from "../notifications/queries.js";
@@ -35,12 +37,14 @@ import type {
 declare const fullApi: ApiFromModules<{
   "agents/actions": typeof agents_actions;
   "agents/prompts": typeof agents_prompts;
+  "agents/tools": typeof agents_tools;
   auth: typeof auth;
   "dashboard/mutations": typeof dashboard_mutations;
   "dashboard/queries": typeof dashboard_queries;
   "globals/helpers": typeof globals_helpers;
   "globals/queries": typeof globals_queries;
   http: typeof http;
+  "integrations/queries": typeof integrations_queries;
   "notifications/actions": typeof notifications_actions;
   "notifications/mutation": typeof notifications_mutation;
   "notifications/queries": typeof notifications_queries;

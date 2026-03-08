@@ -4,7 +4,8 @@ import { ToolLoopAgent } from 'ai'
 import { v } from 'convex/values'
 import { google } from '@ai-sdk/google'
 import { internalAction } from '../_generated/server'
-import { testPrompt } from './prompts'
+import { systemPrompt } from './prompts'
+import { tools } from './tools'
 
 export const T = internalAction({
   args: {
@@ -14,7 +15,8 @@ export const T = internalAction({
   handler: async (ctx, args) => {
     const agent = new ToolLoopAgent({
       model: google('gemma-3n-e4b-it'),
-      instructions: testPrompt(),
+      instructions: systemPrompt(),
+      tools: tools,
     })
     const { text } = await agent.generate({ prompt: args.messageBody })
 

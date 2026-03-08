@@ -1,4 +1,4 @@
-export const testPrompt = function () {
+export const systemPrompt = function () {
   return `
 # T — Personal Intelligence Assistant
 
