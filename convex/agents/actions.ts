@@ -11,7 +11,7 @@ export const T = internalAction({
   },
   handler: async (ctx, args) => {
     const { text } = await generateText({
-      model: google('gemini-2.0-flash'),
+      model: google('gemma-3n-e4b-it'),
       prompt: testPrompt(args.messageBody, args.usersName),
     })
     return text
