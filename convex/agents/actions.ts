@@ -2,7 +2,7 @@
 
 import { ToolLoopAgent } from 'ai'
 import { v } from 'convex/values'
-import { google } from '@ai-sdk/google'
+import { mistral } from '@ai-sdk/mistral'
 import { internalAction } from '../_generated/server'
 import { systemPrompt, userPrompt } from './prompts'
 import { tools } from './tools'
@@ -15,7 +15,7 @@ export const T = internalAction({
   },
   handler: async (ctx, args) => {
     const agent = new ToolLoopAgent({
-      model: google('gemini-flash-lite-latest'),
+      model: mistral('open-mistral-7b'),
       instructions: systemPrompt(),
       tools: tools,
     })
