@@ -1,7 +1,8 @@
-import { tool } from 'ai'
+import {  tool } from 'ai'
 import { z } from 'zod'
 import { ConvexHttpClient } from 'convex/browser'
-import { api, internal } from '../_generated/api'
+import { api } from '../_generated/api'
+import type {ToolSet} from 'ai';
 
 const convex = new ConvexHttpClient(process.env.CONVEX_DEPLOYMENT_URL!)
 
@@ -20,17 +21,54 @@ available before proceeding, extract the userIntegrationId from the input.`,
     if (!integration) {
       return {
         success: false,
+        data:null,
         message:
           'Integration not found please activate in the dashboard at https://twodo.skilldiggers.dev',
       }
     }
     return {
       success: true,
+      data:null,
       message: null,
     }
   },
 })
 
-export const tools = {
+const getUsersWorkspaces = tool({
+  description: `Returns a list of all workspaces the user has access to. use this when asked to list the users' workspaces`,
+  inputSchema: z.object({userIntegrationId:z.string()}),
+  execute: async ({userIntegrationId}) => {
+    const accessToken = process.env.ACCESS_TOKEN!
+        const integration = await convex.query(
+      api.integrations.queries.getIntegration,
+      { userIntegrationId, accessToken },
+    )
+    if(!integration){
+      return {
+        success: false,
+        data:[],
+        message:
+          'Integration not found please activate in the dashboard at https://twodo.skilldiggers.dev/integrations',
+      }
+    }
+
+    const workspaces = await convex.query(api.agents.workspaces.queries.getUserWorkspaces,{
+      accessToken,
+      userId:integration.userId,
+    })
+
+    return{
+      success:true,
+      data:workspaces,
+      message:null,
+    }
+  
+  }})
+
+  
+export const tools: ToolSet = {
   verifyIntegration,
+  getUsersWorkspaces
 }
+
+

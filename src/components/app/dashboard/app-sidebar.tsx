@@ -1,4 +1,4 @@
-import { CheckCircleIcon, Home, Timer } from 'lucide-react'
+import { CheckCircleIcon, Home, PuzzleIcon, Timer } from 'lucide-react'
 import { Link, useLocation } from '@tanstack/react-router'
 import { motion } from 'motion/react'
 import {
@@ -16,6 +16,7 @@ const items = [
   { title: 'Workspaces', url: '/dashboard', icon: Home },
   { title: 'Today', url: '/today', icon: CheckCircleIcon },
   { title: 'Pomodoro', url: '/pomodoro', icon: Timer },
+  { title: 'Integrations', url: '/integrations', icon: PuzzleIcon },
 ]
 
 export function AppSidebar() {
