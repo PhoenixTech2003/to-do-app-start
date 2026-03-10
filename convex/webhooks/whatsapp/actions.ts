@@ -65,7 +65,7 @@ export const handleWhatsappWebhookAction = httpAction(async (ctx, request) => {
     return new Response(null, { status: 200 })
   }
 
-  const aiResponse = await ctx.runAction(internal.agents.actions.T, {
+  const aiResponse = await ctx.runAction(internal.agents.actions.processMessage, {
     messageBody,
     usersName: userName,
     userIntegrationId: userPhoneNumber,
