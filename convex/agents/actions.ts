@@ -2,12 +2,14 @@
 
 import { ToolLoopAgent } from 'ai'
 import { v } from 'convex/values'
-import { createMem0 } from '@mem0/vercel-ai-provider'
+import { mistral } from '@ai-sdk/mistral'
+import { supermemoryTools } from '@supermemory/tools/ai-sdk'
 import { internalAction } from '../_generated/server'
 import { api } from '../_generated/api'
 import { systemPrompt, userPrompt } from './prompts'
 import { tools } from './tools'
 import type { Doc } from '../_generated/dataModel'
+import type { ToolSet } from 'ai'
 
 export const processMessage = internalAction({
   args: {
@@ -26,15 +28,17 @@ export const processMessage = internalAction({
     if (!integration) {
       return 'This integration is not available. Please activate it in your dashboard at https://twodo.skilldiggers.dev/integrations to start using this feature.'
     }
-    const mem0 = createMem0({
-      provider: 'mistral',
-      mem0ApiKey: process.env.MEM0_API_KEY,
-      apiKey: process.env.MISTRAL_API_KEY,
-    })
+
+    const agentTools: ToolSet = {
+      ...tools,
+      ...(supermemoryTools(process.env.SUPERMEMORY_API_KEY!, {
+        containerTags: [integration.userId],
+      }) as ToolSet),
+    }
     const agent = new ToolLoopAgent({
-      model: mem0('mistral-medium-latest', { user_id: integration.userId }),
+      model: mistral('mistral-medium-latest'),
       instructions: systemPrompt(),
-      tools,
+      tools: agentTools,
     })
     const result = await agent.generate({
       prompt: userPrompt(args.messageBody, args.userIntegrationId),
