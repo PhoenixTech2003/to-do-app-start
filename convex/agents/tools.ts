@@ -62,7 +62,10 @@ const getUsersWorkspaces = tool({
 
     return {
       success: true,
-      data: workspaces,
+      data: workspaces.map((workspace) => ({
+        ...workspace,
+        _creationTime: new Date(workspace._creationTime),
+      })),
       message: null,
     }
   },
