@@ -21,10 +21,10 @@ export const processMessage = internalAction({
       {
         userIntegrationId: args.userIntegrationId,
         accessToken: process.env.ACCESS_TOKEN!,
-      }
+      },
     )
     if (!integration) {
-      return "This integration is not available. Please activate it in your dashboard at https://twodo.skilldiggers.dev/integrations to start using this feature."
+      return 'This integration is not available. Please activate it in your dashboard at https://twodo.skilldiggers.dev/integrations to start using this feature.'
     }
     const mem0 = createMem0({
       provider: 'mistral',
@@ -32,7 +32,7 @@ export const processMessage = internalAction({
       apiKey: process.env.MISTRAL_API_KEY,
     })
     const agent = new ToolLoopAgent({
-      model: mem0('mistral-large-latest', { user_id: integration.userId }),
+      model: mem0('mistral-medium-latest', { user_id: integration.userId }),
       instructions: systemPrompt(),
       tools,
     })
