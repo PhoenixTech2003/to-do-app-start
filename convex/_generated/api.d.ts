@@ -11,6 +11,7 @@
 import type * as agents_actions from "../agents/actions.js";
 import type * as agents_prompts from "../agents/prompts.js";
 import type * as agents_tools from "../agents/tools.js";
+import type * as agents_workspaces_mutations from "../agents/workspaces/mutations.js";
 import type * as agents_workspaces_queries from "../agents/workspaces/queries.js";
 import type * as auth from "../auth.js";
 import type * as dashboard_mutations from "../dashboard/mutations.js";
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   "agents/actions": typeof agents_actions;
   "agents/prompts": typeof agents_prompts;
   "agents/tools": typeof agents_tools;
+  "agents/workspaces/mutations": typeof agents_workspaces_mutations;
   "agents/workspaces/queries": typeof agents_workspaces_queries;
   auth: typeof auth;
   "dashboard/mutations": typeof dashboard_mutations;
