@@ -144,7 +144,7 @@ const updateWorkspace = tool({
 })
 
 const getWorkspaceById = tool({
-  description: `Returns a workspace by its id. use this when asked to get a workspace by its id or to do any mutation operations on a workspace`,
+  description: `Returns a workspace by its id ONLY CALL THIS AFTER IDENTIFYING THE WORKSPACE ID BY CALLING THE getUsersWorkspaces tool. use this when asked to get a workspace by its id or to do any mutation operations on a workspace`,
   inputSchema: z.object({
     userIntegrationId: z.string(),
     workspaceId: z.string(),
