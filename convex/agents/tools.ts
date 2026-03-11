@@ -142,8 +142,46 @@ const updateWorkspace = tool({
     }
   },
 })
+
+const getWorkspaceById = tool({
+  description: `Returns a workspace by its id. use this when asked to get a workspace by its id or to do any mutation operations on a workspace`,
+  inputSchema: z.object({
+    userIntegrationId: z.string(),
+    workspaceId: z.string(),
+  }),
+  execute: async ({ userIntegrationId, workspaceId }) => {
+    const accessToken = process.env.ACCESS_TOKEN!
+    const integration = await convex.query(
+      api.integrations.queries.getIntegration,
+      { userIntegrationId, accessToken },
+    )
+    if (!integration) {
+      return {
+        success: false,
+        data: null,
+        message:
+          'Integration not found please activate in the dashboard at https://twodo.skilldiggers.dev/integrations',
+      }
+    }
+    const workspace = await convex.query(
+      api.agents.workspaces.queries.getWorkspaceById,
+      {
+        accessToken,
+        userId: integration.userId,
+        workspaceId: workspaceId as Id<'workspace'>,
+      },
+    )
+    return {
+      success: true,
+      data: workspace,
+      message: null,
+    }
+  },
+})
 export const tools: ToolSet = {
   verifyIntegration,
   getUsersWorkspaces,
   createWorkspace,
+  updateWorkspace,
+  getWorkspaceById,
 }
