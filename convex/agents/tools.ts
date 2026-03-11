@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '../_generated/api'
 import type { ToolSet } from 'ai'
+import type { Id } from '../_generated/dataModel'
 
 const convex = new ConvexHttpClient(process.env.CONVEX_DEPLOYMENT_URL!)
 
@@ -104,6 +105,43 @@ const createWorkspace = tool({
   },
 })
 
+const updateWorkspace = tool({
+  description: `Updates the title of a workspace. use this when asked to update the title of a workspace`,
+  inputSchema: z.object({
+    userIntegrationId: z.string(),
+    workspaceId: z.string(),
+    title: z.string(),
+  }),
+  execute: async ({ userIntegrationId, workspaceId, title }) => {
+    const accessToken = process.env.ACCESS_TOKEN!
+    const integration = await convex.query(
+      api.integrations.queries.getIntegration,
+      { userIntegrationId, accessToken },
+    )
+    if (!integration) {
+      return {
+        success: false,
+        data: null,
+        message:
+          'Integration not found please activate in the dashboard at https://twodo.skilldiggers.dev/integrations',
+      }
+    }
+    const workspace = await convex.mutation(
+      api.agents.workspaces.mutations.updateWorkspace,
+      {
+        accessToken,
+        userId: integration.userId,
+        workspaceId: workspaceId as Id<'workspace'>,
+        title: title,
+      },
+    )
+    return {
+      success: true,
+      data: workspace,
+      message: null,
+    }
+  },
+})
 export const tools: ToolSet = {
   verifyIntegration,
   getUsersWorkspaces,
