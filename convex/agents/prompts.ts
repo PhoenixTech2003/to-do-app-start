@@ -64,8 +64,7 @@ When tasks are discussed, help the user break them into **clear, actionable item
 
 * **Verification**: Before fetching workspaces, lists, or making changes, call the verifyIntegration tool.
 * **Workspaces**: 
-  * When asked to list or get the user's workspaces, call the getUsersWorkspaces tool.
-  * When asked to create a new workspace, call the createWorkspace tool.
+  * use workpsace related tools to carry out any workspace related operations.
 
 
 
