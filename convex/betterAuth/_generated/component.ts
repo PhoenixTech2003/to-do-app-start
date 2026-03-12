@@ -1,6 +1,6 @@
 /* eslint-disable */
 /**
- * Generated `api` utility.
+ * Generated `ComponentApi` utility.
  *
  * THIS CODE IS AUTOMATICALLY GENERATED.
  *
@@ -8,96 +8,21 @@
  * @module
  */
 
-import type * as agents_actions from "../agents/actions.js";
-import type * as agents_lists_mutations from "../agents/lists/mutations.js";
-import type * as agents_lists_queries from "../agents/lists/queries.js";
-import type * as agents_prompts from "../agents/prompts.js";
-import type * as agents_todos_mutations from "../agents/todos/mutations.js";
-import type * as agents_todos_queries from "../agents/todos/queries.js";
-import type * as agents_tools from "../agents/tools.js";
-import type * as agents_workspaces_mutations from "../agents/workspaces/mutations.js";
-import type * as agents_workspaces_queries from "../agents/workspaces/queries.js";
-import type * as auth from "../auth.js";
-import type * as dashboard_mutations from "../dashboard/mutations.js";
-import type * as dashboard_queries from "../dashboard/queries.js";
-import type * as globals_helpers from "../globals/helpers.js";
-import type * as globals_queries from "../globals/queries.js";
-import type * as http from "../http.js";
-import type * as integrations_mutations from "../integrations/mutations.js";
-import type * as integrations_queries from "../integrations/queries.js";
-import type * as notifications_actions from "../notifications/actions.js";
-import type * as notifications_mutation from "../notifications/mutation.js";
-import type * as notifications_queries from "../notifications/queries.js";
-import type * as todos_mutations from "../todos/mutations.js";
-import type * as todos_queries from "../todos/queries.js";
-import type * as webhooks_whatsapp_actions from "../webhooks/whatsapp/actions.js";
-import type * as webhooks_whatsapp_node_actions from "../webhooks/whatsapp/node_actions.js";
-import type * as workspace_mutations from "../workspace/mutations.js";
-import type * as workspace_queries from "../workspace/queries.js";
-
-import type {
-  ApiFromModules,
-  FilterApi,
-  FunctionReference,
-} from "convex/server";
-
-declare const fullApi: ApiFromModules<{
-  "agents/actions": typeof agents_actions;
-  "agents/lists/mutations": typeof agents_lists_mutations;
-  "agents/lists/queries": typeof agents_lists_queries;
-  "agents/prompts": typeof agents_prompts;
-  "agents/todos/mutations": typeof agents_todos_mutations;
-  "agents/todos/queries": typeof agents_todos_queries;
-  "agents/tools": typeof agents_tools;
-  "agents/workspaces/mutations": typeof agents_workspaces_mutations;
-  "agents/workspaces/queries": typeof agents_workspaces_queries;
-  auth: typeof auth;
-  "dashboard/mutations": typeof dashboard_mutations;
-  "dashboard/queries": typeof dashboard_queries;
-  "globals/helpers": typeof globals_helpers;
-  "globals/queries": typeof globals_queries;
-  http: typeof http;
-  "integrations/mutations": typeof integrations_mutations;
-  "integrations/queries": typeof integrations_queries;
-  "notifications/actions": typeof notifications_actions;
-  "notifications/mutation": typeof notifications_mutation;
-  "notifications/queries": typeof notifications_queries;
-  "todos/mutations": typeof todos_mutations;
-  "todos/queries": typeof todos_queries;
-  "webhooks/whatsapp/actions": typeof webhooks_whatsapp_actions;
-  "webhooks/whatsapp/node_actions": typeof webhooks_whatsapp_node_actions;
-  "workspace/mutations": typeof workspace_mutations;
-  "workspace/queries": typeof workspace_queries;
-}>;
+import type { FunctionReference } from "convex/server";
 
 /**
- * A utility for referencing Convex functions in your app's public API.
+ * A utility for referencing a Convex component's exposed API.
  *
+ * Useful when expecting a parameter like `components.myComponent`.
  * Usage:
- * ```js
- * const myFunctionReference = api.myModule.myFunction;
+ * ```ts
+ * async function myFunction(ctx: QueryCtx, component: ComponentApi) {
+ *   return ctx.runQuery(component.someFile.someQuery, { ...args });
+ * }
  * ```
  */
-export declare const api: FilterApi<
-  typeof fullApi,
-  FunctionReference<any, "public">
->;
-
-/**
- * A utility for referencing Convex functions in your app's internal API.
- *
- * Usage:
- * ```js
- * const myFunctionReference = internal.myModule.myFunction;
- * ```
- */
-export declare const internal: FilterApi<
-  typeof fullApi,
-  FunctionReference<any, "internal">
->;
-
-export declare const components: {
-  betterAuth: {
+export type ComponentApi<Name extends string | undefined = string | undefined> =
+  {
     adapter: {
       create: FunctionReference<
         "mutation",
@@ -167,7 +92,8 @@ export declare const components: {
           onCreateHandle?: string;
           select?: Array<string>;
         },
-        any
+        any,
+        Name
       >;
       deleteMany: FunctionReference<
         "mutation",
@@ -354,7 +280,8 @@ export declare const components: {
             numItems: number;
           };
         },
-        any
+        any,
+        Name
       >;
       deleteOne: FunctionReference<
         "mutation",
@@ -533,7 +460,8 @@ export declare const components: {
               };
           onDeleteHandle?: string;
         },
-        any
+        any,
+        Name
       >;
       findMany: FunctionReference<
         "query",
@@ -576,7 +504,8 @@ export declare const components: {
               | null;
           }>;
         },
-        any
+        any,
+        Name
       >;
       findOne: FunctionReference<
         "query",
@@ -609,7 +538,8 @@ export declare const components: {
               | null;
           }>;
         },
-        any
+        any,
+        Name
       >;
       updateMany: FunctionReference<
         "mutation",
@@ -841,7 +771,8 @@ export declare const components: {
             numItems: number;
           };
         },
-        any
+        any,
+        Name
       >;
       updateOne: FunctionReference<
         "mutation",
@@ -1065,8 +996,8 @@ export declare const components: {
               };
           onUpdateHandle?: string;
         },
-        any
+        any,
+        Name
       >;
     };
   };
-};
