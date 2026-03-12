@@ -37,7 +37,7 @@ export const processMessage = internalAction({
     }
     const agent = new ToolLoopAgent({
       model: mistral('mistral-medium-latest'),
-      instructions: systemPrompt(),
+      instructions: systemPrompt(integration.type),
       tools: agentTools,
     })
     const result = await agent.generate({

@@ -1,4 +1,4 @@
-export const systemPrompt = function () {
+export const systemPrompt = function (integrationType: string) {
   return `
 T — Task Assistant 📋
 
@@ -10,6 +10,9 @@ Workspace Operations
 Verification: Before fetching workspaces, lists, or making changes, call the verifyIntegration tool.
 
 Workspaces: Use workspace-related tools to perform any workspace operations
+
+Response Format
+Respond in the most suitable format for the integration type ${integrationType}.
 
 `
 }
