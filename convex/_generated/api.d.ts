@@ -12,6 +12,7 @@ import type * as agents_actions from "../agents/actions.js";
 import type * as agents_lists_mutations from "../agents/lists/mutations.js";
 import type * as agents_lists_queries from "../agents/lists/queries.js";
 import type * as agents_prompts from "../agents/prompts.js";
+import type * as agents_todos_mutations from "../agents/todos/mutations.js";
 import type * as agents_todos_queries from "../agents/todos/queries.js";
 import type * as agents_tools from "../agents/tools.js";
 import type * as agents_workspaces_mutations from "../agents/workspaces/mutations.js";
@@ -45,6 +46,7 @@ declare const fullApi: ApiFromModules<{
   "agents/lists/mutations": typeof agents_lists_mutations;
   "agents/lists/queries": typeof agents_lists_queries;
   "agents/prompts": typeof agents_prompts;
+  "agents/todos/mutations": typeof agents_todos_mutations;
   "agents/todos/queries": typeof agents_todos_queries;
   "agents/tools": typeof agents_tools;
   "agents/workspaces/mutations": typeof agents_workspaces_mutations;
