@@ -315,6 +315,39 @@ const getListById = tool({
   },
 })
 
+const getTodos = tool({
+  description: `Returns a list of all todos for the user. use this when asked to list the user's todos. ONLY CALL THIS AFTER IDENTIFYING THE LIST ID BY CALLING THE getListById tool.`,
+  inputSchema: z.object({ userIntegrationId: z.string(), listId: z.string() }),
+  execute: async ({ userIntegrationId, listId }) => {
+    const accessToken = process.env.ACCESS_TOKEN!
+    const integration = await convex.query(
+      api.integrations.queries.getIntegration,
+      { userIntegrationId, accessToken },
+    )
+    if (!integration) {
+      return {
+        success: false,
+        data: [],
+        message:
+          'Integration not found please activate in the dashboard at https://twodo.skilldiggers.dev/integrations',
+      }
+    }
+    const todos = await convex.query(api.agents.todos.queries.getTodos, {
+      accessToken,
+      userId: integration.userId,
+      listId: listId as Id<'lists'>,
+    })
+    return {
+      success: true,
+      data: todos.map((todo) => ({
+        ...todo,
+        _creationTime: new Date(todo._creationTime),
+      })),
+      message: null,
+    }
+  },
+})
+
 export const tools: ToolSet = {
   verifyIntegration,
   getUsersWorkspaces,
@@ -325,4 +358,5 @@ export const tools: ToolSet = {
   getLists,
   updateList,
   getListById,
+  getTodos,
 }
