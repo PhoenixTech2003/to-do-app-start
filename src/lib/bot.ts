@@ -24,4 +24,8 @@ bot.onNewMention(async (thread, message) => {
   }
 })
 
+bot.onSubscribedMessage(async (thread, message) => {
+  await thread.post('Hello T v2 launched')
+})
+
 export default bot
