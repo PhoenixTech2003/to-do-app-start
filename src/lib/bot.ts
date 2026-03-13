@@ -12,8 +12,14 @@ const bot = new Chat({
 
 bot.onNewMention(async (thread) => {
   console.log('new mention', thread)
-  await thread.subscribe()
-  await thread.post('Hello T v2 launched')
+  try {
+    await thread.subscribe()
+    if (thread.isDM) {
+      await thread.post('Hello T v2 launched')
+    }
+  } catch (error) {
+    console.error('error in new mention', error)
+  }
 })
 
 export default bot
