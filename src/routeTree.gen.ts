@@ -16,6 +16,8 @@ import { Route as appTodayIndexRouteImport } from './routes/(app)/today/index'
 import { Route as appPomodoroIndexRouteImport } from './routes/(app)/pomodoro/index'
 import { Route as appIntegrationsIndexRouteImport } from './routes/(app)/integrations/index'
 import { Route as appDashboardIndexRouteImport } from './routes/(app)/dashboard/index'
+import { Route as appChatIndexRouteImport } from './routes/(app)/chat/index'
+import { Route as ApiWebhooksWhatsappRouteImport } from './routes/api/webhooks/whatsapp'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as appDashboardWorkspaceWorkspaceIdListsIndexRouteImport } from './routes/(app)/dashboard/workspace/$workspaceId/lists/index'
 import { Route as appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRouteImport } from './routes/(app)/dashboard/workspace/$workspaceId/lists/$listId/todos/index'
@@ -54,6 +56,16 @@ const appDashboardIndexRoute = appDashboardIndexRouteImport.update({
   path: '/dashboard/',
   getParentRoute: () => appRouteRoute,
 } as any)
+const appChatIndexRoute = appChatIndexRouteImport.update({
+  id: '/chat/',
+  path: '/chat/',
+  getParentRoute: () => appRouteRoute,
+} as any)
+const ApiWebhooksWhatsappRoute = ApiWebhooksWhatsappRouteImport.update({
+  id: '/api/webhooks/whatsapp',
+  path: '/api/webhooks/whatsapp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -76,6 +88,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/signup': typeof authSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/webhooks/whatsapp': typeof ApiWebhooksWhatsappRoute
+  '/chat/': typeof appChatIndexRoute
   '/dashboard/': typeof appDashboardIndexRoute
   '/integrations/': typeof appIntegrationsIndexRoute
   '/pomodoro/': typeof appPomodoroIndexRoute
@@ -87,6 +101,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/signup': typeof authSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/webhooks/whatsapp': typeof ApiWebhooksWhatsappRoute
+  '/chat': typeof appChatIndexRoute
   '/dashboard': typeof appDashboardIndexRoute
   '/integrations': typeof appIntegrationsIndexRoute
   '/pomodoro': typeof appPomodoroIndexRoute
@@ -100,6 +116,8 @@ export interface FileRoutesById {
   '/(app)': typeof appRouteRouteWithChildren
   '/(auth)/signup': typeof authSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/webhooks/whatsapp': typeof ApiWebhooksWhatsappRoute
+  '/(app)/chat/': typeof appChatIndexRoute
   '/(app)/dashboard/': typeof appDashboardIndexRoute
   '/(app)/integrations/': typeof appIntegrationsIndexRoute
   '/(app)/pomodoro/': typeof appPomodoroIndexRoute
@@ -113,6 +131,8 @@ export interface FileRouteTypes {
     | '/'
     | '/signup'
     | '/api/auth/$'
+    | '/api/webhooks/whatsapp'
+    | '/chat/'
     | '/dashboard/'
     | '/integrations/'
     | '/pomodoro/'
@@ -124,6 +144,8 @@ export interface FileRouteTypes {
     | '/'
     | '/signup'
     | '/api/auth/$'
+    | '/api/webhooks/whatsapp'
+    | '/chat'
     | '/dashboard'
     | '/integrations'
     | '/pomodoro'
@@ -136,6 +158,8 @@ export interface FileRouteTypes {
     | '/(app)'
     | '/(auth)/signup'
     | '/api/auth/$'
+    | '/api/webhooks/whatsapp'
+    | '/(app)/chat/'
     | '/(app)/dashboard/'
     | '/(app)/integrations/'
     | '/(app)/pomodoro/'
@@ -149,6 +173,7 @@ export interface RootRouteChildren {
   appRouteRoute: typeof appRouteRouteWithChildren
   authSignupRoute: typeof authSignupRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiWebhooksWhatsappRoute: typeof ApiWebhooksWhatsappRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -202,6 +227,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appDashboardIndexRouteImport
       parentRoute: typeof appRouteRoute
     }
+    '/(app)/chat/': {
+      id: '/(app)/chat/'
+      path: '/chat'
+      fullPath: '/chat/'
+      preLoaderRoute: typeof appChatIndexRouteImport
+      parentRoute: typeof appRouteRoute
+    }
+    '/api/webhooks/whatsapp': {
+      id: '/api/webhooks/whatsapp'
+      path: '/api/webhooks/whatsapp'
+      fullPath: '/api/webhooks/whatsapp'
+      preLoaderRoute: typeof ApiWebhooksWhatsappRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -227,6 +266,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface appRouteRouteChildren {
+  appChatIndexRoute: typeof appChatIndexRoute
   appDashboardIndexRoute: typeof appDashboardIndexRoute
   appIntegrationsIndexRoute: typeof appIntegrationsIndexRoute
   appPomodoroIndexRoute: typeof appPomodoroIndexRoute
@@ -236,6 +276,7 @@ interface appRouteRouteChildren {
 }
 
 const appRouteRouteChildren: appRouteRouteChildren = {
+  appChatIndexRoute: appChatIndexRoute,
   appDashboardIndexRoute: appDashboardIndexRoute,
   appIntegrationsIndexRoute: appIntegrationsIndexRoute,
   appPomodoroIndexRoute: appPomodoroIndexRoute,
@@ -255,6 +296,7 @@ const rootRouteChildren: RootRouteChildren = {
   appRouteRoute: appRouteRouteWithChildren,
   authSignupRoute: authSignupRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiWebhooksWhatsappRoute: ApiWebhooksWhatsappRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
