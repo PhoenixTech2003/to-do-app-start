@@ -8,10 +8,8 @@
  * @module
  */
 
-import type * as agents_actions from "../agents/actions.js";
 import type * as agents_lists_mutations from "../agents/lists/mutations.js";
 import type * as agents_lists_queries from "../agents/lists/queries.js";
-import type * as agents_prompts from "../agents/prompts.js";
 import type * as agents_todos_mutations from "../agents/todos/mutations.js";
 import type * as agents_todos_queries from "../agents/todos/queries.js";
 import type * as agents_tools from "../agents/tools.js";
@@ -30,8 +28,6 @@ import type * as notifications_mutation from "../notifications/mutation.js";
 import type * as notifications_queries from "../notifications/queries.js";
 import type * as todos_mutations from "../todos/mutations.js";
 import type * as todos_queries from "../todos/queries.js";
-import type * as webhooks_whatsapp_actions from "../webhooks/whatsapp/actions.js";
-import type * as webhooks_whatsapp_node_actions from "../webhooks/whatsapp/node_actions.js";
 import type * as workspace_mutations from "../workspace/mutations.js";
 import type * as workspace_queries from "../workspace/queries.js";
 
@@ -42,10 +38,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  "agents/actions": typeof agents_actions;
   "agents/lists/mutations": typeof agents_lists_mutations;
   "agents/lists/queries": typeof agents_lists_queries;
-  "agents/prompts": typeof agents_prompts;
   "agents/todos/mutations": typeof agents_todos_mutations;
   "agents/todos/queries": typeof agents_todos_queries;
   "agents/tools": typeof agents_tools;
@@ -64,8 +58,6 @@ declare const fullApi: ApiFromModules<{
   "notifications/queries": typeof notifications_queries;
   "todos/mutations": typeof todos_mutations;
   "todos/queries": typeof todos_queries;
-  "webhooks/whatsapp/actions": typeof webhooks_whatsapp_actions;
-  "webhooks/whatsapp/node_actions": typeof webhooks_whatsapp_node_actions;
   "workspace/mutations": typeof workspace_mutations;
   "workspace/queries": typeof workspace_queries;
 }>;

@@ -86,8 +86,8 @@ export function DashboardLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <main className="flex flex-1 flex-col min-h-screen">
-        <SidebarInset className="flex flex-col flex-1">
+      <main className="flex min-w-0 flex-1 flex-col min-h-screen">
+        <SidebarInset className="flex min-w-0 flex-1 flex-col">
           <header className="flex items-center gap-4 px-6 h-14 sticky top-0 z-30 bg-background border-b border-border">
             <SidebarTrigger />
             <div className="flex-1 min-w-0">
@@ -95,13 +95,16 @@ export function DashboardLayout() {
                 <span className="text-muted-foreground text-sm">loading…</span>
               ) : (
                 <p className="text-sm truncate text-muted-foreground">
-                  Welcome back, <span className="text-foreground font-medium">{data?.user.name}</span>
+                  Welcome back,{' '}
+                  <span className="text-foreground font-medium">
+                    {data?.user.name}
+                  </span>
                 </p>
               )}
             </div>
             <ThemeSwitcher />
           </header>
-          <div className="flex-1 overflow-auto p-4 sm:p-6 pb-20 sm:pb-6">
+          <div className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto p-4 sm:p-6 pb-20 sm:pb-6">
             <Outlet />
           </div>
         </SidebarInset>
