@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { bot } from '@/lib/bot'
+import bot from '@/lib/bot'
 
 export const Route = createFileRoute('/api/webhooks/whatsapp')({
   server: {
