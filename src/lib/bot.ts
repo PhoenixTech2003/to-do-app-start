@@ -1,4 +1,4 @@
-import { Chat } from 'chat'
+import { Chat, ConsoleLogger } from 'chat'
 import { createMemoryState } from '@chat-adapter/state-memory'
 import { createWhatsAppAdapter } from '@chat-adapter/whatsapp'
 
@@ -6,7 +6,8 @@ const bot = new Chat({
   userName: 'T',
   adapters: {
     whatsapp: createWhatsAppAdapter({
-      apiVersion: 'v22.0',
+      apiVersion: 'v21.0', // use default; v22.0 may have compatibility issues
+      logger: new ConsoleLogger('debug'), // surface adapter activity and errors
     }),
   },
   state: createMemoryState(),
@@ -14,18 +15,25 @@ const bot = new Chat({
 
 bot.onNewMention(async (thread, message) => {
   try {
+    // Post first; subscribe after (per Chat SDK WhatsApp docs example)
+    await thread.post('Hello from T!')
     await thread.subscribe()
-    if (thread.isDM) {
-      console.log(message)
-      await thread.post('Hello T v2 launched')
-    }
   } catch (error) {
-    console.error('error in new mention', error)
+    console.error('[bot] onNewMention error:', error)
+    if (error instanceof Error) {
+      console.error('[bot] error stack:', error.stack)
+      console.error('[bot] error cause:', error.cause)
+    }
+    throw error // rethrow so adapter can surface it
   }
 })
 
 bot.onSubscribedMessage(async (thread, message) => {
-  await thread.post('Hello T v2 launched')
+  try {
+    await thread.post(`You said: ${message.text}`)
+  } catch (error) {
+    console.error('[bot] onSubscribedMessage error:', error)
+  }
 })
 
 export default bot
