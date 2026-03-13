@@ -4,8 +4,8 @@ import { bot } from '@/lib/bot'
 export const Route = createFileRoute('/api/webhooks/whatsapp')({
   server: {
     handlers: {
-      POST: ({ request }) => bot.getAdapter('whatsapp').handleWebhook(request),
-      GET: ({ request }) => bot.getAdapter('whatsapp').handleWebhook(request),
+      POST: ({ request }) => bot.webhooks.whatsapp(request),
+      GET: ({ request }) => bot.webhooks.whatsapp(request),
     },
   },
 })
