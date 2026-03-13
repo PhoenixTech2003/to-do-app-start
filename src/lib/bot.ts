@@ -5,7 +5,9 @@ import { createWhatsAppAdapter } from '@chat-adapter/whatsapp'
 const bot = new Chat({
   userName: 'T',
   adapters: {
-    whatsapp: createWhatsAppAdapter(),
+    whatsapp: createWhatsAppAdapter({
+      apiVersion: 'v22.0',
+    }),
   },
   state: createMemoryState(),
 }).registerSingleton()
