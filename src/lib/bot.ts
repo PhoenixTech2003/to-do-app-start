@@ -15,7 +15,7 @@ bot.onNewMention(async (thread, message) => {
   try {
     await thread.subscribe()
     if (thread.isDM) {
-      const dmThread = await bot.openDM(message.author.userId)
+      const dmThread = await bot.openDM(message.author)
       await dmThread.post('Hello T v2 launched')
     }
   } catch (error) {
