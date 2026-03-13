@@ -8,9 +8,9 @@ export const bot = new Chat({
     whatsapp: createWhatsAppAdapter(),
   },
   state: createMemoryState(),
-})
+}).registerSingleton()
 
 bot.onNewMention(async (thread) => {
   await thread.subscribe()
-  await thread.post('Hello bot v2 launched')
+  await thread.post('Hello T v2 launched')
 })
