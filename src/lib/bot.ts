@@ -10,12 +10,13 @@ const bot = new Chat({
   state: createMemoryState(),
 }).registerSingleton()
 
-bot.onNewMention(async (thread) => {
+bot.onNewMention(async (thread, message) => {
   console.log('new mention', thread)
   try {
     await thread.subscribe()
     if (thread.isDM) {
-      await thread.post('Hello T v2 launched')
+      const dmThread = await bot.openDM(message.author.userId)
+      await dmThread.post('Hello T v2 launched')
     }
   } catch (error) {
     console.error('error in new mention', error)
