@@ -7,6 +7,7 @@ const bot = new Chat({
   userName: 'T',
   adapters: {
     whatsapp: createWhatsAppAdapter({
+      apiVersion: 'v25.0',
       logger: new ConsoleLogger('error'), // surface adapter activity and errors
     }),
     telegram: createTelegramAdapter({
