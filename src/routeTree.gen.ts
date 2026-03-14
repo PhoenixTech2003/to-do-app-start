@@ -18,6 +18,7 @@ import { Route as appIntegrationsIndexRouteImport } from './routes/(app)/integra
 import { Route as appDashboardIndexRouteImport } from './routes/(app)/dashboard/index'
 import { Route as appChatIndexRouteImport } from './routes/(app)/chat/index'
 import { Route as ApiWebhooksWhatsappRouteImport } from './routes/api/webhooks/whatsapp'
+import { Route as ApiWebhooksTelegramRouteImport } from './routes/api/webhooks/telegram'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as appDashboardWorkspaceWorkspaceIdListsIndexRouteImport } from './routes/(app)/dashboard/workspace/$workspaceId/lists/index'
 import { Route as appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRouteImport } from './routes/(app)/dashboard/workspace/$workspaceId/lists/$listId/todos/index'
@@ -66,6 +67,11 @@ const ApiWebhooksWhatsappRoute = ApiWebhooksWhatsappRouteImport.update({
   path: '/api/webhooks/whatsapp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiWebhooksTelegramRoute = ApiWebhooksTelegramRouteImport.update({
+  id: '/api/webhooks/telegram',
+  path: '/api/webhooks/telegram',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/signup': typeof authSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/webhooks/telegram': typeof ApiWebhooksTelegramRoute
   '/api/webhooks/whatsapp': typeof ApiWebhooksWhatsappRoute
   '/chat/': typeof appChatIndexRoute
   '/dashboard/': typeof appDashboardIndexRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/signup': typeof authSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/webhooks/telegram': typeof ApiWebhooksTelegramRoute
   '/api/webhooks/whatsapp': typeof ApiWebhooksWhatsappRoute
   '/chat': typeof appChatIndexRoute
   '/dashboard': typeof appDashboardIndexRoute
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/(app)': typeof appRouteRouteWithChildren
   '/(auth)/signup': typeof authSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/webhooks/telegram': typeof ApiWebhooksTelegramRoute
   '/api/webhooks/whatsapp': typeof ApiWebhooksWhatsappRoute
   '/(app)/chat/': typeof appChatIndexRoute
   '/(app)/dashboard/': typeof appDashboardIndexRoute
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
     | '/'
     | '/signup'
     | '/api/auth/$'
+    | '/api/webhooks/telegram'
     | '/api/webhooks/whatsapp'
     | '/chat/'
     | '/dashboard/'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/'
     | '/signup'
     | '/api/auth/$'
+    | '/api/webhooks/telegram'
     | '/api/webhooks/whatsapp'
     | '/chat'
     | '/dashboard'
@@ -158,6 +169,7 @@ export interface FileRouteTypes {
     | '/(app)'
     | '/(auth)/signup'
     | '/api/auth/$'
+    | '/api/webhooks/telegram'
     | '/api/webhooks/whatsapp'
     | '/(app)/chat/'
     | '/(app)/dashboard/'
@@ -173,6 +185,7 @@ export interface RootRouteChildren {
   appRouteRoute: typeof appRouteRouteWithChildren
   authSignupRoute: typeof authSignupRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiWebhooksTelegramRoute: typeof ApiWebhooksTelegramRoute
   ApiWebhooksWhatsappRoute: typeof ApiWebhooksWhatsappRoute
 }
 
@@ -241,6 +254,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiWebhooksWhatsappRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/webhooks/telegram': {
+      id: '/api/webhooks/telegram'
+      path: '/api/webhooks/telegram'
+      fullPath: '/api/webhooks/telegram'
+      preLoaderRoute: typeof ApiWebhooksTelegramRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -296,6 +316,7 @@ const rootRouteChildren: RootRouteChildren = {
   appRouteRoute: appRouteRouteWithChildren,
   authSignupRoute: authSignupRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiWebhooksTelegramRoute: ApiWebhooksTelegramRoute,
   ApiWebhooksWhatsappRoute: ApiWebhooksWhatsappRoute,
 }
 export const routeTree = rootRouteImport
