@@ -13,6 +13,7 @@ const bot = new Chat({
 }).registerSingleton()
 
 bot.onNewMention(async (thread, message) => {
+  thread.subscribe()
   console.log('Fired new mention')
   try {
     await thread.post('Hello from T!')
