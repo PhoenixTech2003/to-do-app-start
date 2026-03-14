@@ -13,9 +13,9 @@ const bot = new Chat({
 }).registerSingleton()
 
 bot.onNewMention(async (thread, message) => {
+  thread.subscribe()
+  console.log('Fired new mention')
   try {
-    // Post first; subscribe after (per Chat SDK WhatsApp docs example)
-    await thread.subscribe()
     await thread.post('Hello from T!')
   } catch (error) {
     console.error('[bot] onNewMention error:', error)
@@ -28,6 +28,7 @@ bot.onNewMention(async (thread, message) => {
 })
 
 bot.onSubscribedMessage(async (thread, message) => {
+  console.log('Fired subscribed message')
   try {
     await thread.post(`You said: ${message.text}`)
   } catch (error) {
