@@ -1,11 +1,15 @@
 import { Chat, ConsoleLogger } from 'chat'
 import { createWhatsAppAdapter } from '@chat-adapter/whatsapp'
+import { createTelegramAdapter } from '@chat-adapter/telegram'
 import { createRedisState } from '@chat-adapter/state-redis'
 
 const bot = new Chat({
   userName: 'T',
   adapters: {
     whatsapp: createWhatsAppAdapter({
+      logger: new ConsoleLogger('error'), // surface adapter activity and errors
+    }),
+    telegram: createTelegramAdapter({
       logger: new ConsoleLogger('error'), // surface adapter activity and errors
     }),
   },

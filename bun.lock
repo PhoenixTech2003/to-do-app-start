@@ -10,6 +10,7 @@
         "@chat-adapter/state-memory": "^4.20.1",
         "@chat-adapter/state-pg": "^4.20.1",
         "@chat-adapter/state-redis": "^4.20.1",
+        "@chat-adapter/telegram": "^4.20.1",
         "@chat-adapter/whatsapp": "^4.20.1",
         "@convex-dev/better-auth": "^0.10.10",
         "@convex-dev/react-query": "0.1.0",
@@ -195,6 +196,8 @@
     "@chat-adapter/state-pg": ["@chat-adapter/state-pg@4.20.1", "", { "dependencies": { "chat": "4.20.1", "pg": "^8.20.0" } }, "sha512-CcNaGEFzf4wKOs6I0rbWWfm2GxoPlIjwjcl+IYcv1KxLk5ECyafxCHfAjzbf4C2Ls+/GQaie9Y6FvrvgCoUIAQ=="],
 
     "@chat-adapter/state-redis": ["@chat-adapter/state-redis@4.20.1", "", { "dependencies": { "chat": "4.20.1", "redis": "^5.11.0" } }, "sha512-aAN+GXNTCKrXsSurh5arLMDGl8XbbxTspD1qLZuYXPwQBBZsuF3mPBfeFmwRJqweHuwv+3b/VofXvxFmRosR6A=="],
+
+    "@chat-adapter/telegram": ["@chat-adapter/telegram@4.20.1", "", { "dependencies": { "@chat-adapter/shared": "4.20.1", "chat": "4.20.1" } }, "sha512-0GCMv2XDYrCN0etnCrvHE76ihCfNbV00PslBOQRHqIyqJKRy5jmm9qg+XmfdXm6yuWA7c9RB8gD6m9QPhIvi3Q=="],
 
     "@chat-adapter/whatsapp": ["@chat-adapter/whatsapp@4.20.1", "", { "dependencies": { "@chat-adapter/shared": "4.20.1", "chat": "4.20.1" } }, "sha512-9EwE+EXHE/fC2pRUAWPblaVPiGa9HzyfmtEW7ExJadNzMryqzXzfNVU8dAXhBp5uwTSY6nq9n9NYjXC0KgDpBQ=="],
 
