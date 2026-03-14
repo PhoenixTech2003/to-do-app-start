@@ -6,8 +6,8 @@ const bot = new Chat({
   userName: 'T',
   adapters: {
     whatsapp: createWhatsAppAdapter({
-      apiVersion: 'v21.0', // use default; v22.0 may have compatibility issues
-      logger: new ConsoleLogger('debug'), // surface adapter activity and errors
+      apiVersion: 'v22.0', // use default; v22.0 may have compatibility issues
+      logger: new ConsoleLogger('error'), // surface adapter activity and errors
     }),
   },
   state: createMemoryState(),
