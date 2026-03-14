@@ -1,6 +1,6 @@
 import { Chat, ConsoleLogger } from 'chat'
-import { createMemoryState } from '@chat-adapter/state-memory'
 import { createWhatsAppAdapter } from '@chat-adapter/whatsapp'
+import { createPostgresState } from '@chat-adapter/state-pg'
 
 const bot = new Chat({
   userName: 'T',
@@ -10,14 +10,14 @@ const bot = new Chat({
       logger: new ConsoleLogger('error'), // surface adapter activity and errors
     }),
   },
-  state: createMemoryState(),
+  state: createPostgresState(),
 }).registerSingleton()
 
 bot.onNewMention(async (thread, message) => {
   try {
     // Post first; subscribe after (per Chat SDK WhatsApp docs example)
-    await thread.post('Hello from T!')
     await thread.subscribe()
+    await thread.post('Hello from T!')
   } catch (error) {
     console.error('[bot] onNewMention error:', error)
     if (error instanceof Error) {
