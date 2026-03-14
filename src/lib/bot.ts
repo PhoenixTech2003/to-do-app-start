@@ -1,6 +1,6 @@
 import { Chat, ConsoleLogger } from 'chat'
 import { createWhatsAppAdapter } from '@chat-adapter/whatsapp'
-import { createPostgresState } from '@chat-adapter/state-pg'
+import { createRedisState } from '@chat-adapter/state-redis'
 
 const bot = new Chat({
   userName: 'T',
@@ -9,7 +9,7 @@ const bot = new Chat({
       logger: new ConsoleLogger('error'), // surface adapter activity and errors
     }),
   },
-  state: createPostgresState(),
+  state: createRedisState(),
 }).registerSingleton()
 
 bot.onNewMention(async (thread, message) => {
