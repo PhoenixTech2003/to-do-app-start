@@ -7,6 +7,7 @@ const bot = new Chat({
   userName: 'T',
   adapters: {
     whatsapp: createWhatsAppAdapter({
+      apiVersion: 'v25.0',
       logger: new ConsoleLogger('error'), // surface adapter activity and errors
     }),
     telegram: createTelegramAdapter({
@@ -18,7 +19,6 @@ const bot = new Chat({
 
 bot.onNewMention(async (thread, message) => {
   thread.subscribe()
-  console.log('Fired new mention')
   try {
     await thread.post('Hello from T!')
   } catch (error) {
@@ -32,7 +32,6 @@ bot.onNewMention(async (thread, message) => {
 })
 
 bot.onSubscribedMessage(async (thread, message) => {
-  console.log('Fired subscribed message')
   try {
     await thread.post(`You said: ${message.text}`)
   } catch (error) {
