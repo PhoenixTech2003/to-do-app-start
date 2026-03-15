@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { internalQuery, query } from '../_generated/server'
+import { query } from '../_generated/server'
 import { authComponent } from '../auth'
 
 export const getIntegrations = query({
@@ -30,5 +30,18 @@ export const getIntegration = query({
       )
       .first()
     return integration
+  },
+})
+
+export const getTelegramLinkToken = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await authComponent.getAuthUser(ctx)
+    const tokenDoc = await ctx.db
+      .query('telegramLinkTokens')
+      .withIndex('by_userId', (q) => q.eq('userId', user._id))
+      .first()
+    if (!tokenDoc) return null
+    return { token: tokenDoc.token, expiresAt: tokenDoc.expiresAt }
   },
 })

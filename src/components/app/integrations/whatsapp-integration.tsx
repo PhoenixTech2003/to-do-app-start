@@ -67,7 +67,7 @@ export function WhatsAppIntegration({ integration }: WhatsAppIntegrationProps) {
           e.stopPropagation()
           form.handleSubmit()
         }}
-        className="space-y-4"
+        className="flex flex-1 flex-col space-y-4"
       >
         <form.Field
           name="phoneNumber"
@@ -115,7 +115,7 @@ export function WhatsAppIntegration({ integration }: WhatsAppIntegrationProps) {
               (integration?.userIntegrationId ?? '')
 
             return (
-              <div className="flex gap-2">
+              <div className="mt-auto flex gap-2">
                 <Button
                   type="submit"
                   disabled={(isSubmitting as boolean) || !hasChanged}

@@ -64,10 +64,17 @@ export default defineSchema({
   integrations: defineTable({
     userId: v.string(),
     userIntegrationId: v.string(),
-    type: v.union(v.literal('whatsapp')),
+    type: v.union(v.literal('whatsapp'), v.literal('telegram')),
   })
     .index('by_userId', ['userId'])
     .index('by_userIntegrationId', ['userIntegrationId']),
+  telegramLinkTokens: defineTable({
+    token: v.string(),
+    userId: v.string(),
+    expiresAt: v.number(),
+  })
+    .index('by_token', ['token'])
+    .index('by_userId', ['userId']),
   integrationDMThreads: defineTable({
     userId: v.string(),
     agentThreadId: v.string(),

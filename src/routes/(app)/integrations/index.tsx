@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from 'convex/_generated/api'
 import { WhatsAppIntegration } from '@/components/app/integrations/whatsapp-integration'
+import { TelegramIntegration } from '@/components/app/integrations/telegram-integration'
 import { StateHandler } from '@/components/app/state-handler'
 
 export const Route = createFileRoute('/(app)/integrations/')({
@@ -12,8 +13,8 @@ export const Route = createFileRoute('/(app)/integrations/')({
 function IntegrationsPage() {
   const integrations = useQuery(api.integrations.queries.getIntegrations)
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   const whatsappIntegration = integrations?.find((i) => i.type === 'whatsapp')
+  const telegramIntegration = integrations?.find((i) => i.type === 'telegram')
 
   return (
     <div className="space-y-8 pb-20">
@@ -40,6 +41,7 @@ function IntegrationsPage() {
           isEmpty={false} // We always want to show the available ones
         >
           <WhatsAppIntegration integration={whatsappIntegration} />
+          <TelegramIntegration integration={telegramIntegration} />
 
           {/* Future integrations can be added here */}
           <div className="group relative overflow-hidden rounded-xl border border-dashed border-muted-foreground/25 bg-muted/5 p-6 transition-colors hover:bg-muted/10">
