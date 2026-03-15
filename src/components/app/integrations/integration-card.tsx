@@ -62,7 +62,9 @@ export function IntegrationCard({
           )}
         </Badge>
       </CardHeader>
-      <CardContent className="pt-4">{children}</CardContent>
+      <CardContent className="flex flex-1 flex-col pt-4 min-h-0">
+        <div className="flex flex-1 flex-col">{children}</div>
+      </CardContent>
     </Card>
   )
 }

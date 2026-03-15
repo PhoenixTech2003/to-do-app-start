@@ -60,6 +60,16 @@ export const createAgentThread = mutation({
         )
       }
       userId = integration.userId
+
+      // Check for existing thread (cross-platform continuity)
+      const existingThread = await ctx.db
+        .query('integrationDMThreads')
+        .withIndex('by_userId', (q) => q.eq('userId', userId))
+        .first()
+
+      if (existingThread) {
+        return existingThread.agentThreadId
+      }
     } else {
       const user = await authComponent.getAuthUser(ctx)
       userId = user._id
