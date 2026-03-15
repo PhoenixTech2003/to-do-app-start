@@ -55,9 +55,7 @@ export const createAgentThread = mutation({
         .first()
 
       if (!integration) {
-        throw new Error(
-          `Integration not found for userIntegrationId: ${userIntegrationId} and platform ${args.platform}`,
-        )
+        return { success: false as const, reason: 'integration_not_found' }
       }
       userId = integration.userId
 
@@ -68,7 +66,7 @@ export const createAgentThread = mutation({
         .first()
 
       if (existingThread) {
-        return existingThread.agentThreadId
+        return { success: true as const, threadId: existingThread.agentThreadId }
       }
     } else {
       const user = await authComponent.getAuthUser(ctx)
@@ -86,7 +84,7 @@ export const createAgentThread = mutation({
       })
     }
 
-    return threadId
+    return { success: true as const, threadId }
   },
 })
 
