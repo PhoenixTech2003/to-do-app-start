@@ -68,4 +68,8 @@ export default defineSchema({
   })
     .index('by_userId', ['userId'])
     .index('by_userIntegrationId', ['userIntegrationId']),
+  integrationDMThreads: defineTable({
+    userId: v.string(),
+    agentThreadId: v.string(),
+  }).index('by_userId', ['userId']),
 })
