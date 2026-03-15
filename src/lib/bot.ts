@@ -67,29 +67,28 @@ bot.onNewMention(async (thread, message) => {
       if (handled) return
     }
 
-    const threadId = await convex.mutation(api.agents.agent.createAgentThread, {
+    const result = await convex.mutation(api.agents.agent.createAgentThread, {
       platform,
       userIntegrationId: message.author.userId,
     })
+
+    if (!result.success) {
+      await thread.post(INTEGRATION_MISSING_MESSAGE)
+      return
+    }
+
     const agentResponse = await convex.action(api.agents.agent.testAgent, {
-      threadId,
+      threadId: result.threadId,
       prompt: message.text,
     })
     await thread.post(agentResponse)
   } catch (error) {
     console.error('[bot] onNewMention error:', error)
-    const isIntegrationNotFound =
-      error instanceof Error &&
-      error.message.includes('Integration not found')
-    if (isIntegrationNotFound) {
-      await thread.post(INTEGRATION_MISSING_MESSAGE)
-      return
-    }
     if (error instanceof Error) {
       console.error('[bot] error stack:', error.stack)
       console.error('[bot] error cause:', error.cause)
     }
-    throw error // rethrow so adapter can surface it
+    throw error
   }
 })
 
@@ -108,24 +107,23 @@ bot.onSubscribedMessage(async (thread, message) => {
       if (handled) return
     }
 
-    const threadId = await convex.mutation(api.agents.agent.createAgentThread, {
+    const result = await convex.mutation(api.agents.agent.createAgentThread, {
       platform,
       userIntegrationId: message.author.userId,
     })
+
+    if (!result.success) {
+      await thread.post(INTEGRATION_MISSING_MESSAGE)
+      return
+    }
+
     const agentResponse = await convex.action(api.agents.agent.testAgent, {
-      threadId,
+      threadId: result.threadId,
       prompt: message.text,
     })
     await thread.post(agentResponse)
   } catch (error) {
     console.error('[bot] onSubscribedMessage error:', error)
-    const isIntegrationNotFound =
-      error instanceof Error &&
-      error.message.includes('Integration not found')
-    if (isIntegrationNotFound) {
-      await thread.post(INTEGRATION_MISSING_MESSAGE)
-      return
-    }
     if (error instanceof Error) {
       console.error('[bot] error stack:', error.stack)
       console.error('[bot] error cause:', error.cause)
