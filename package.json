@@ -19,6 +19,7 @@
     "@chat-adapter/state-redis": "^4.20.1",
     "@chat-adapter/telegram": "^4.20.1",
     "@chat-adapter/whatsapp": "^4.20.1",
+    "@convex-dev/agent": "^0.3.2",
     "@convex-dev/better-auth": "^0.10.10",
     "@convex-dev/react-query": "0.1.0",
     "@dnd-kit/react": "^0.3.2",
