@@ -14,6 +14,33 @@ const signUpPageSearchParams = z.object({
   redirectUrl: z.string().optional(),
 })
 
+function getSafeCallbackUrl(redirectUrl: string | undefined): string {
+  const defaultUrl = '/dashboard'
+  if (!redirectUrl || redirectUrl.trim() === '') {
+    return defaultUrl
+  }
+  const trimmed = redirectUrl.trim()
+
+  // Relative path: must start with "/" but not "//"
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+    return trimmed
+  }
+
+  // Absolute URL: must be same-origin
+  try {
+    const baseOrigin =
+      typeof window !== 'undefined' ? window.location.origin : ''
+    const url = new URL(trimmed, baseOrigin)
+    if (url.origin === baseOrigin) {
+      return trimmed
+    }
+  } catch {
+    // Invalid URL
+  }
+
+  return defaultUrl
+}
+
 export const Route = createFileRoute('/(auth)/signup')({
   beforeLoad: ({ context }) => {
     if (context.isAuthenticated) {
@@ -30,7 +57,7 @@ function SignUpPage() {
   function handleGoogleSignUp() {
     const googleSignInHandler = authClient.signIn.social({
       provider: 'google',
-      callbackURL: redirectUrl ?? '/dashboard',
+      callbackURL: getSafeCallbackUrl(redirectUrl),
     })
     toast.promise(googleSignInHandler, {
       loading: 'Signing up',
