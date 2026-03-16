@@ -5,6 +5,41 @@ import { api } from 'convex/_generated/api'
 import { WhatsAppIntegration } from '@/components/app/integrations/whatsapp-integration'
 import { TelegramIntegration } from '@/components/app/integrations/telegram-integration'
 import { StateHandler } from '@/components/app/state-handler'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+
+function IntegrationCardSkeleton() {
+  return (
+    <Card className="relative overflow-hidden flex h-full min-h-[300px] flex-col">
+      <div className="absolute left-0 top-0 h-full w-1 bg-muted" />
+      <CardHeader className="flex flex-row items-start justify-between space-y-0 px-6 pb-2">
+        <div className="min-w-0 flex-1 space-y-2">
+          <Skeleton className="h-5 w-full" />
+          <Skeleton className="h-4 w-full" />
+        </div>
+        <Skeleton className="h-5 w-16 shrink-0 rounded-full" />
+      </CardHeader>
+      <CardContent className="flex min-h-0 flex-1 flex-col px-6 pt-4">
+        <div className="flex flex-1 flex-col gap-4">
+          <Skeleton className="h-11 w-full rounded-md" />
+          <div className="mt-auto pt-2">
+            <Skeleton className="h-10 w-full rounded-md" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function IntegrationsGridSkeleton() {
+  return (
+    <div className="grid auto-rows-[minmax(280px,1fr)] gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <IntegrationCardSkeleton />
+      <IntegrationCardSkeleton />
+      <IntegrationCardSkeleton />
+    </div>
+  )
+}
 
 export const Route = createFileRoute('/(app)/integrations/')({
   component: IntegrationsPage,
@@ -34,11 +69,12 @@ function IntegrationsPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid auto-rows-[minmax(280px,1fr)] gap-6 md:grid-cols-2 lg:grid-cols-3">
         <StateHandler
           isLoading={integrations === undefined}
           isError={false}
-          isEmpty={false} // We always want to show the available ones
+          isEmpty={false}
+          loadingSkeleton={<IntegrationsGridSkeleton />}
         >
           <WhatsAppIntegration integration={whatsappIntegration} />
           <TelegramIntegration integration={telegramIntegration} />
