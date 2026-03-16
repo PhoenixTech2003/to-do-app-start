@@ -1,8 +1,13 @@
-import { Outlet, createFileRoute } from '@tanstack/react-router'
+import {
+  Outlet,
+  createFileRoute,
+  redirect,
+  useNavigate,
+} from '@tanstack/react-router'
 import { getToken, onMessage } from 'firebase/messaging'
 import { useCallback, useEffect } from 'react'
 import { toast } from 'sonner'
-import { BellIcon } from 'lucide-react'
+import { BellIcon, LogOut } from 'lucide-react'
 import {
   convexQuery,
   useConvexAction,
@@ -17,6 +22,12 @@ import {
 } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app/dashboard/app-sidebar'
 import { authClient } from '@/lib/auth-client'
+import { Button } from '@/components/ui/button'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
 import { usePomoBackgroundTimer } from '@/hooks/use-pomo-background-timer'
 import { playNotificationSound } from '@/components/app/pomodoro/pomo-helpers'
@@ -24,11 +35,27 @@ import { env } from '@/env'
 import { getFirebaseMessaging } from '@/firebase/firebase-config'
 
 export const Route = createFileRoute('/(app)')({
+  beforeLoad: ({ context, location }) => {
+    if (!context.isAuthenticated) {
+      throw redirect({ to: '/signup', search: { redirectUrl: location.href } })
+    }
+  },
   component: DashboardLayout,
 })
 
 export function DashboardLayout() {
+  const navigate = useNavigate()
   const { isPending, isRefetching, data } = authClient.useSession()
+
+  const handleSignOut = useCallback(async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          navigate({ to: '/' })
+        },
+      },
+    })
+  }, [navigate])
   const createPushNotificationToken = useConvexMutation(
     api.notifications.mutation.createPushNotificationToken,
   )
@@ -103,6 +130,22 @@ export function DashboardLayout() {
               )}
             </div>
             <ThemeSwitcher />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={handleSignOut}
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                  aria-label="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" sideOffset={6}>
+                Sign out
+              </TooltipContent>
+            </Tooltip>
           </header>
           <div className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto p-4 sm:p-6 pb-20 sm:pb-6">
             <Outlet />

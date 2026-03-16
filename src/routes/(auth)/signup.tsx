@@ -1,23 +1,36 @@
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute, redirect } from '@tanstack/react-router'
 import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { motion } from 'motion/react'
+import { z } from 'zod'
+import { zodValidator } from '@tanstack/zod-adapter'
 import { Button } from '@/components/ui/button'
 import { authClient } from '@/lib/auth-client'
 import { GoogleLogo } from '@/components/app/auth/google-logo'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
 import { SignupPageSkeleton } from '@/components/app/auth/signup-page-skeleton'
 
+const signUpPageSearchParams = z.object({
+  redirectUrl: z.string().optional(),
+})
+
 export const Route = createFileRoute('/(auth)/signup')({
+  beforeLoad: ({ context }) => {
+    if (context.isAuthenticated) {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
+  validateSearch: zodValidator(signUpPageSearchParams),
   pendingComponent: SignupPageSkeleton,
   component: SignUpPage,
 })
 
 function SignUpPage() {
+  const { redirectUrl } = Route.useSearch()
   function handleGoogleSignUp() {
     const googleSignInHandler = authClient.signIn.social({
       provider: 'google',
-      callbackURL: '/dashboard',
+      callbackURL: redirectUrl ?? '/dashboard',
     })
     toast.promise(googleSignInHandler, {
       loading: 'Signing up',

@@ -28,7 +28,9 @@ export function StateHandler({
   // Show loading skeleton only on initial load
   if (isLoading) {
     if (loadingSkeleton) {
-      return <>{loadingSkeleton}</>
+      return (
+        <div className="col-span-full w-full min-w-0">{loadingSkeleton}</div>
+      )
     }
     return null
   }
@@ -51,7 +53,9 @@ export function StateHandler({
 
   // Show empty state if data is empty
   if (isEmpty && emptyState) {
-    return <>{emptyState}</>
+    return (
+      <div className="col-span-full w-full min-w-0">{emptyState}</div>
+    )
   }
 
   // Show children if no error or loading

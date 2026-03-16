@@ -11,7 +11,9 @@ import { motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
 
-export const Route = createFileRoute('/')({ component: LandingPage })
+export const Route = createFileRoute('/')({
+  component: LandingPage,
+})
 
 const stagger = {
   hidden: { opacity: 0 },
