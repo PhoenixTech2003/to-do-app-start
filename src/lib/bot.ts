@@ -80,8 +80,9 @@ bot.onNewMention(async (thread, message) => {
     const agentResponse = await convex.action(api.agents.agent.testAgent, {
       threadId: result.threadId,
       prompt: message.text,
+      platform,
     })
-    await thread.post(agentResponse)
+    if (agentResponse) await thread.post(agentResponse)
   } catch (error) {
     console.error('[bot] onNewMention error:', error)
     if (error instanceof Error) {
@@ -120,8 +121,9 @@ bot.onSubscribedMessage(async (thread, message) => {
     const agentResponse = await convex.action(api.agents.agent.testAgent, {
       threadId: result.threadId,
       prompt: message.text,
+      platform,
     })
-    await thread.post(agentResponse)
+    if (agentResponse) await thread.post(agentResponse)
   } catch (error) {
     console.error('[bot] onSubscribedMessage error:', error)
     if (error instanceof Error) {

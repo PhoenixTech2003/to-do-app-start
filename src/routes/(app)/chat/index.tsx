@@ -1,4 +1,7 @@
+import { useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
+import { useMutation, useQuery } from 'convex/react'
+import { api } from 'convex/_generated/api'
 import { ChatInterface } from '@/components/app/chat/chat-interface'
 
 export const Route = createFileRoute('/(app)/chat/')({
@@ -6,10 +9,30 @@ export const Route = createFileRoute('/(app)/chat/')({
 })
 
 function ChatPage() {
+  const threadResult = useQuery(api.agents.agent.getUserWebThread)
+  const createThread = useMutation(api.agents.agent.createAgentThread)
+
+  useEffect(() => {
+    if (threadResult === null) {
+      createThread({ platform: 'web' })
+    }
+  }, [threadResult, createThread])
+
+  const threadId = threadResult?.threadId
+
+  if (threadId === undefined) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <p className="text-sm text-muted-foreground">Loading chat…</p>
+      </div>
+    )
+  }
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6">
       <div className="flex min-h-0 flex-1">
-        <ChatInterface showMockMessages className="h-full min-h-0 flex-1" />
+        <ChatInterface threadId={threadId} className="h-full min-h-0 flex-1" />
       </div>
     </div>
   )
