@@ -77,12 +77,12 @@ bot.onNewMention(async (thread, message) => {
       return
     }
 
-    const agentResponse = await convex.action(api.agents.agent.testAgent, {
+    const agentResponse = await convex.action(api.agents.agent.sendBotMessage, {
       threadId: result.threadId,
       prompt: message.text,
       platform,
     })
-    if (agentResponse) await thread.post(agentResponse)
+    if (agentResponse) await thread.post({ markdown: agentResponse })
   } catch (error) {
     console.error('[bot] onNewMention error:', error)
     if (error instanceof Error) {
@@ -118,12 +118,12 @@ bot.onSubscribedMessage(async (thread, message) => {
       return
     }
 
-    const agentResponse = await convex.action(api.agents.agent.testAgent, {
+    const agentResponse = await convex.action(api.agents.agent.sendBotMessage, {
       threadId: result.threadId,
       prompt: message.text,
       platform,
     })
-    if (agentResponse) await thread.post(agentResponse)
+    if (agentResponse) await thread.post({ markdown: agentResponse })
   } catch (error) {
     console.error('[bot] onSubscribedMessage error:', error)
     if (error instanceof Error) {

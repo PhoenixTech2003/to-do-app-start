@@ -1,9 +1,14 @@
-import { Agent, vStreamArgs } from '@convex-dev/agent'
+import {
+  Agent,
+  listUIMessages,
+  syncStreams,
+  vStreamArgs,
+} from '@convex-dev/agent'
 import { mistral } from '@ai-sdk/mistral'
 import { v } from 'convex/values'
 import { paginationOptsValidator } from 'convex/server'
-import { action, mutation, query } from '../_generated/server'
-import { components } from '../_generated/api'
+import { action, internalQuery, mutation, query } from '../_generated/server'
+import { components, internal } from '../_generated/api'
 import { authComponent } from '../auth'
 
 export const agent = new Agent(components.agent, {
@@ -60,7 +65,6 @@ export const createAgentThread = mutation({
       }
       userId = integration.userId
 
-      // Check for existing thread (cross-platform continuity)
       const existingThread = await ctx.db
         .query('integrationDMThreads')
         .withIndex('by_userId', (q) => q.eq('userId', userId))
@@ -76,7 +80,6 @@ export const createAgentThread = mutation({
       const user = await authComponent.getAuthUser(ctx)
       userId = user._id
 
-      // Check for existing thread (web users share thread with integrations)
       const existingThread = await ctx.db
         .query('integrationDMThreads')
         .withIndex('by_userId', (q) => q.eq('userId', userId))
@@ -94,7 +97,6 @@ export const createAgentThread = mutation({
       userId,
     })
 
-    // Persist thread for both web and integration users (one thread per user)
     await ctx.db.insert('integrationDMThreads', {
       userId,
       agentThreadId: threadId,
@@ -110,7 +112,11 @@ const platformValidator = v.union(
   v.literal('telegram'),
 )
 
-export const testAgent = action({
+/**
+ * Bot-only: used by WhatsApp / Telegram integrations.
+ * Returns the generated text so the bot adapter can relay it.
+ */
+export const sendBotMessage = action({
   args: {
     threadId: v.string(),
     prompt: v.string(),
@@ -120,15 +126,6 @@ export const testAgent = action({
     const { thread } = await agent.continueThread(ctx, {
       threadId: args.threadId,
     })
-    if (args.platform === 'web') {
-      const result = await thread.streamText(
-        { prompt: args.prompt } as Parameters<typeof agent.streamText>[2],
-        { saveStreamDeltas: true },
-      )
-      await result.consumeStream()
-      return null
-    }
-
     const result = await thread.generateText({
       prompt: args.prompt,
     } as Parameters<typeof thread.generateText>[0])
@@ -136,7 +133,51 @@ export const testAgent = action({
   },
 })
 
-export const getThreadMessages = query({
+export const verifyThreadOwner = internalQuery({
+  args: { threadId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx)
+    const thread = await ctx.db
+      .query('integrationDMThreads')
+      .withIndex('by_agentThreadId', (q) =>
+        q.eq('agentThreadId', args.threadId),
+      )
+      .first()
+    if (thread?.userId !== user._id) {
+      throw new Error('You are not the owner of this thread')
+    }
+  },
+})
+
+/**
+ * Web-only: streams the response with saveStreamDeltas so the client
+ * receives live updates via the reactive listWebMessages query.
+ */
+export const sendWebMessage = action({
+  args: {
+    threadId: v.string(),
+    prompt: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.runQuery(internal.agents.agent.verifyThreadOwner, {
+      threadId: args.threadId,
+    })
+    const { thread } = await agent.continueThread(ctx, {
+      threadId: args.threadId,
+    })
+    const result = await thread.streamText(
+      { prompt: args.prompt } as Parameters<typeof agent.streamText>[2],
+      { saveStreamDeltas: true },
+    )
+    await result.consumeStream()
+  },
+})
+
+/**
+ * Web-only: returns UIMessages (richer than raw MessageDocs) plus
+ * streaming deltas — designed for useUIMessages on the client.
+ */
+export const listWebMessages = query({
   args: {
     threadId: v.string(),
     paginationOpts: paginationOptsValidator,
@@ -144,31 +185,27 @@ export const getThreadMessages = query({
   },
   handler: async (ctx, args) => {
     const loggedInUser = await authComponent.getAuthUser(ctx)
-    const userId = loggedInUser._id
     const integrationDMThread = await ctx.db
       .query('integrationDMThreads')
       .withIndex('by_agentThreadId', (q) =>
         q.eq('agentThreadId', args.threadId),
       )
       .first()
-    if (integrationDMThread?.userId !== userId) {
+    if (integrationDMThread?.userId !== loggedInUser._id) {
       throw new Error('You are not the owner of the thread')
     }
 
-    const paginated = await agent.listMessages(ctx, {
+    const paginated = await listUIMessages(ctx, components.agent, {
       threadId: args.threadId,
       paginationOpts: args.paginationOpts,
     })
 
-    const streams = await agent.syncStreams(ctx, {
+    const streams = await syncStreams(ctx, components.agent, {
       threadId: args.threadId,
       streamArgs: args.streamArgs,
     })
 
-    return {
-      ...paginated,
-      streams,
-    }
+    return { ...paginated, streams }
   },
 })
 

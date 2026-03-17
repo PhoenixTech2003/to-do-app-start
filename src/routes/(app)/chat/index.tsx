@@ -29,11 +29,5 @@ function ChatPage() {
     )
   }
 
-  return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6">
-      <div className="flex min-h-0 flex-1">
-        <ChatInterface threadId={threadId} className="h-full min-h-0 flex-1" />
-      </div>
-    </div>
-  )
+  return <ChatInterface threadId={threadId} className="min-h-0 flex-1" />
 }
