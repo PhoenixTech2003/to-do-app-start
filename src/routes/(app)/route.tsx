@@ -51,7 +51,7 @@ export function DashboardLayout() {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          navigate({ to: '/' })
+          throw redirect({ to: '/' })
         },
       },
     })
