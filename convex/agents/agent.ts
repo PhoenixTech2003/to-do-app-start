@@ -184,11 +184,12 @@ export const sendWebMessage = action({
         excludeToolMessages: true,
       },
     } as unknown as Parameters<typeof agent.streamText>[2]
-    await thread.streamText(promptArgs, {
+    const result = await thread.streamText(promptArgs, {
       saveStreamDeltas: {
         returnImmediately: true,
       },
     })
+    return await result.consumeStream()
   },
 })
 
