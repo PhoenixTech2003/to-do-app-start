@@ -7,8 +7,8 @@ import {
 import { mistral } from '@ai-sdk/mistral'
 import { v } from 'convex/values'
 import { paginationOptsValidator } from 'convex/server'
-import { action, mutation, query } from '../_generated/server'
-import { components } from '../_generated/api'
+import { action, internalQuery, mutation, query } from '../_generated/server'
+import { components, internal } from '../_generated/api'
 import { authComponent } from '../auth'
 
 export const agent = new Agent(components.agent, {
@@ -116,7 +116,7 @@ const platformValidator = v.union(
  * Bot-only: used by WhatsApp / Telegram integrations.
  * Returns the generated text so the bot adapter can relay it.
  */
-export const testAgent = action({
+export const sendBotMessage = action({
   args: {
     threadId: v.string(),
     prompt: v.string(),
@@ -133,6 +133,22 @@ export const testAgent = action({
   },
 })
 
+export const verifyThreadOwner = internalQuery({
+  args: { threadId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx)
+    const thread = await ctx.db
+      .query('integrationDMThreads')
+      .withIndex('by_agentThreadId', (q) =>
+        q.eq('agentThreadId', args.threadId),
+      )
+      .first()
+    if (thread?.userId !== user._id) {
+      throw new Error('You are not the owner of this thread')
+    }
+  },
+})
+
 /**
  * Web-only: streams the response with saveStreamDeltas so the client
  * receives live updates via the reactive listWebMessages query.
@@ -143,6 +159,9 @@ export const sendWebMessage = action({
     prompt: v.string(),
   },
   handler: async (ctx, args) => {
+    await ctx.runQuery(internal.agents.agent.verifyThreadOwner, {
+      threadId: args.threadId,
+    })
     const { thread } = await agent.continueThread(ctx, {
       threadId: args.threadId,
     })
