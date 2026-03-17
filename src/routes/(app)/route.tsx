@@ -113,9 +113,9 @@ export function DashboardLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <main className="flex min-w-0 flex-1 flex-col min-h-screen">
-        <SidebarInset className="flex min-w-0 flex-1 flex-col">
-          <header className="flex items-center gap-4 px-6 h-14 sticky top-0 z-30 bg-background border-b border-border">
+      <main className="flex min-w-0 flex-1 flex-col h-screen max-h-screen overflow-hidden">
+        <SidebarInset className="flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden">
+          <header className="flex shrink-0 items-center gap-4 px-6 h-14 z-30 bg-background border-b border-border">
             <SidebarTrigger />
             <div className="flex-1 min-w-0">
               {isPending || isRefetching ? (
