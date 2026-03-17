@@ -5,16 +5,16 @@ import {
   useNavigate,
 } from '@tanstack/react-router'
 import { getToken, onMessage } from 'firebase/messaging'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { BellIcon, LogOut } from 'lucide-react'
+import { BellIcon, LoaderCircle, LogOut } from 'lucide-react'
 import {
   convexQuery,
   useConvexAction,
   useConvexMutation,
 } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   SidebarInset,
   SidebarProvider,
@@ -45,17 +45,27 @@ export const Route = createFileRoute('/(app)')({
 
 export function DashboardLayout() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { isPending, isRefetching, data } = authClient.useSession()
+  const [isSigningOut, setIsSigningOut] = useState(false)
 
   const handleSignOut = useCallback(async () => {
+    setIsSigningOut(true)
+    queryClient.setQueryData(['auth', 'token'], null)
+    void navigate({ to: '/', replace: true })
+
     await authClient.signOut({
       fetchOptions: {
+        onError: () => {
+          setIsSigningOut(false)
+          toast.error('Failed to sign out')
+        },
         onSuccess: () => {
-          throw redirect({ to: '/' })
+          void queryClient.invalidateQueries({ queryKey: ['auth', 'token'] })
         },
       },
     })
-  }, [navigate])
+  }, [navigate, queryClient])
   const createPushNotificationToken = useConvexMutation(
     api.notifications.mutation.createPushNotificationToken,
   )
@@ -63,7 +73,10 @@ export function DashboardLayout() {
     api.notifications.actions.sendPushNotification,
   )
   const { data: pushTokenData } = useQuery(
-    convexQuery(api.notifications.queries.getPushNotificationToken),
+    {
+      ...convexQuery(api.notifications.queries.getPushNotificationToken),
+      enabled: !isSigningOut,
+    },
   )
 
   const onPhaseComplete = useCallback(
@@ -83,6 +96,13 @@ export function DashboardLayout() {
   usePomoBackgroundTimer(onPhaseComplete)
 
   useEffect(() => {
+    if (!isPending && !isRefetching && !data) {
+      void navigate({ to: '/', replace: true })
+    }
+  }, [data, isPending, isRefetching, navigate])
+
+  useEffect(() => {
+    if (isSigningOut) return
     const messaging = getFirebaseMessaging()
     if (!messaging) return
 
@@ -108,7 +128,18 @@ export function DashboardLayout() {
     return () => {
       unsubscribe()
     }
-  }, [])
+  }, [createPushNotificationToken, isSigningOut])
+
+  if (isSigningOut) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-5 py-4 text-sm text-muted-foreground shadow-sm">
+          <LoaderCircle className="size-4 animate-spin text-primary" />
+          Signing you out...
+        </div>
+      </div>
+    )
+  }
 
   return (
     <SidebarProvider>
