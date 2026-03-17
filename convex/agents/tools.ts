@@ -1,456 +1,362 @@
-import { tool } from 'ai'
+import { createTool } from '@convex-dev/agent'
 import { z } from 'zod'
-import { ConvexHttpClient } from 'convex/browser'
 import { api } from '../_generated/api'
-import type { ToolSet } from 'ai'
 import type { Id } from '../_generated/dataModel'
 
-const convex = new ConvexHttpClient(process.env.CONVEX_DEPLOYMENT_URL!)
-
-const verifyIntegration = tool({
-  description: `Verifies whether the interface or platform the user is currently 
-operating on has been connected and configured to support T's actions. Use this tool before 
-carrying out any operation that depends on an external integration to confirm access is 
-available before proceeding, extract the userIntegrationId from the input.`,
-  inputSchema: z.object({ userIntegrationId: z.string() }),
-  execute: async ({ userIntegrationId }) => {
-    const accessToken = process.env.ACCESS_TOKEN!
-    const integration = await convex.query(
-      api.integrations.queries.getIntegration,
-      { userIntegrationId, accessToken },
-    )
-    if (!integration) {
-      return {
-        success: false,
-        data: null,
-        message:
-          'Integration not found please activate in the dashboard at https://twodo.skilldiggers.dev',
-      }
-    }
-    return {
-      success: true,
-      data: null,
-      message: null,
-    }
-  },
-})
-
-const getUsersWorkspaces = tool({
-  description: `Returns a list of all workspaces the user has access to. use this when asked to list the users' workspaces`,
-  inputSchema: z.object({ userIntegrationId: z.string() }),
-  execute: async ({ userIntegrationId }) => {
-    const accessToken = process.env.ACCESS_TOKEN!
-    const integration = await convex.query(
-      api.integrations.queries.getIntegration,
-      { userIntegrationId, accessToken },
-    )
-    if (!integration) {
-      return {
-        success: false,
-        data: [],
-        message:
-          'Integration not found please activate in the dashboard at https://twodo.skilldiggers.dev/integrations',
-      }
-    }
-
-    const workspaces = await convex.query(
-      api.agents.workspaces.queries.getUserWorkspaces,
-      {
-        accessToken,
-        userId: integration.userId,
-      },
-    )
-
-    return {
-      success: true,
-      data: workspaces.map((workspace) => ({
-        ...workspace,
-        _creationTime: new Date(workspace._creationTime),
-      })),
-      message: null,
-    }
-  },
-})
-
-const createWorkspace = tool({
-  description: `Creates a new workspace for the user. use this when asked to create a new workspace`,
-  inputSchema: z.object({ userIntegrationId: z.string(), title: z.string() }),
-  execute: async ({ userIntegrationId, title }) => {
-    const accessToken = process.env.ACCESS_TOKEN!
-    const integration = await convex.query(
-      api.integrations.queries.getIntegration,
-      { userIntegrationId, accessToken },
-    )
-    if (!integration) {
-      return {
-        success: false,
-        data: null,
-        message:
-          'Integration not found please activate in the dashboard at https://twodo.skilldiggers.dev/integrations',
-      }
-    }
-    const workspace = await convex.mutation(
-      api.agents.workspaces.mutations.createWorkspace,
-      {
-        accessToken,
-        userId: integration.userId,
-        title: title,
-      },
-    )
-    return {
-      success: true,
-      data: workspace,
-      message: null,
-    }
-  },
-})
-
-const updateWorkspace = tool({
-  description: `Updates the title of a workspace. use this when asked to update the title of a workspace`,
-  inputSchema: z.object({
-    userIntegrationId: z.string(),
-    workspaceId: z.string(),
-    title: z.string(),
+const getCurrentDate = createTool({
+  description:
+    'Returns the current real date and time. Use this whenever the user asks for today, the current date, current time, day of the week, or anything time-sensitive.',
+  args: z.object({
+    timezone: z
+      .string()
+      .optional()
+      .describe(
+        'Optional IANA timezone like UTC, Africa/Blantyre, or America/New_York',
+      ),
   }),
-  execute: async ({ userIntegrationId, workspaceId, title }) => {
-    const accessToken = process.env.ACCESS_TOKEN!
-    const integration = await convex.query(
-      api.integrations.queries.getIntegration,
-      { userIntegrationId, accessToken },
-    )
-    if (!integration) {
-      return {
-        success: false,
-        data: null,
-        message:
-          'Integration not found please activate in the dashboard at https://twodo.skilldiggers.dev/integrations',
+  handler: async (_ctx, args): Promise<string> => {
+    await Promise.resolve()
+    const now = new Date()
+    const timeZone = args.timezone ?? 'UTC'
+
+    try {
+      const humanReadable = new Intl.DateTimeFormat('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZone: timeZone,
+        timeZoneName: 'short',
+      }).format(now)
+
+      if (timeZone === 'UTC') {
+        return `Current date and time in UTC: ${humanReadable}. ISO (UTC): ${now.toISOString()}.`
       }
-    }
-    const workspace = await convex.mutation(
-      api.agents.workspaces.mutations.updateWorkspace,
-      {
-        accessToken,
-        userId: integration.userId,
-        workspaceId: workspaceId as Id<'workspace'>,
-        title: title,
-      },
-    )
-    return {
-      success: true,
-      data: workspace,
-      message: null,
+
+      return `Current date and time in ${timeZone}: ${humanReadable}. Unix timestamp: ${now.getTime()}.`
+    } catch {
+      return `Invalid timezone "${timeZone}". Please use a valid IANA timezone like UTC, Africa/Blantyre, or America/New_York.`
     }
   },
 })
 
-const getWorkspaceById = tool({
-  description: `Returns a workspace by its id ONLY CALL THIS AFTER IDENTIFYING THE WORKSPACE ID BY CALLING THE getUsersWorkspaces tool. use this when asked to get a workspace by its id or to do any mutation operations on a workspace`,
-  inputSchema: z.object({
-    userIntegrationId: z.string(),
-    workspaceId: z.string(),
+const getUsersWorkspaces = createTool({
+  description:
+    "Returns a list of all workspaces the user has access to. Use this when asked to list or show the user's workspaces.",
+  args: z.object({}),
+  handler: async (ctx): Promise<string> => {
+    try {
+      const workspaces = await ctx.runQuery(
+        api.agents.workspaces.queries.getUserWorkspaces,
+        { userId: ctx.userId!, accessToken: process.env.ACCESS_TOKEN! },
+      )
+      if (!workspaces.length) {
+        return JSON.stringify({ workspaces: [], count: 0 })
+      }
+
+      return JSON.stringify({
+        workspaces: workspaces.map((w: { _id: string; title: string }) => ({
+          id: w._id,
+          title: w.title,
+        })),
+        count: workspaces.length,
+      })
+    } catch {
+      return JSON.stringify({ error: 'Failed to fetch workspaces' })
+    }
+  },
+})
+
+const createWorkspace = createTool({
+  description:
+    'Creates a new workspace for the user. Use this when asked to create a new workspace.',
+  args: z.object({
+    title: z.string().describe('The title for the new workspace'),
   }),
-  execute: async ({ userIntegrationId, workspaceId }) => {
-    const accessToken = process.env.ACCESS_TOKEN!
-    const integration = await convex.query(
-      api.integrations.queries.getIntegration,
-      { userIntegrationId, accessToken },
-    )
-    if (!integration) {
-      return {
-        success: false,
-        data: null,
-        message:
-          'Integration not found please activate in the dashboard at https://twodo.skilldiggers.dev/integrations',
-      }
-    }
-    const workspace = await convex.query(
-      api.agents.workspaces.queries.getWorkspaceById,
-      {
-        accessToken,
-        userId: integration.userId,
-        workspaceId: workspaceId as Id<'workspace'>,
-      },
-    )
-    return {
-      success: true,
-      data: workspace,
-      message: null,
+  handler: async (ctx, args): Promise<string> => {
+    try {
+      const workspaceId = await ctx.runMutation(
+        api.agents.workspaces.mutations.createWorkspace,
+        {
+          userId: ctx.userId!,
+          accessToken: process.env.ACCESS_TOKEN!,
+          title: args.title,
+        },
+      )
+      return `Created workspace "${args.title}" (id: ${workspaceId}).`
+    } catch {
+      return `Failed to create workspace "${args.title}". Please try again.`
     }
   },
 })
 
-const createList = tool({
-  description: `Creates a new list for the user. use this when asked to create a new list. ONLY CALL THIS AFTER IDENTIFYING THE WORKSPACE ID BY CALLING THE getWorkspaceById tool.`,
-  inputSchema: z.object({
-    userIntegrationId: z.string(),
-    title: z.string(),
-    workspaceId: z.string(),
+const updateWorkspace = createTool({
+  description:
+    'Updates the title of a workspace. Use this when asked to rename or update a workspace.',
+  args: z.object({
+    workspaceId: z.string().describe('The ID of the workspace to update'),
+    title: z.string().describe('The new title for the workspace'),
   }),
-  execute: async ({ userIntegrationId, title, workspaceId }) => {
-    const accessToken = process.env.ACCESS_TOKEN!
-    const integration = await convex.query(
-      api.integrations.queries.getIntegration,
-      { userIntegrationId, accessToken },
-    )
-    if (!integration) {
-      return {
-        success: false,
-        data: null,
-        message:
-          'Integration not found please activate in the dashboard at https://twodo.skilldiggers.dev/integrations',
-      }
-    }
-    const list = await convex.mutation(api.agents.lists.mutations.createList, {
-      accessToken,
-      userId: integration.userId,
-      workspaceId: workspaceId as Id<'workspace'>,
-      title: title,
-    })
-    return {
-      success: true,
-      data: list,
-      message: null,
+  handler: async (ctx, args): Promise<string> => {
+    try {
+      await ctx.runMutation(api.agents.workspaces.mutations.updateWorkspace, {
+        userId: ctx.userId!,
+        accessToken: process.env.ACCESS_TOKEN!,
+        workspaceId: args.workspaceId as Id<'workspace'>,
+        title: args.title,
+      })
+      return `Renamed workspace to "${args.title}".`
+    } catch {
+      return `Failed to rename workspace. Please try again.`
     }
   },
 })
 
-const updateList = tool({
-  description: `Updates the title of a list. use this when asked to update the title of a list. ONLY CALL THIS AFTER IDENTIFYING THE LIST ID BY CALLING THE getListById tool.`,
-  inputSchema: z.object({
-    userIntegrationId: z.string(),
-    listId: z.string(),
-    title: z.string(),
+const getWorkspaceById = createTool({
+  description:
+    'Returns a workspace by its ID. Call getUsersWorkspaces first to discover workspace IDs.',
+  args: z.object({
+    workspaceId: z.string().describe('The ID of the workspace to retrieve'),
   }),
-  execute: async ({ userIntegrationId, listId, title }) => {
-    const accessToken = process.env.ACCESS_TOKEN!
-    const integration = await convex.query(
-      api.integrations.queries.getIntegration,
-      { userIntegrationId, accessToken },
-    )
-    if (!integration) {
-      return {
-        success: false,
-        data: null,
-        message:
-          'Integration not found please activate in the dashboard at https://twodo.skilldiggers.dev/integrations',
-      }
-    }
-    const list = await convex.mutation(api.agents.lists.mutations.updateList, {
-      accessToken,
-      userId: integration.userId,
-      listId: listId as Id<'lists'>,
-      title: title,
-    })
-    return {
-      success: true,
-      data: list,
-      message: null,
+  handler: async (ctx, args): Promise<string> => {
+    try {
+      const workspace = await ctx.runQuery(
+        api.agents.workspaces.queries.getWorkspaceById,
+        {
+          userId: ctx.userId!,
+          accessToken: process.env.ACCESS_TOKEN!,
+          workspaceId: args.workspaceId as Id<'workspace'>,
+        },
+      )
+      if (!workspace) return 'Workspace not found.'
+      return `Workspace: "${workspace.title}" (id: ${workspace._id})`
+    } catch {
+      return 'Failed to fetch workspace. Please try again.'
     }
   },
 })
 
-const getLists = tool({
-  description: `Returns a list of all lists for the user. use this when asked to list the user's lists. ONLY CALL THIS AFTER IDENTIFYING THE WORKSPACE ID BY CALLING THE getWorkspaceById tool.`,
-  inputSchema: z.object({
-    userIntegrationId: z.string(),
-    workspaceId: z.string(),
+const createList = createTool({
+  description:
+    'Creates a new list inside a workspace. Call getUsersWorkspaces first to identify the workspace ID.',
+  args: z.object({
+    title: z.string().describe('The title for the new list'),
+    workspaceId: z.string().describe('The workspace ID to create the list in'),
   }),
-  execute: async ({ userIntegrationId, workspaceId }) => {
-    const accessToken = process.env.ACCESS_TOKEN!
-    const integration = await convex.query(
-      api.integrations.queries.getIntegration,
-      { userIntegrationId, accessToken },
-    )
-    if (!integration) {
-      return {
-        success: false,
-        data: [],
-        message:
-          'Integration not found please activate in the dashboard at https://twodo.skilldiggers.dev/integrations',
-      }
-    }
-    const lists = await convex.query(api.agents.lists.queries.getLists, {
-      accessToken,
-      userId: integration.userId,
-      workspaceId: workspaceId as Id<'workspace'>,
-    })
-    return {
-      success: true,
-      data: lists.map((list) => ({
-        ...list,
-        _creationTime: new Date(list._creationTime),
-      })),
-      message: null,
+  handler: async (ctx, args): Promise<string> => {
+    try {
+      const listId = await ctx.runMutation(
+        api.agents.lists.mutations.createList,
+        {
+          userId: ctx.userId!,
+          accessToken: process.env.ACCESS_TOKEN!,
+          workspaceId: args.workspaceId as Id<'workspace'>,
+          title: args.title,
+        },
+      )
+      return `Created list "${args.title}" (id: ${listId}).`
+    } catch {
+      return `Failed to create list "${args.title}". Please try again.`
     }
   },
 })
 
-const getListById = tool({
-  description: `Returns a list by its id. use this when asked to get a list by its id. ONLY CALL THIS AFTER IDENTIFYING THE LIST ID BY CALLING THE getLists tool.`,
-  inputSchema: z.object({ userIntegrationId: z.string(), listId: z.string() }),
-  execute: async ({ userIntegrationId, listId }) => {
-    const accessToken = process.env.ACCESS_TOKEN!
-    const integration = await convex.query(
-      api.integrations.queries.getIntegration,
-      { userIntegrationId, accessToken },
-    )
-    if (!integration) {
-      return {
-        success: false,
-        data: null,
-        message:
-          'Integration not found please activate in the dashboard at https://twodo.skilldiggers.dev/integrations',
-      }
-    }
-    const list = await convex.query(api.agents.lists.queries.getListById, {
-      accessToken,
-      userId: integration.userId,
-      listId: listId as Id<'lists'>,
-    })
-    return {
-      success: true,
-      data: list,
-      message: null,
-    }
-  },
-})
-
-const getTodos = tool({
-  description: `Returns a list of all todos for the user. use this when asked to list the user's todos. ONLY CALL THIS AFTER IDENTIFYING THE LIST ID BY CALLING THE getListById tool.`,
-  inputSchema: z.object({ userIntegrationId: z.string(), listId: z.string() }),
-  execute: async ({ userIntegrationId, listId }) => {
-    const accessToken = process.env.ACCESS_TOKEN!
-    const integration = await convex.query(
-      api.integrations.queries.getIntegration,
-      { userIntegrationId, accessToken },
-    )
-    if (!integration) {
-      return {
-        success: false,
-        data: [],
-        message:
-          'Integration not found please activate in the dashboard at https://twodo.skilldiggers.dev/integrations',
-      }
-    }
-    const todos = await convex.query(api.agents.todos.queries.getTodos, {
-      accessToken,
-      userId: integration.userId,
-      listId: listId as Id<'lists'>,
-    })
-    return {
-      success: true,
-      data: todos.map((todo) => ({
-        ...todo,
-        _creationTime: new Date(todo._creationTime),
-      })),
-      message: null,
-    }
-  },
-})
-
-const createTodo = tool({
-  description: `Creates a new todo for the user. use this when asked to create a new todo. ONLY CALL THIS AFTER IDENTIFYING THE LIST ID BY CALLING THE getListById tool.`,
-  inputSchema: z.object({
-    userIntegrationId: z.string(),
-    listId: z.string(),
-    title: z.string(),
-    description: z.optional(z.string()),
-    dueDate: z.optional(z.string()),
-    priority: z.enum(['high', 'medium', 'low', 'none']),
-    scheduledFuntionRunTime: z.optional(z.number()),
+const updateList = createTool({
+  description:
+    'Updates the title of a list. Call getLists first to identify the list ID.',
+  args: z.object({
+    listId: z.string().describe('The ID of the list to update'),
+    title: z.string().describe('The new title for the list'),
   }),
-  execute: async ({
-    userIntegrationId,
-    listId,
-    title,
-    description,
-    dueDate,
-    priority,
-    scheduledFuntionRunTime,
-  }) => {
-    const accessToken = process.env.ACCESS_TOKEN!
-    const integration = await convex.query(
-      api.integrations.queries.getIntegration,
-      { userIntegrationId, accessToken },
-    )
-    if (!integration) {
-      return {
-        success: false,
-        data: null,
-        message:
-          'Integration not found please activate in the dashboard at https://twodo.skilldiggers.dev/integrations',
-      }
-    }
-    const todo = await convex.mutation(api.agents.todos.mutations.createTodo, {
-      accessToken,
-      userId: integration.userId,
-      listId: listId as Id<'lists'>,
-      title: title,
-      description: description,
-      dueDate: dueDate,
-      priority: priority,
-      scheduledFuntionRunTime: scheduledFuntionRunTime,
-    })
-    return {
-      success: true,
-      data: todo,
-      message: null,
+  handler: async (ctx, args): Promise<string> => {
+    try {
+      await ctx.runMutation(api.agents.lists.mutations.updateList, {
+        userId: ctx.userId!,
+        accessToken: process.env.ACCESS_TOKEN!,
+        listId: args.listId as Id<'lists'>,
+        title: args.title,
+      })
+      return `Renamed list to "${args.title}".`
+    } catch {
+      return `Failed to rename list. Please try again.`
     }
   },
 })
 
-const updateTodo = tool({
-  description: `Updates a todo for the user. use this when asked to update a todo. ONLY CALL THIS AFTER IDENTIFYING THE TODO ID BY CALLING THE getTodos tool.`,
-  inputSchema: z.object({
-    userIntegrationId: z.string(),
-    todoId: z.string(),
-    title: z.string(),
-    description: z.optional(z.string()),
-    dueDate: z.optional(z.string()),
-    priority: z.enum(['high', 'medium', 'low', 'none']),
-    scheduledFuntionRunTime: z.optional(z.number()),
+const getLists = createTool({
+  description:
+    'Returns all lists in a workspace. Call getUsersWorkspaces first to identify the workspace ID.',
+  args: z.object({
+    workspaceId: z.string().describe('The workspace ID to list lists for'),
   }),
-  execute: async ({
-    userIntegrationId,
-    todoId,
-    title,
-    description,
-    dueDate,
-    priority,
-    scheduledFuntionRunTime,
-  }) => {
-    const accessToken = process.env.ACCESS_TOKEN!
-    const integration = await convex.query(
-      api.integrations.queries.getIntegration,
-      { userIntegrationId, accessToken },
-    )
-    if (!integration) {
-      return {
-        success: false,
-        data: null,
-        message:
-          'Integration not found please activate in the dashboard at https://twodo.skilldiggers.dev/integrations',
-      }
-    }
-    const todo = await convex.mutation(api.agents.todos.mutations.updateTodo, {
-      accessToken,
-      userId: integration.userId,
-      todoId: todoId as Id<'todos'>,
-      title: title,
-      description: description,
-      dueDate: dueDate,
-      priority: priority,
-      scheduledFunctionRunTime: scheduledFuntionRunTime,
-    })
-    return {
-      success: true,
-      data: todo,
-      message: null,
+  handler: async (ctx, args): Promise<string> => {
+    try {
+      const lists = await ctx.runQuery(api.agents.lists.queries.getLists, {
+        userId: ctx.userId!,
+        accessToken: process.env.ACCESS_TOKEN!,
+        workspaceId: args.workspaceId as Id<'workspace'>,
+      })
+      if (!lists.length) return 'This workspace has no lists yet.'
+      return lists
+        .map(
+          (l: { _id: string; title: string }) =>
+            `- "${l.title}" (id: ${l._id})`,
+        )
+        .join('\n')
+    } catch {
+      return 'Failed to fetch lists. Please try again.'
     }
   },
 })
-export const tools: ToolSet = {
-  verifyIntegration,
+
+const getListById = createTool({
+  description:
+    'Returns a list by its ID. Call getLists first to discover list IDs.',
+  args: z.object({
+    listId: z.string().describe('The ID of the list to retrieve'),
+  }),
+  handler: async (ctx, args): Promise<string> => {
+    try {
+      const list = await ctx.runQuery(api.agents.lists.queries.getListById, {
+        userId: ctx.userId!,
+        accessToken: process.env.ACCESS_TOKEN!,
+        listId: args.listId as Id<'lists'>,
+      })
+      return `List: "${list.title}" (id: ${list._id})`
+    } catch {
+      return 'Failed to fetch list. Please try again.'
+    }
+  },
+})
+
+const getTodos = createTool({
+  description:
+    'Returns all todos in a list. Call getLists first to identify the list ID.',
+  args: z.object({
+    listId: z.string().describe('The list ID to get todos for'),
+  }),
+  handler: async (ctx, args): Promise<string> => {
+    try {
+      const todos = await ctx.runQuery(api.agents.todos.queries.getTodos, {
+        userId: ctx.userId!,
+        accessToken: process.env.ACCESS_TOKEN!,
+        listId: args.listId as Id<'lists'>,
+      })
+      if (!todos.length) return 'This list has no todos yet.'
+      return todos
+        .map(
+          (t: {
+            _id: string
+            title: string
+            status: string
+            priority: string
+            dueDate?: string
+            description?: string
+          }) => {
+            const parts = [`- "${t.title}"`]
+            parts.push(`[${t.status}]`)
+            if (t.priority !== 'none') parts.push(`priority: ${t.priority}`)
+            if (t.dueDate) parts.push(`due: ${t.dueDate}`)
+            parts.push(`(id: ${t._id})`)
+            return parts.join(' ')
+          },
+        )
+        .join('\n')
+    } catch {
+      return 'Failed to fetch todos. Please try again.'
+    }
+  },
+})
+
+const createTodoTool = createTool({
+  description:
+    'Creates a new todo in a list. Call getLists first to identify the list ID.',
+  args: z.object({
+    listId: z.string().describe('The list ID to create the todo in'),
+    title: z.string().describe('The title of the todo'),
+    description: z.string().optional().describe('Optional description'),
+    dueDate: z
+      .string()
+      .datetime({ offset: true })
+      .optional()
+      .describe('Optional due date as an ISO datetime string'),
+    priority: z
+      .enum(['high', 'medium', 'low', 'none'])
+      .describe('Priority level'),
+    scheduledFunctionRunTime: z
+      .number()
+      .optional()
+      .describe('Optional timestamp for overdue scheduling'),
+  }),
+  handler: async (ctx, args): Promise<string> => {
+    try {
+      const todoId = await ctx.runMutation(
+        api.agents.todos.mutations.createTodo,
+        {
+          userId: ctx.userId!,
+          accessToken: process.env.ACCESS_TOKEN!,
+          listId: args.listId as Id<'lists'>,
+          title: args.title,
+          description: args.description,
+          dueDate: args.dueDate,
+          priority: args.priority,
+          scheduledFunctionRunTime: args.scheduledFunctionRunTime,
+        },
+      )
+      const details = [`Created todo "${args.title}" (id: ${todoId})`]
+      if (args.priority !== 'none') details.push(`priority: ${args.priority}`)
+      if (args.dueDate) details.push(`due: ${args.dueDate}`)
+      return details.join(', ') + '.'
+    } catch {
+      return `Failed to create todo "${args.title}". Please try again.`
+    }
+  },
+})
+
+const updateTodoTool = createTool({
+  description:
+    'Updates an existing todo. Call getTodos first to identify the todo ID.',
+  args: z.object({
+    todoId: z.string().describe('The ID of the todo to update'),
+    title: z.string().describe('The new title'),
+    description: z.string().optional().describe('Optional new description'),
+    dueDate: z
+      .string()
+      .datetime({ offset: true })
+      .optional()
+      .describe('Optional new due date as an ISO datetime string'),
+    priority: z
+      .enum(['high', 'medium', 'low', 'none'])
+      .describe('Priority level'),
+    scheduledFunctionRunTime: z
+      .number()
+      .optional()
+      .describe('Optional timestamp for overdue scheduling'),
+  }),
+  handler: async (ctx, args): Promise<string> => {
+    try {
+      await ctx.runMutation(api.agents.todos.mutations.updateTodo, {
+        userId: ctx.userId!,
+        accessToken: process.env.ACCESS_TOKEN!,
+        todoId: args.todoId as Id<'todos'>,
+        title: args.title,
+        description: args.description,
+        dueDate: args.dueDate,
+        priority: args.priority,
+        scheduledFunctionRunTime: args.scheduledFunctionRunTime,
+      })
+      return `Updated todo to "${args.title}".`
+    } catch {
+      return `Failed to update todo. Please try again.`
+    }
+  },
+})
+
+export const tools = {
+  getCurrentDate,
   getUsersWorkspaces,
   createWorkspace,
   updateWorkspace,
@@ -460,6 +366,6 @@ export const tools: ToolSet = {
   updateList,
   getListById,
   getTodos,
-  createTodo,
-  updateTodo,
+  createTodo: createTodoTool,
+  updateTodo: updateTodoTool,
 }
