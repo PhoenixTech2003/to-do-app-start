@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { format } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 import { mutation } from "../../_generated/server";
 import { internal } from "../../_generated/api";
 import { verifyListOnwership, verifyTodoOnwership } from "../../globals/helpers";
@@ -18,7 +18,7 @@ export const createTodo = mutation({
       v.literal('low'),
       v.literal('none'),
     ),
-    scheduledFuntionRunTime: v.optional(v.number()),
+    scheduledFunctionRunTime: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     if (args.accessToken !== process.env.ACCESS_TOKEN) {
@@ -33,10 +33,15 @@ export const createTodo = mutation({
       throw new Error('You are not the owner of the list')
     }
 
-    const dueDate = args.dueDate
-      ? format(args.dueDate, 'yyyy-LL-dd')
+    const parsedDueDate = args.dueDate ? parseISO(args.dueDate) : undefined
+    if (parsedDueDate && !isValid(parsedDueDate)) {
+      throw new Error('Invalid due date')
+    }
+
+    const dueDate = parsedDueDate
+      ? format(parsedDueDate, 'yyyy-LL-dd')
       : undefined
-    const dueTime = args.dueDate ? format(args.dueDate, 'HH:mm') : undefined
+    const dueTime = parsedDueDate ? format(parsedDueDate, 'HH:mm') : undefined
 
     const todoId = await ctx.db.insert('todos', {
       title: args.title,
@@ -49,9 +54,9 @@ export const createTodo = mutation({
       createdBy: args.userId,
     })
 
-    if (args.dueDate && args.scheduledFuntionRunTime) {
+    if (args.dueDate && args.scheduledFunctionRunTime) {
       const scheduledFunctionId = await ctx.scheduler.runAt(
-        args.scheduledFuntionRunTime,
+        args.scheduledFunctionRunTime,
         internal.todos.mutations.ToggleTodoStatusOverdue,
         { todoId },
       )
@@ -95,10 +100,15 @@ export const updateTodo = mutation({
 
     const currentTodo = await ctx.db.get('todos', args.todoId)
 
-    const dueDate = args.dueDate
-      ? format(args.dueDate, 'yyyy-LL-dd')
+    const parsedDueDate = args.dueDate ? parseISO(args.dueDate) : undefined
+    if (parsedDueDate && !isValid(parsedDueDate)) {
+      throw new Error('Invalid due date')
+    }
+
+    const dueDate = parsedDueDate
+      ? format(parsedDueDate, 'yyyy-LL-dd')
       : undefined
-    const dueTime = args.dueDate ? format(args.dueDate, 'HH:mm') : undefined
+    const dueTime = parsedDueDate ? format(parsedDueDate, 'HH:mm') : undefined
 
     const updateData: Record<string, unknown> = {
       title: args.title,

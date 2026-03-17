@@ -6,23 +6,40 @@ import type { Id } from '../_generated/dataModel'
 const getCurrentDate = createTool({
   description:
     'Returns the current real date and time. Use this whenever the user asks for today, the current date, current time, day of the week, or anything time-sensitive.',
-  args: z.object({}),
-  handler: async (): Promise<string> => {
+  args: z.object({
+    timezone: z
+      .string()
+      .optional()
+      .describe(
+        'Optional IANA timezone like UTC, Africa/Blantyre, or America/New_York',
+      ),
+  }),
+  handler: async (_ctx, args): Promise<string> => {
     await Promise.resolve()
     const now = new Date()
+    const timeZone = args.timezone ?? 'UTC'
 
-    const humanReadable = new Intl.DateTimeFormat('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      second: '2-digit',
-      timeZoneName: 'short',
-    }).format(now)
+    try {
+      const humanReadable = new Intl.DateTimeFormat('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZone: timeZone,
+        timeZoneName: 'short',
+      }).format(now)
 
-    return `Current date and time: ${humanReadable}. ISO: ${now.toISOString()}.`
+      if (timeZone === 'UTC') {
+        return `Current date and time in UTC: ${humanReadable}. ISO (UTC): ${now.toISOString()}.`
+      }
+
+      return `Current date and time in ${timeZone}: ${humanReadable}. Unix timestamp: ${now.getTime()}.`
+    } catch {
+      return `Invalid timezone "${timeZone}". Please use a valid IANA timezone like UTC, Africa/Blantyre, or America/New_York.`
+    }
   },
 })
 
@@ -36,15 +53,19 @@ const getUsersWorkspaces = createTool({
         api.agents.workspaces.queries.getUserWorkspaces,
         { userId: ctx.userId!, accessToken: process.env.ACCESS_TOKEN! },
       )
-      if (!workspaces.length) return 'The user has no workspaces yet.'
-      return workspaces
-        .map(
-          (w: { _id: string; title: string }) =>
-            `- "${w.title}" (id: ${w._id})`,
-        )
-        .join('\n')
+      if (!workspaces.length) {
+        return JSON.stringify({ workspaces: [], count: 0 })
+      }
+
+      return JSON.stringify({
+        workspaces: workspaces.map((w: { _id: string; title: string }) => ({
+          id: w._id,
+          title: w.title,
+        })),
+        count: workspaces.length,
+      })
     } catch {
-      return 'Failed to fetch workspaces. Please try again.'
+      return JSON.stringify({ error: 'Failed to fetch workspaces' })
     }
   },
 })
@@ -257,11 +278,15 @@ const createTodoTool = createTool({
     listId: z.string().describe('The list ID to create the todo in'),
     title: z.string().describe('The title of the todo'),
     description: z.string().optional().describe('Optional description'),
-    dueDate: z.string().optional().describe('Optional due date as ISO string'),
+    dueDate: z
+      .string()
+      .datetime({ offset: true })
+      .optional()
+      .describe('Optional due date as an ISO datetime string'),
     priority: z
       .enum(['high', 'medium', 'low', 'none'])
       .describe('Priority level'),
-    scheduledFuntionRunTime: z
+    scheduledFunctionRunTime: z
       .number()
       .optional()
       .describe('Optional timestamp for overdue scheduling'),
@@ -278,7 +303,7 @@ const createTodoTool = createTool({
           description: args.description,
           dueDate: args.dueDate,
           priority: args.priority,
-          scheduledFuntionRunTime: args.scheduledFuntionRunTime,
+          scheduledFunctionRunTime: args.scheduledFunctionRunTime,
         },
       )
       const details = [`Created todo "${args.title}" (id: ${todoId})`]
@@ -300,12 +325,13 @@ const updateTodoTool = createTool({
     description: z.string().optional().describe('Optional new description'),
     dueDate: z
       .string()
+      .datetime({ offset: true })
       .optional()
-      .describe('Optional new due date as ISO string'),
+      .describe('Optional new due date as an ISO datetime string'),
     priority: z
       .enum(['high', 'medium', 'low', 'none'])
       .describe('Priority level'),
-    scheduledFuntionRunTime: z
+    scheduledFunctionRunTime: z
       .number()
       .optional()
       .describe('Optional timestamp for overdue scheduling'),
@@ -320,7 +346,7 @@ const updateTodoTool = createTool({
         description: args.description,
         dueDate: args.dueDate,
         priority: args.priority,
-        scheduledFunctionRunTime: args.scheduledFuntionRunTime,
+        scheduledFunctionRunTime: args.scheduledFunctionRunTime,
       })
       return `Updated todo to "${args.title}".`
     } catch {
