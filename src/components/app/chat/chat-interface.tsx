@@ -92,10 +92,7 @@ export function ChatInterface({
         className,
       )}
     >
-      <div
-        ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto"
-      >
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto">
         <div className="mx-auto max-w-2xl w-full px-5 py-6">
           {!hasMessages ? (
             <EmptyState onSuggestion={handleSuggestion} />
@@ -213,9 +210,7 @@ function MessageBubble({
         <Avatar className="size-7 ring-1 ring-border/40">
           {isUser ? (
             <>
-              {userImage && (
-                <AvatarImage src={userImage} alt={userName} />
-              )}
+              {userImage && <AvatarImage src={userImage} alt={userName} />}
               <AvatarFallback className="text-[10px] font-semibold bg-primary/10 text-primary">
                 {userInitials}
               </AvatarFallback>
@@ -278,7 +273,11 @@ function MessageBubble({
 
 const suggestions = ['Create a task', 'Create a workspace', 'Show my tasks']
 
-function EmptyState({ onSuggestion }: { onSuggestion: (text: string) => void }) {
+function EmptyState({
+  onSuggestion,
+}: {
+  onSuggestion: (text: string) => void
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -303,7 +302,8 @@ function EmptyState({ onSuggestion }: { onSuggestion: (text: string) => void }) 
           Hey, how can I help?
         </h2>
         <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
-          Manage tasks, schedule focus sessions, or ask me anything about your workflow.
+          Manage tasks, schedule focus sessions, or ask me anything about your
+          workflow.
         </p>
       </div>
 
