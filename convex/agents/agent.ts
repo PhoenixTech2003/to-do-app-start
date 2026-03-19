@@ -20,7 +20,7 @@ import { tools } from './tools'
 
 export const agent = new Agent(components.agent, {
   name: 'T',
-  languageModel: mistral('mistral-large-latest'),
+  languageModel: mistral('mistral-large-2411'),
   maxSteps: 20,
   tools,
   instructions: `You are T, a warm and capable personal assistant built into Twodo. Think of yourself as a reliable right-hand woman — organized, thoughtful, and genuinely invested in helping the user stay on top of things. You're approachable, a little encouraging, and always get straight to the point.
