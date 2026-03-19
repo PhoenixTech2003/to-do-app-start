@@ -7,7 +7,13 @@ import {
 import { mistral } from '@ai-sdk/mistral'
 import { v } from 'convex/values'
 import { paginationOptsValidator } from 'convex/server'
-import { action, internalQuery, mutation, query } from '../_generated/server'
+import {
+  action,
+  internalAction,
+  internalQuery,
+  mutation,
+  query,
+} from '../_generated/server'
 import { components, internal } from '../_generated/api'
 import { authComponent } from '../auth'
 import { tools } from './tools'
@@ -166,7 +172,7 @@ export const verifyThreadOwner = internalQuery({
  * Web-only: streams the response with saveStreamDeltas so the client
  * receives live updates via the reactive listWebMessages query.
  */
-export const sendWebMessage = action({
+export const sendWebMessageSync = action({
   args: {
     threadId: v.string(),
     prompt: v.string(),
@@ -184,9 +190,43 @@ export const sendWebMessage = action({
         excludeToolMessages: true,
       },
     } as unknown as Parameters<typeof agent.streamText>[2]
-    await thread.streamText(promptArgs, {
-      saveStreamDeltas: true,
+    await thread.streamText(promptArgs)
+  },
+})
+
+export const sendWebMessage = mutation({
+  args: { prompt: v.string(), threadId: v.string() },
+  handler: async (ctx, { prompt, threadId }) => {
+    await ctx.runQuery(internal.agents.agent.verifyThreadOwner, {
+      threadId,
     })
+    const { messageId } = await agent.saveMessage(ctx, {
+      threadId,
+      prompt,
+      // we're in a mutation, so skip embeddings for now. They'll be generated
+      // lazily when streaming text.
+      skipEmbeddings: true,
+    })
+    await ctx.scheduler.runAfter(0, internal.agents.agent.streamAsync, {
+      threadId,
+      promptMessageId: messageId,
+    })
+  },
+})
+
+export const streamAsync = internalAction({
+  args: { promptMessageId: v.string(), threadId: v.string() },
+  handler: async (ctx, { promptMessageId, threadId }) => {
+    const result = await agent.streamText(
+      ctx,
+      { threadId },
+      { promptMessageId } as unknown as Parameters<typeof agent.streamText>[2],
+      // more custom delta options (`true` uses defaults)
+      { saveStreamDeltas: { chunking: 'word', throttleMs: 100 } },
+    )
+    // We need to make sure the stream finishes - by awaiting each chunk
+    // or using this call to consume it all.
+    await result.consumeStream()
   },
 })
 
