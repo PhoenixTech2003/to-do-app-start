@@ -94,15 +94,14 @@ export function ChatInterface({
         className,
       )}
     >
-      <Conversation className="flex-1 min-h-0" resize="smooth">
+      <Conversation className="flex-1 min-h-0" resize="auto">
         <ConversationContent className="mx-auto max-w-3xl w-full px-3 py-4 sm:px-6 sm:py-6 gap-1.5">
           {!hasMessages ? (
             <EmptyState onSuggestion={handleSuggestion} />
           ) : (
             messages.map((message, index) => {
               const isUser = message.role === 'user'
-              const prevRole =
-                index > 0 ? messages[index - 1]?.role : undefined
+              const prevRole = index > 0 ? messages[index - 1]?.role : undefined
               const isContinuation =
                 index > 0 && isUser === (prevRole === 'user')
 
