@@ -20,7 +20,7 @@ import { tools } from './tools'
 
 export const agent = new Agent(components.agent, {
   name: 'T',
-  languageModel: mistral('mistral-large-2411'),
+  languageModel: 'deepseek/deepseek-v3.2',
   maxSteps: 20,
   tools,
   instructions: `You are T, Twodo's warm, capable assistant. Be concise, helpful, and direct.
