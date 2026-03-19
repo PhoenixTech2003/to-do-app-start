@@ -2,7 +2,7 @@
 
 import { Send } from 'lucide-react'
 import { useForm } from '@tanstack/react-form'
-import { useAction } from 'convex/react'
+import { useMutation } from 'convex/react'
 import { useSmoothText, useUIMessages } from '@convex-dev/agent/react'
 import { toast } from 'sonner'
 import { motion } from 'motion/react'
@@ -25,7 +25,7 @@ export function ChatInterface({
   threadId: string
 }) {
   const { data: session } = authClient.useSession()
-  const sendWebMessage = useAction(api.agents.agent.sendWebMessage)
+  const sendWebMessage = useMutation(api.agents.agent.sendWebMessage)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const form = useForm({
