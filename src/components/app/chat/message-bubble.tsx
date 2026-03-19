@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'motion/react'
+import { isToolPart } from './types'
 import type { UIMessage } from '@convex-dev/agent/react'
 import { MessageResponse } from '@/components/ai-elements/message'
 import {
@@ -12,7 +13,6 @@ import {
 } from '@/components/ai-elements/tool'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
-import { isToolPart } from './types'
 
 export function MessageBubble({
   message,
@@ -122,7 +122,11 @@ export function MessageBubble({
             {isUser ? (
               <p className="whitespace-pre-wrap">{message.text}</p>
             ) : (
-              <MessageResponse isAnimating={isStreaming} className="text-sm">
+              <MessageResponse
+                animated
+                isAnimating={isStreaming}
+                className="text-sm"
+              >
                 {message.text}
               </MessageResponse>
             )}

@@ -94,7 +94,7 @@ export function ChatInterface({
         className,
       )}
     >
-      <Conversation className="flex-1 min-h-0" resize="instant">
+      <Conversation className="flex-1 min-h-0" resize="smooth">
         <ConversationContent className="mx-auto max-w-3xl w-full px-3 py-4 sm:px-6 sm:py-6 gap-1.5">
           {!hasMessages ? (
             <EmptyState onSuggestion={handleSuggestion} />
