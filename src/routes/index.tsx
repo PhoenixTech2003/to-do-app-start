@@ -10,6 +10,7 @@ import {
 import { motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
+import { BetaBadge } from '@/components/ui/beta-badge'
 
 export const Route = createFileRoute('/')({
   component: LandingPage,
@@ -34,8 +35,9 @@ function LandingPage() {
       {/* ── Nav ── */}
       <nav className="fixed top-0 inset-x-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <span className="text-base font-bold tracking-tight">
+          <span className="flex items-center gap-2 text-base font-bold tracking-tight">
             Two<span className="text-primary">Do</span>
+            <BetaBadge />
           </span>
           <div className="flex items-center gap-3">
             <ThemeSwitcher />
@@ -61,12 +63,12 @@ function LandingPage() {
           animate="show"
           className="max-w-3xl mx-auto"
         >
-          <motion.p
-            variants={fadeUp}
-            className="font-mono text-[11px] font-semibold uppercase tracking-[0.25em] text-primary mb-6"
-          >
-            Productivity, distilled
-          </motion.p>
+          <motion.div variants={fadeUp} className="mb-6 flex items-center gap-3">
+            <BetaBadge variant="pill" />
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.25em] text-primary">
+              Productivity, distilled
+            </span>
+          </motion.div>
 
           <motion.h1
             variants={fadeUp}
