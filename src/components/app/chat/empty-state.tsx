@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'motion/react'
+import { BetaBadge } from '@/components/ui/beta-badge'
 
 const suggestions = ['Create a task', 'Create a workspace', 'Show my tasks']
 
@@ -28,10 +29,13 @@ export function EmptyState({
         />
       </div>
 
-      <div className="space-y-1.5">
-        <h2 className="text-lg font-bold tracking-tight text-foreground">
-          Hey, how can I help?
-        </h2>
+      <div className="space-y-2">
+        <div className="flex items-center justify-center gap-2">
+          <h2 className="text-lg font-bold tracking-tight text-foreground">
+            Hey, how can I help?
+          </h2>
+          <BetaBadge />
+        </div>
         <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
           Manage tasks, schedule focus sessions, or ask me anything about your
           workflow.

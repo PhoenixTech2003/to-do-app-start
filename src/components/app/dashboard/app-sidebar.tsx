@@ -19,25 +19,27 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from '@/components/ui/sidebar'
+import { BetaBadge } from '@/components/ui/beta-badge'
 
 const appNavItems = [
   { title: 'Workspaces', url: '/dashboard', icon: Home },
   { title: 'Today', url: '/today', icon: CheckCircleIcon },
   { title: 'Pomodoro', url: '/pomodoro', icon: Timer },
-  { title: 'Chat', url: '/chat', icon: MessageCircle },
-]
+  { title: 'Chat', url: '/chat', icon: MessageCircle, beta: true },
+] satisfies NavItem[]
 
 const settingsNavItems = [
   { title: 'Integrations', url: '/integrations', icon: PuzzleIcon },
-]
+] satisfies NavItem[]
 
-function NavLink({
-  item,
-  isActive,
-}: {
-  item: (typeof appNavItems)[0] | (typeof settingsNavItems)[0]
-  isActive: boolean
-}) {
+type NavItem = {
+  title: string
+  url: string
+  icon: typeof Home
+  beta?: boolean
+}
+
+function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
   return (
     <SidebarMenuButton
       asChild
@@ -64,6 +66,7 @@ function NavLink({
         >
           {item.title}
         </span>
+        {item.beta && <BetaBadge className="ml-auto" />}
       </Link>
     </SidebarMenuButton>
   )
@@ -79,9 +82,12 @@ export function AppSidebar() {
       className="border-none"
     >
       <SidebarHeader className="px-5 pt-8 pb-6 group-data-[collapsible=icon]:hidden group-data-[collapsible=icon]:py-4">
-        <h1 className="text-xl font-bold tracking-tight text-foreground">
-          Two<span className="text-primary">Do</span>
-        </h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-bold tracking-tight text-foreground">
+            Two<span className="text-primary">Do</span>
+          </h1>
+          <BetaBadge className="translate-y-px" />
+        </div>
       </SidebarHeader>
 
       <SidebarContent className="flex flex-col gap-1 px-2">
