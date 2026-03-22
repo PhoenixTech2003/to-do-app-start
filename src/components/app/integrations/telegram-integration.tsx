@@ -1,6 +1,6 @@
 import { api } from 'convex/_generated/api'
 import { useMutation, useQuery } from 'convex/react'
-import { Link2, Trash2 } from 'lucide-react'
+import { Link2, Send, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { IntegrationCard } from './integration-card'
@@ -78,6 +78,8 @@ export function TelegramIntegration({ integration }: TelegramIntegrationProps) {
       title="Telegram"
       description="Link your Telegram account to manage tasks and get notifications."
       isActive={isActive}
+      accentColor="#26A5E4"
+      icon={<Send className="size-5 text-[#26A5E4]" />}
     >
       <div className="flex flex-1 flex-col">
         <div className="mt-auto flex gap-2">

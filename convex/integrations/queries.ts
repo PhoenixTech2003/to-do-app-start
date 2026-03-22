@@ -6,7 +6,7 @@ export const getIntegrations = query({
   args: {},
   handler: async (ctx) => {
     const user = await authComponent.getAuthUser(ctx)
-    
+
     return await ctx.db
       .query('integrations')
       .withIndex('by_userId', (q) => q.eq('userId', user._id))
