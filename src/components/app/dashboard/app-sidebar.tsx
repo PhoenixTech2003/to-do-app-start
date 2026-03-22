@@ -76,11 +76,7 @@ export function AppSidebar() {
   const location = useLocation()
 
   return (
-    <Sidebar
-      variant="inset"
-      collapsible="icon"
-      className="border-none"
-    >
+    <Sidebar variant="inset" collapsible="icon" className="border-none">
       <SidebarHeader className="px-5 pt-8 pb-6 group-data-[collapsible=icon]:hidden group-data-[collapsible=icon]:py-4">
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-bold tracking-tight text-foreground">

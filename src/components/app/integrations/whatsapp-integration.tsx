@@ -2,7 +2,7 @@ import { api } from 'convex/_generated/api'
 import { useMutation } from 'convex/react'
 import { useForm } from '@tanstack/react-form'
 import { toast } from 'sonner'
-import { Phone, Save, Trash2 } from 'lucide-react'
+import { MessageCircle, Phone, Save, Trash2 } from 'lucide-react'
 import { IntegrationCard } from './integration-card'
 import type { Doc } from 'convex/_generated/dataModel'
 import { whatsappIntegrationSchema } from '@/validation/whatsapp-integration-schema'
@@ -60,6 +60,8 @@ export function WhatsAppIntegration({ integration }: WhatsAppIntegrationProps) {
       title="WhatsApp"
       description="Get task reminders and notifications directly on WhatsApp."
       isActive={isActive}
+      accentColor="#25D366"
+      icon={<MessageCircle className="size-5 text-[#25D366]" />}
     >
       <form
         onSubmit={(e) => {
