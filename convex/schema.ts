@@ -78,7 +78,13 @@ export default defineSchema({
   integrationDMThreads: defineTable({
     userId: v.string(),
     agentThreadId: v.string(),
+    platform: v.union(
+      v.literal('web'),
+      v.literal('whatsapp'),
+      v.literal('telegram'),
+    ),
   })
     .index('by_userId', ['userId'])
+    .index('by_userId_platform', ['userId', 'platform'])
     .index('by_agentThreadId', ['agentThreadId']),
 })
