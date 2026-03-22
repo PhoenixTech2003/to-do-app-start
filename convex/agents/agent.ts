@@ -4,7 +4,6 @@ import {
   syncStreams,
   vStreamArgs,
 } from '@convex-dev/agent'
-import { mistral } from '@ai-sdk/mistral'
 import { v } from 'convex/values'
 import { paginationOptsValidator } from 'convex/server'
 import {
@@ -17,39 +16,17 @@ import {
 import { components, internal } from '../_generated/api'
 import { authComponent } from '../auth'
 import { tools } from './tools'
+import { systemPrompt } from './system_prompt'
 
-export const agent = new Agent(components.agent, {
-  name: 'T',
-  languageModel: 'deepseek/deepseek-v3.2',
-  maxSteps: 20,
-  tools,
-  instructions: `# Role and Identity
-You are T, Twodo's warm, capable assistant. Your communication style is concise, helpful, and direct. 
-
-# Core Rule
-For anything concerning workspaces, lists, todos, or the current date/time, **always use tools**. Never rely on your internal memory or training data when Twodo data can be fetched or modified via tools.
-
-# Tool Flow & Execution
-Follow these strict execution paths:
-- **Date or time requests:** Call "getCurrentDate".
-- **List requests:** Call "getUsersWorkspaces" first, then "getLists".
-- **Todo requests:** Resolve the workspace first, then the list, and finally call "getTodos", "createTodo", or "updateTodo" as appropriate.
-- **Defaults:** Unless the user explicitly specifies otherwise, default to "priority: "none"" and "due date: null".
-
-# Behavior & Guidelines
-- **Tone:** Be warm and efficient.
-- **Clarification:** If a request is ambiguous, ask exactly **one** short clarifying question before proceeding.
-- **Data Integrity:** Never invent, hallucinate, or guess IDs, names, or todo details.
-- **Scope Limitations:** If a request falls outside of Twodo's capabilities, state this briefly and suggest the closest useful help or alternative.
-- **Confirmations:** After successfully creating or updating an item, confirm the action clearly and succinctly to the user.
-
-# Formatting & Output
-- **Dynamic Formatting:** Support rich markdown (including code blocks, math, tables, links, and lists) only when it improves clarity. Keep simple replies plain and short.
-- **Streaming Mermaid Diagrams:** You support rendering "mermaid" diagrams. Because your responses are streamed to the frontend, you must adhere strictly to the following syntax to prevent rendering errors:
-- Always wrap the diagram in standard markdown code blocks, starting exactly with "\`\`\`mermaid" on its own line and ending with "\`\`\`" on its own line.
-- Do not place conversational text on the same line as the opening or closing backticks.
-- Ensure the internal Mermaid syntax is valid and standard so the frontend parser can stream and render it progressively without breaking.`,
-})
+function getAgent({ platform }: { platform: 'web' | 'whatsapp' | 'telegram' }) {
+  return new Agent(components.agent, {
+    name: 'T',
+    languageModel: 'deepseek/deepseek-v3.2',
+    maxSteps: 20,
+    tools,
+    instructions: systemPrompt(platform),
+  })
+}
 
 export const createAgentThread = mutation({
   args: {
@@ -104,13 +81,16 @@ export const createAgentThread = mutation({
       }
     }
 
-    const { threadId } = await agent.createThread(ctx, {
+    const { threadId } = await getAgent({
+      platform: args.platform,
+    }).createThread(ctx, {
       userId,
     })
 
     await ctx.db.insert('integrationDMThreads', {
       userId,
       agentThreadId: threadId,
+      platform: args.platform,
     })
 
     return { success: true as const, threadId }
@@ -134,7 +114,9 @@ export const sendBotMessage = action({
     platform: platformValidator,
   },
   handler: async (ctx, args) => {
-    const { thread } = await agent.continueThread(ctx, {
+    const { thread } = await getAgent({
+      platform: args.platform,
+    }).continueThread(ctx, {
       threadId: args.threadId,
     })
     const promptArgs = {
@@ -177,6 +159,7 @@ export const sendWebMessageSync = action({
     await ctx.runQuery(internal.agents.agent.verifyThreadOwner, {
       threadId: args.threadId,
     })
+    const agent = getAgent({ platform: 'web' })
     const { thread } = await agent.continueThread(ctx, {
       threadId: args.threadId,
     })
@@ -196,6 +179,7 @@ export const sendWebMessage = mutation({
     await ctx.runQuery(internal.agents.agent.verifyThreadOwner, {
       threadId,
     })
+    const agent = getAgent({ platform: 'web' })
     const { messageId } = await agent.saveMessage(ctx, {
       threadId,
       prompt,
@@ -213,6 +197,7 @@ export const sendWebMessage = mutation({
 export const streamAsync = internalAction({
   args: { promptMessageId: v.string(), threadId: v.string() },
   handler: async (ctx, { promptMessageId, threadId }) => {
+    const agent = getAgent({ platform: 'web' })
     const result = await agent.streamText(
       ctx,
       { threadId },

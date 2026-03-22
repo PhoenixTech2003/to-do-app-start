@@ -11,6 +11,7 @@
 import type * as agents_agent from "../agents/agent.js";
 import type * as agents_lists_mutations from "../agents/lists/mutations.js";
 import type * as agents_lists_queries from "../agents/lists/queries.js";
+import type * as agents_system_prompt from "../agents/system_prompt.js";
 import type * as agents_todos_mutations from "../agents/todos/mutations.js";
 import type * as agents_todos_queries from "../agents/todos/queries.js";
 import type * as agents_tools from "../agents/tools.js";
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   "agents/agent": typeof agents_agent;
   "agents/lists/mutations": typeof agents_lists_mutations;
   "agents/lists/queries": typeof agents_lists_queries;
+  "agents/system_prompt": typeof agents_system_prompt;
   "agents/todos/mutations": typeof agents_todos_mutations;
   "agents/todos/queries": typeof agents_todos_queries;
   "agents/tools": typeof agents_tools;
