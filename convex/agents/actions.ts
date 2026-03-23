@@ -56,7 +56,7 @@ async function logCommandOutput(
 
 function createSandbox(snapshotId?: string) {
   const options = {
-    token: process.env.VERCEL_ACCES_TOKEN,
+    token: process.env.VERCEL_ACCESS_TOKEN,
     projectId: process.env.VERCEL_PROJECT_ID,
     teamId: process.env.VERCEL_TEAM_ID,
     ...(snapshotId
