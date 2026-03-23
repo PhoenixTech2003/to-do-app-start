@@ -94,4 +94,28 @@ export default defineSchema({
     status: v.union(v.literal('ready'), v.literal('stale')),
     expiresAt: v.optional(v.number()),
   }).index('by_toolKey_runtime', ['toolKey', 'runtime']),
+  newsArticles: defineTable({
+    source: v.string(),
+    articleUrl: v.string(),
+    title: v.string(),
+    author: v.string(),
+    headlineImage: v.string(),
+    content: v.string(),
+    archiveYear: v.number(),
+    archiveMonth: v.number(),
+    archiveDay: v.number(),
+    scrapedAt: v.number(),
+    lastUpdatedAt: v.number(),
+  })
+    .index('by_articleUrl', ['articleUrl'])
+    .index('by_archiveDate', ['source', 'archiveYear', 'archiveMonth', 'archiveDay'])
+    .index('by_source_scrapedAt', ['source', 'scrapedAt']),
+  newsSourceState: defineTable({
+    source: v.string(),
+    lastSuccessfulScrapeAt: v.number(),
+    lastArchiveYear: v.number(),
+    lastArchiveMonth: v.number(),
+    lastArchiveDay: v.number(),
+    lastScheduledWindow: v.optional(v.string()),
+  }).index('by_source', ['source']),
 })

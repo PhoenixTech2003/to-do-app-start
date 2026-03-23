@@ -357,10 +357,18 @@ const updateTodoTool = createTool({
 
 const scrapeMalawi24Articles = createTool({
   description:
-    'Use this when the user asks for Malawi24 news, recent headlines, article summaries, or the latest stories from Malawi24. This tool requires a Malawi24 archive date path, so if the user wants today or the latest news and has not provided a date, call `getCurrentDate` first and construct the arguments from that date. Pass `year` as four digits, `month` as the numeric month, and `day` as the numeric day without leading zeroes for single-digit dates. Returns a JSON string with `source`, `count`, and an `articles` array where each article includes `title`, `author`, `content`, `headline_image`, and `article_url`. Read the JSON, then summarize the most relevant articles for the user and include the full article link for each summarized article. If the headline image is relevant, mention or share its URL as plain text only; do not render or embed images inline. Do not mention scrape counts, crawl stats, or internal tooling details unless the user explicitly asks for them, and do not repeat the raw payload unless they explicitly ask for it.',
+    'Use this for explicit live Malawi24 archive scrapes, especially when the user asks for a specific date, older news, historical headlines, or wants you to scrape rather than read cached latest news. This tool requires a Malawi24 archive date path, so if the user wants today or another date and has not provided all date parts, call `getCurrentDate` first when needed and construct the arguments from that date. Pass `year` as four digits, `month` as the numeric month, and `day` as the numeric day without leading zeroes for single-digit dates. Returns a JSON string with `source`, `count`, and an `articles` array where each article includes `title`, `author`, `content`, `headline_image`, and `article_url`. Read the JSON, then summarize the most relevant articles for the user and include the full article link for each summarized article. If the headline image is relevant, mention or share its URL as plain text only; do not render or embed images inline. Do not mention scrape counts, crawl stats, or internal tooling details unless the user explicitly asks for them, and do not repeat the raw payload unless they explicitly ask for it.',
   args: z.object({
-    year: z.number().int().describe('The four-digit year for the Malawi24 archive URL'),
-    month: z.number().int().min(1).max(12).describe('The month number for the Malawi24 archive URL'),
+    year: z
+      .number()
+      .int()
+      .describe('The four-digit year for the Malawi24 archive URL'),
+    month: z
+      .number()
+      .int()
+      .min(1)
+      .max(12)
+      .describe('The month number for the Malawi24 archive URL'),
     day: z
       .number()
       .int()
@@ -372,6 +380,22 @@ const scrapeMalawi24Articles = createTool({
   }),
   handler: async (ctx, args): Promise<string> => {
     return await ctx.runAction(api.agents.actions.scrapeMalawi24Articles, args)
+  },
+})
+
+const getLatestMalawi24News = createTool({
+  description:
+    'Use this for normal latest/current Malawi24 news requests. It reads cached latest Malawi24 articles by default for faster responses, and if there is no cached payload it automatically falls back to a live scrape for today. For plain requests like "latest news", "today\'s news", "current headlines", or "what is in the news", do not set `forceFresh` and let it stay false. Set `forceFresh` to true only when the user explicitly asks you to refresh, re-scrape, ignore cache, fetch live right now, or get breaking news directly from the source. Returns a JSON string with `source`, `count`, and an `articles` array where each article includes `title`, `author`, `content`, `headline_image`, and `article_url`. Read the JSON, then summarize the most relevant articles for the user and include the full article link for each summarized article. If the headline image is relevant, mention or share its URL as plain text only; do not render or embed images inline. Do not mention scrape counts, crawl stats, or internal tooling details unless the user explicitly asks for them, and do not repeat the raw payload unless they explicitly ask for it.',
+  args: z.object({
+    forceFresh: z
+      .boolean()
+      .optional()
+      .describe(
+        'Defaults to false. Leave omitted or false for normal latest news requests. Set to true only if the user explicitly asks to refresh, re-scrape, ignore cache, or fetch live now.',
+      ),
+  }),
+  handler: async (ctx, args): Promise<string> => {
+    return await ctx.runAction(api.agents.actions.getLatestMalawi24News, args)
   },
 })
 
@@ -388,5 +412,6 @@ export const tools = {
   getTodos,
   createTodo: createTodoTool,
   updateTodo: updateTodoTool,
+  getLatestMalawi24News,
   scrapeMalawi24Articles,
 }
