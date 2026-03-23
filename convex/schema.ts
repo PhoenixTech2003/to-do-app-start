@@ -87,4 +87,11 @@ export default defineSchema({
     .index('by_userId', ['userId'])
     .index('by_userId_platform', ['userId', 'platform'])
     .index('by_agentThreadId', ['agentThreadId']),
+  sandboxSnapshots: defineTable({
+    toolKey: v.string(),
+    runtime: v.string(),
+    snapshotId: v.string(),
+    status: v.union(v.literal('ready'), v.literal('stale')),
+    expiresAt: v.optional(v.number()),
+  }).index('by_toolKey_runtime', ['toolKey', 'runtime']),
 })

@@ -8,9 +8,11 @@
  * @module
  */
 
+import type * as agents_actions from "../agents/actions.js";
 import type * as agents_agent from "../agents/agent.js";
 import type * as agents_lists_mutations from "../agents/lists/mutations.js";
 import type * as agents_lists_queries from "../agents/lists/queries.js";
+import type * as agents_sandboxSnapshots from "../agents/sandboxSnapshots.js";
 import type * as agents_system_prompt from "../agents/system_prompt.js";
 import type * as agents_todos_mutations from "../agents/todos/mutations.js";
 import type * as agents_todos_queries from "../agents/todos/queries.js";
@@ -28,6 +30,7 @@ import type * as integrations_queries from "../integrations/queries.js";
 import type * as notifications_actions from "../notifications/actions.js";
 import type * as notifications_mutation from "../notifications/mutation.js";
 import type * as notifications_queries from "../notifications/queries.js";
+import type * as scripts_main from "../scripts/main.js";
 import type * as todos_mutations from "../todos/mutations.js";
 import type * as todos_queries from "../todos/queries.js";
 import type * as workspace_mutations from "../workspace/mutations.js";
@@ -40,9 +43,11 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "agents/actions": typeof agents_actions;
   "agents/agent": typeof agents_agent;
   "agents/lists/mutations": typeof agents_lists_mutations;
   "agents/lists/queries": typeof agents_lists_queries;
+  "agents/sandboxSnapshots": typeof agents_sandboxSnapshots;
   "agents/system_prompt": typeof agents_system_prompt;
   "agents/todos/mutations": typeof agents_todos_mutations;
   "agents/todos/queries": typeof agents_todos_queries;
@@ -60,6 +65,7 @@ declare const fullApi: ApiFromModules<{
   "notifications/actions": typeof notifications_actions;
   "notifications/mutation": typeof notifications_mutation;
   "notifications/queries": typeof notifications_queries;
+  "scripts/main": typeof scripts_main;
   "todos/mutations": typeof todos_mutations;
   "todos/queries": typeof todos_queries;
   "workspace/mutations": typeof workspace_mutations;

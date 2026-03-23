@@ -355,6 +355,26 @@ const updateTodoTool = createTool({
   },
 })
 
+const scrapeMalawi24Articles = createTool({
+  description:
+    'Use this when the user asks for Malawi24 news, recent headlines, article summaries, or the latest stories from Malawi24. This tool requires a Malawi24 archive date path, so if the user wants today or the latest news and has not provided a date, call `getCurrentDate` first and construct the arguments from that date. Pass `year` as four digits, `month` as the numeric month, and `day` as the numeric day without leading zeroes for single-digit dates. Returns a JSON string with `source`, `count`, and an `articles` array where each article includes `title`, `author`, `content`, `headline_image`, and `article_url`. Read the JSON, then summarize the most relevant articles for the user and include the full article link for each summarized article. If the headline image is relevant, mention or share its URL as plain text only; do not render or embed images inline. Do not mention scrape counts, crawl stats, or internal tooling details unless the user explicitly asks for them, and do not repeat the raw payload unless they explicitly ask for it.',
+  args: z.object({
+    year: z.number().int().describe('The four-digit year for the Malawi24 archive URL'),
+    month: z.number().int().min(1).max(12).describe('The month number for the Malawi24 archive URL'),
+    day: z
+      .number()
+      .int()
+      .min(1)
+      .max(31)
+      .describe(
+        'The day number for the Malawi24 archive URL. Use a single digit for single-digit days, not a leading-zero string.',
+      ),
+  }),
+  handler: async (ctx, args): Promise<string> => {
+    return await ctx.runAction(api.agents.actions.scrapeMalawi24Articles, args)
+  },
+})
+
 export const tools = {
   getCurrentDate,
   getUsersWorkspaces,
@@ -368,4 +388,5 @@ export const tools = {
   getTodos,
   createTodo: createTodoTool,
   updateTodo: updateTodoTool,
+  scrapeMalawi24Articles,
 }
