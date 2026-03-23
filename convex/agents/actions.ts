@@ -56,7 +56,7 @@ async function logCommandOutput(
 
 function createSandbox(snapshotId?: string) {
   const options = {
-    token: process.env.VERCEL_OIDC_TOKEN,
+    token: process.env.VERCEL_ACCES_TOKEN,
     projectId: process.env.VERCEL_PROJECT_ID,
     teamId: process.env.VERCEL_TEAM_ID,
     ...(snapshotId
@@ -91,9 +91,7 @@ function normalizeSnapshotExpiresAt(value: unknown) {
   return undefined
 }
 
-async function installScraperDependencies(
-  sandbox: SandboxInstance,
-) {
+async function installScraperDependencies(sandbox: SandboxInstance) {
   const systemDepsResult = await sandbox.runCommand('sudo', [
     'dnf',
     'install',
@@ -145,9 +143,7 @@ async function runMalawi24Scraper(
   return stdout
 }
 
-async function bootstrapScraperSnapshot(
-  ctx: ActionCtx,
-) {
+async function bootstrapScraperSnapshot(ctx: ActionCtx) {
   const sandbox = await createSandbox()
   let snapshotCreated = false
 
@@ -164,13 +160,16 @@ async function bootstrapScraperSnapshot(
     }
     const expiresAt = normalizeSnapshotExpiresAt(snapshot.expiresAt)
 
-    await ctx.runMutation(internal.agents.sandboxSnapshots.upsertSandboxSnapshot, {
-      toolKey: SCRAPER_TOOL_KEY,
-      runtime: SCRAPER_RUNTIME,
-      snapshotId: snapshot.snapshotId,
-      status: 'ready',
-      expiresAt,
-    })
+    await ctx.runMutation(
+      internal.agents.sandboxSnapshots.upsertSandboxSnapshot,
+      {
+        toolKey: SCRAPER_TOOL_KEY,
+        runtime: SCRAPER_RUNTIME,
+        snapshotId: snapshot.snapshotId,
+        status: 'ready',
+        expiresAt,
+      },
+    )
 
     return snapshot.snapshotId
   } finally {
@@ -180,9 +179,7 @@ async function bootstrapScraperSnapshot(
   }
 }
 
-async function ensureScraperSnapshot(
-  ctx: ActionCtx,
-) {
+async function ensureScraperSnapshot(ctx: ActionCtx) {
   const existingSnapshot = (await ctx.runQuery(
     internal.agents.sandboxSnapshots.getSandboxSnapshot,
     {
@@ -192,7 +189,9 @@ async function ensureScraperSnapshot(
   )) as { snapshotId: string; expiresAt?: number } | null
 
   if (existingSnapshot?.snapshotId) {
-    console.log(`SNAPSHOT HIT: using cached snapshot ${existingSnapshot.snapshotId}`)
+    console.log(
+      `SNAPSHOT HIT: using cached snapshot ${existingSnapshot.snapshotId}`,
+    )
     return existingSnapshot.snapshotId
   }
 
