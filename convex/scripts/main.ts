@@ -39,18 +39,19 @@ export const scrapeMalawi24ArticlesScript = ({
         name = "malawi24_articles"
         start_urls = ["${startUrl}"]
         allowed_domains = {"malawi24.com"}
-        concurrent_requests = 2
-        concurrent_requests_per_domain = 1
-        download_delay = 1.0
+        concurrent_requests = 4
+        concurrent_requests_per_domain = 2
+        download_delay = 0.2
 
         def configure_sessions(self, manager: SessionManager) -> None:
             manager.add(
                 "stealth",
                 AsyncStealthySession(
                     headless=True,
-                    network_idle=True,
-                    timeout=60000,
-                    wait=2000,
+                    disable_resources=True,
+                    network_idle=False,
+                    timeout=30000,
+                    wait=500,
                     locale="en-US",
                     timezone_id="Africa/Blantyre",
                     user_data_dir="./browser-profile",
@@ -70,6 +71,11 @@ export const scrapeMalawi24ArticlesScript = ({
 
         async def parse(self, response: Response):
             items = response.css("li.col-xs-12.col-sm-12.col-md-12.col-lg-12.col-xs-vertical")
+            pagination_links = {
+                href
+                for href in response.css("ul.page-numbers a.page-numbers::attr(href)").getall()
+                if href
+            }
 
             for item in items:
                 link = item.css("a::attr(href)").get()
@@ -87,6 +93,9 @@ export const scrapeMalawi24ArticlesScript = ({
                     meta={"title": title},
                 )
 
+            for page_link in pagination_links:
+                yield response.follow(page_link, callback=self.parse, priority=-1)
+
         async def parse_article(self, response: Response):
             paragraphs = [
                 paragraph.strip()
@@ -99,7 +108,6 @@ export const scrapeMalawi24ArticlesScript = ({
                 "headline_image": response.css("div.cover-media img::attr(src)").get(""),
                 "author": response.css("li.links-item a.links-item-link::text").get("").strip(),
                 "content": "\\n\\n".join(paragraphs),
-                "article_url": response.url,
                 "url": response.url,
             }
 
