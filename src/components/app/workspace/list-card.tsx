@@ -79,7 +79,8 @@ export function ListCard({ listTitle, listItem }: ListCardProps) {
                 isOpen={isOpenDeleteDialog}
                 setIsOpen={setIsOpenDeleteDialogHandler}
                 handleDelete={handleDelete}
-                dialogTitle={`This action will permanently delete the ${listTitle} list`}
+                dialogTitle={`Delete the ${listTitle} list?`}
+                description="Warning: deleting this list will also permanently delete every todo and subtask inside it."
               />
             </div>
           </div>

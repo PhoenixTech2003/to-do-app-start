@@ -12,10 +12,18 @@ import {
 } from '@/components/ui/dialog'
 
 interface CreateTodoDialogProps {
-  listId: Id<'lists'>
+  listId?: Id<'lists'>
+  title?: string
+  description?: string
+  buttonLabel?: string
 }
 
-export function CreateTodoDialog({ listId }: CreateTodoDialogProps) {
+export function CreateTodoDialog({
+  listId,
+  title = 'Create Todo',
+  description = 'Add a new todo to your list to stay organized',
+  buttonLabel = 'Create Todo',
+}: CreateTodoDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   function setCreateDialogIsOpen(value: boolean) {
@@ -25,15 +33,13 @@ export function CreateTodoDialog({ listId }: CreateTodoDialogProps) {
     <Dialog open={isOpen} onOpenChange={setCreateDialogIsOpen}>
       <Button onClick={() => setIsOpen(true)} size="icon" className="sm:size-auto sm:px-4 sm:py-2">
         <Plus className="h-4 w-4 sm:mr-2" />
-        <span className="hidden sm:inline">Create Todo</span>
+        <span className="hidden sm:inline">{buttonLabel}</span>
       </Button>
 
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Todo</DialogTitle>
-          <DialogDescription>
-            Add a new todo to your list to stay organized
-          </DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <CreateTodoForm
           setCreateDialogIsOpen={setCreateDialogIsOpen}

@@ -389,7 +389,7 @@ const createTodo = tool({
       description: description,
       dueDate: dueDate,
       priority: priority,
-      scheduledFuntionRunTime: scheduledFuntionRunTime,
+      scheduledFunctionRunTime: scheduledFuntionRunTime,
     })
     return {
       success: true,

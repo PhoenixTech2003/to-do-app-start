@@ -15,6 +15,7 @@ import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as appTodayIndexRouteImport } from './routes/(app)/today/index'
 import { Route as appPomodoroIndexRouteImport } from './routes/(app)/pomodoro/index'
 import { Route as appIntegrationsIndexRouteImport } from './routes/(app)/integrations/index'
+import { Route as appInboxIndexRouteImport } from './routes/(app)/inbox/index'
 import { Route as appDashboardIndexRouteImport } from './routes/(app)/dashboard/index'
 import { Route as appChatIndexRouteImport } from './routes/(app)/chat/index'
 import { Route as ApiWebhooksWhatsappRouteImport } from './routes/api/webhooks/whatsapp'
@@ -50,6 +51,11 @@ const appPomodoroIndexRoute = appPomodoroIndexRouteImport.update({
 const appIntegrationsIndexRoute = appIntegrationsIndexRouteImport.update({
   id: '/integrations/',
   path: '/integrations/',
+  getParentRoute: () => appRouteRoute,
+} as any)
+const appInboxIndexRoute = appInboxIndexRouteImport.update({
+  id: '/inbox/',
+  path: '/inbox/',
   getParentRoute: () => appRouteRoute,
 } as any)
 const appDashboardIndexRoute = appDashboardIndexRouteImport.update({
@@ -98,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/api/webhooks/whatsapp': typeof ApiWebhooksWhatsappRoute
   '/chat/': typeof appChatIndexRoute
   '/dashboard/': typeof appDashboardIndexRoute
+  '/inbox/': typeof appInboxIndexRoute
   '/integrations/': typeof appIntegrationsIndexRoute
   '/pomodoro/': typeof appPomodoroIndexRoute
   '/today/': typeof appTodayIndexRoute
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/api/webhooks/whatsapp': typeof ApiWebhooksWhatsappRoute
   '/chat': typeof appChatIndexRoute
   '/dashboard': typeof appDashboardIndexRoute
+  '/inbox': typeof appInboxIndexRoute
   '/integrations': typeof appIntegrationsIndexRoute
   '/pomodoro': typeof appPomodoroIndexRoute
   '/today': typeof appTodayIndexRoute
@@ -128,6 +136,7 @@ export interface FileRoutesById {
   '/api/webhooks/whatsapp': typeof ApiWebhooksWhatsappRoute
   '/(app)/chat/': typeof appChatIndexRoute
   '/(app)/dashboard/': typeof appDashboardIndexRoute
+  '/(app)/inbox/': typeof appInboxIndexRoute
   '/(app)/integrations/': typeof appIntegrationsIndexRoute
   '/(app)/pomodoro/': typeof appPomodoroIndexRoute
   '/(app)/today/': typeof appTodayIndexRoute
@@ -144,6 +153,7 @@ export interface FileRouteTypes {
     | '/api/webhooks/whatsapp'
     | '/chat/'
     | '/dashboard/'
+    | '/inbox/'
     | '/integrations/'
     | '/pomodoro/'
     | '/today/'
@@ -158,6 +168,7 @@ export interface FileRouteTypes {
     | '/api/webhooks/whatsapp'
     | '/chat'
     | '/dashboard'
+    | '/inbox'
     | '/integrations'
     | '/pomodoro'
     | '/today'
@@ -173,6 +184,7 @@ export interface FileRouteTypes {
     | '/api/webhooks/whatsapp'
     | '/(app)/chat/'
     | '/(app)/dashboard/'
+    | '/(app)/inbox/'
     | '/(app)/integrations/'
     | '/(app)/pomodoro/'
     | '/(app)/today/'
@@ -233,6 +245,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appIntegrationsIndexRouteImport
       parentRoute: typeof appRouteRoute
     }
+    '/(app)/inbox/': {
+      id: '/(app)/inbox/'
+      path: '/inbox'
+      fullPath: '/inbox/'
+      preLoaderRoute: typeof appInboxIndexRouteImport
+      parentRoute: typeof appRouteRoute
+    }
     '/(app)/dashboard/': {
       id: '/(app)/dashboard/'
       path: '/dashboard'
@@ -288,6 +307,7 @@ declare module '@tanstack/react-router' {
 interface appRouteRouteChildren {
   appChatIndexRoute: typeof appChatIndexRoute
   appDashboardIndexRoute: typeof appDashboardIndexRoute
+  appInboxIndexRoute: typeof appInboxIndexRoute
   appIntegrationsIndexRoute: typeof appIntegrationsIndexRoute
   appPomodoroIndexRoute: typeof appPomodoroIndexRoute
   appTodayIndexRoute: typeof appTodayIndexRoute
@@ -298,6 +318,7 @@ interface appRouteRouteChildren {
 const appRouteRouteChildren: appRouteRouteChildren = {
   appChatIndexRoute: appChatIndexRoute,
   appDashboardIndexRoute: appDashboardIndexRoute,
+  appInboxIndexRoute: appInboxIndexRoute,
   appIntegrationsIndexRoute: appIntegrationsIndexRoute,
   appPomodoroIndexRoute: appPomodoroIndexRoute,
   appTodayIndexRoute: appTodayIndexRoute,

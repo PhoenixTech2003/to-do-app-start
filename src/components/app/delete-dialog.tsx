@@ -2,6 +2,7 @@ import { Trash2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -14,6 +15,8 @@ interface DeleteDialogProps {
   isOpen: boolean
   setIsOpen: (value: boolean) => void
   handleDelete: () => void
+  description?: string
+  showTrigger?: boolean
 }
 
 export function DeleteDialog({
@@ -22,22 +25,27 @@ export function DeleteDialog({
   triggerTitle,
   dialogTitle,
   handleDelete,
+  description,
+  showTrigger = true,
 }: DeleteDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <Button
-        variant="destructive"
-        onClick={() => setIsOpen(true)}
-        size="sm"
-        className="flex-1 py-2"
-      >
-        <Trash2 className="h-4 w-4" />
-        {triggerTitle}
-      </Button>
+      {showTrigger && (
+        <Button
+          variant="destructive"
+          onClick={() => setIsOpen(true)}
+          size="sm"
+          className="flex-1 py-2"
+        >
+          <Trash2 className="h-4 w-4" />
+          {triggerTitle}
+        </Button>
+      )}
 
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{dialogTitle}</DialogTitle>
+          {description ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
         <DialogFooter>
           <Button onClick={() => setIsOpen(false)} variant={'outline'}>

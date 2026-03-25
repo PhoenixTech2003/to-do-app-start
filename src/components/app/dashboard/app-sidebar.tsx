@@ -1,6 +1,7 @@
 import {
   CheckCircleIcon,
   Home,
+  Inbox,
   MessageCircle,
   PuzzleIcon,
   Timer,
@@ -23,14 +24,15 @@ import { BetaBadge } from '@/components/ui/beta-badge'
 
 const appNavItems = [
   { title: 'Workspaces', url: '/dashboard', icon: Home },
+  { title: 'Inbox', url: '/inbox', icon: Inbox },
   { title: 'Today', url: '/today', icon: CheckCircleIcon },
   { title: 'Pomodoro', url: '/pomodoro', icon: Timer },
   { title: 'Chat', url: '/chat', icon: MessageCircle, beta: true },
-] satisfies NavItem[]
+] satisfies Array<NavItem>
 
 const settingsNavItems = [
   { title: 'Integrations', url: '/integrations', icon: PuzzleIcon },
-] satisfies NavItem[]
+] satisfies Array<NavItem>
 
 type NavItem = {
   title: string

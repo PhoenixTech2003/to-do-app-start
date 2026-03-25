@@ -1,19 +1,16 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Calendar } from 'lucide-react'
 import { format } from 'date-fns'
 import { convexQuery, useConvexMutation } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { toast } from 'sonner'
 import { StateHandler } from '../state-handler'
-import { UpdateDialog } from '../update-dialog'
-import { DeleteDialog } from '../delete-dialog'
 import { CreateSubtaskDialog } from './add-subtask-dialog'
 import { TodoCheckInput } from './todo-check-input'
 import { SubtaskItem } from './subtask-item'
-import { UpdateTodoForm } from './update-todo-form'
 import type { Id } from 'convex/_generated/dataModel'
 import type { Todo } from '@/types/global'
+import { Button } from '@/components/ui/button'
 import {
   Sheet,
   SheetContent,
@@ -29,6 +26,8 @@ interface TodoSheetProps {
   todo: Todo
   isOpen: boolean
   setIsOpen: (value: boolean) => void
+  onEdit: () => void
+  onDelete: () => void
 }
 
 export function TodoSheet({
@@ -36,6 +35,8 @@ export function TodoSheet({
   todo,
   isOpen,
   setIsOpen,
+  onEdit,
+  onDelete,
 }: TodoSheetProps) {
   const { data, isFetching, isError, error } = useSuspenseQuery(
     convexQuery(api.todos.queries.GetAllSubtasks, {
@@ -43,50 +44,8 @@ export function TodoSheet({
     }),
   )
 
-  const [updateTodoDialogOpen, setUpdateTodoDialogOpen] = useState(false)
-  const [deleteTodoDialogOpen, setDeleteTodoDialogOpen] = useState(false)
-
-  function updateTodoDialogHandler(value: boolean) {
-    setUpdateTodoDialogOpen(value)
-  }
-
-  function deleteTodoDialogHandler(value: boolean) {
-    setDeleteTodoDialogOpen(value)
-  }
-
   const updateSubtask = useConvexMutation(api.todos.mutations.updateSubTask)
   const deleteSubtask = useConvexMutation(api.todos.mutations.deleteSubTask)
-  const deleteTodo = useConvexMutation(
-    api.todos.mutations.deleteTodo,
-  ).withOptimisticUpdate((localStore, mutationArgs) => {
-    const { todoId: mutationTodoId } = mutationArgs
-
-    const removeTodoFromQueries = (
-      queryRef: typeof api.todos.queries.GetPendingTodos,
-    ) => {
-      const queries = localStore.getAllQueries(queryRef)
-      for (const { args: qArgs, value } of queries) {
-        if (qArgs.listId !== todo.listId) continue
-        if (!value) continue
-
-        const pageContainsTodo = value.page.some(
-          (t) => t._id === mutationTodoId,
-        )
-        if (!pageContainsTodo) continue
-
-        localStore.setQuery(queryRef, qArgs, {
-          ...value,
-          page: value.page.filter((t: Todo) => t._id !== mutationTodoId),
-          isDone: false,
-          continueCursor: 'optimistic',
-        })
-      }
-    }
-
-    removeTodoFromQueries(api.todos.queries.GetPendingTodos)
-    removeTodoFromQueries(api.todos.queries.GetCompletedTodos)
-    removeTodoFromQueries(api.todos.queries.GetOverDueTodos)
-  })
 
   const handleToggle = (id: Id<'subTasks'>, checked: boolean) => {
     updateSubtask({ subTaskId: id, completed: checked })
@@ -95,20 +54,6 @@ export function TodoSheet({
   const handleDelete = async (id: Id<'subTasks'>) => {
     const p = deleteSubtask({ subTaskId: id })
     await p
-  }
-
-  function handleTodoDelete() {
-    const deleteTodoPromise = deleteTodo({
-      todoId: todo._id,
-    })
-    toast.promise(deleteTodoPromise, {
-      loading: 'Deleting todo please wait',
-      success: () => {
-        deleteTodoDialogHandler(false)
-        return 'Twodo has been deleted succussfully'
-      },
-      error: 'Failed to delete the Twodo',
-    })
   }
 
   return (
@@ -167,24 +112,17 @@ export function TodoSheet({
           </StateHandler>
         </div>
         <SheetFooter>
-          <UpdateDialog
-            triggerTitle="Edit Twodo"
-            isOpen={updateTodoDialogOpen}
-            updateDialogTitle="Update Todo"
-            setDialogIsOpen={updateTodoDialogHandler}
+          <Button variant="outline" size="sm" className="flex-1 py-2" onClick={onEdit}>
+            Edit Twodo
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="flex-1 py-2"
+            onClick={onDelete}
           >
-            <UpdateTodoForm
-              todo={todo}
-              setUpdateDialogIsOpen={updateTodoDialogHandler}
-            />
-          </UpdateDialog>
-          <DeleteDialog
-            triggerTitle="Delete Twodo"
-            handleDelete={handleTodoDelete}
-            setIsOpen={deleteTodoDialogHandler}
-            isOpen={deleteTodoDialogOpen}
-            dialogTitle="Are you sure you want to delete the Twodo"
-          />
+            Delete Twodo
+          </Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>

@@ -75,6 +75,29 @@ export const deleteList = mutation({
     if (!isOwnerOfWorkspace) {
       throw new Error('You are not the owner of this workspace')
     }
+
+    const todos = await ctx.db
+      .query('todos')
+      .withIndex('by_listId', (q) => q.eq('listId', args.listId))
+      .collect()
+
+    for (const todo of todos) {
+      const subtasks = await ctx.db
+        .query('subTasks')
+        .withIndex('by_todo_id', (q) => q.eq('todoId', todo._id))
+        .collect()
+
+      for (const subtask of subtasks) {
+        await ctx.db.delete(subtask._id)
+      }
+
+      if (todo.markAsOverdueScheudledFunctionId) {
+        await ctx.scheduler.cancel(todo.markAsOverdueScheudledFunctionId)
+      }
+
+      await ctx.db.delete(todo._id)
+    }
+
     await ctx.db.delete('lists', args.listId)
   },
 })

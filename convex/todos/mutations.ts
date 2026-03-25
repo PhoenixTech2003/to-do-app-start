@@ -1,13 +1,62 @@
+import { format } from 'date-fns'
 import { v } from 'convex/values'
-import { format, isAfter, parse } from 'date-fns'
-import { internalMutation, mutation } from '../_generated/server'
 import { authComponent } from '../auth'
-import { verifyListOnwership, verifyTodoOnwership } from '../globals/helpers'
 import { internal } from '../_generated/api'
+import { internalMutation, mutation } from '../_generated/server'
+import { verifyListOnwership, verifyTodoOnwership } from '../globals/helpers'
+import type { MutationCtx } from '../_generated/server'
+import type { Id } from '../_generated/dataModel'
+
+async function ensureTodoOwnership({
+  ctx,
+  userId,
+  todoId,
+}: {
+  ctx: MutationCtx
+  userId: string
+  todoId: Id<'todos'>
+}) {
+  const isOwnerOfTodo = await verifyTodoOnwership({
+    ctx,
+    userId,
+    todoId,
+  })
+
+  if (!isOwnerOfTodo) {
+    throw new Error('You are not the owner of this todo')
+  }
+}
+
+async function ensureListOwnership({
+  ctx,
+  userId,
+  listId,
+}: {
+  ctx: MutationCtx
+  userId: string
+  listId: Id<'lists'>
+}) {
+  const isOwnerOfList = await verifyListOnwership({
+    ctx,
+    userId,
+    listId,
+  })
+
+  if (!isOwnerOfList) {
+    throw new Error('You are not the owner of the list')
+  }
+}
+
+function getDueDateFields(dueDate?: string) {
+  return {
+    dueDate: dueDate ? format(dueDate, 'yyyy-LL-dd') : undefined,
+    dueTime: dueDate ? format(dueDate, 'HH:mm') : undefined,
+  }
+}
 
 export const createTodo = mutation({
   args: {
-    listId: v.id('lists'),
+    listId: v.optional(v.id('lists')),
     title: v.string(),
     description: v.optional(v.string()),
     dueDate: v.optional(v.string()),
@@ -22,19 +71,16 @@ export const createTodo = mutation({
   handler: async (ctx, args) => {
     const loggedInUser = await authComponent.getAuthUser(ctx)
     const loggedInUserId = loggedInUser._id
-    const isOwnerOfList = await verifyListOnwership({
-      ctx,
-      userId: loggedInUserId,
-      listId: args.listId,
-    })
-    if (!isOwnerOfList) {
-      throw new Error('You are not the owner of the list')
+
+    if (args.listId) {
+      await ensureListOwnership({
+        ctx,
+        userId: loggedInUserId,
+        listId: args.listId,
+      })
     }
 
-    const dueDate = args.dueDate
-      ? format(args.dueDate, 'yyyy-LL-dd')
-      : undefined
-    const dueTime = args.dueDate ? format(args.dueDate, 'HH:mm') : undefined
+    const { dueDate, dueTime } = getDueDateFields(args.dueDate)
     const todoId = await ctx.db.insert('todos', {
       title: args.title,
       listId: args.listId,
@@ -97,6 +143,13 @@ export const toggleTodoStatus = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const loggedInUser = await authComponent.getAuthUser(ctx)
+    await ensureTodoOwnership({
+      ctx,
+      userId: loggedInUser._id,
+      todoId: args.todoId,
+    })
+
     await ctx.db.patch('todos', args.todoId, {
       status: args.status,
     })
@@ -111,7 +164,13 @@ export const addSubTask = mutation({
   handler: async (ctx, args) => {
     const loggedInUser = await authComponent.getAuthUser(ctx)
     const loggedInUserId = loggedInUser._id
-    ctx.db.insert('subTasks', {
+    await ensureTodoOwnership({
+      ctx,
+      userId: loggedInUserId,
+      todoId: args.todoId,
+    })
+
+    await ctx.db.insert('subTasks', {
       title: args.title,
       todoId: args.todoId,
       completed: false,
@@ -127,6 +186,19 @@ export const updateSubTask = mutation({
     completed: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    const loggedInUser = await authComponent.getAuthUser(ctx)
+    const loggedInUserId = loggedInUser._id
+    const subTask = await ctx.db.get('subTasks', args.subTaskId)
+    if (!subTask) {
+      throw new Error('Subtask does not exist')
+    }
+
+    await ensureTodoOwnership({
+      ctx,
+      userId: loggedInUserId,
+      todoId: subTask.todoId,
+    })
+
     const patch: Record<string, unknown> = {}
     if (typeof args.title === 'string') patch.title = args.title
     if (typeof args.completed === 'boolean') patch.completed = args.completed
@@ -139,6 +211,19 @@ export const deleteSubTask = mutation({
     subTaskId: v.id('subTasks'),
   },
   handler: async (ctx, args) => {
+    const loggedInUser = await authComponent.getAuthUser(ctx)
+    const loggedInUserId = loggedInUser._id
+    const subTask = await ctx.db.get('subTasks', args.subTaskId)
+    if (!subTask) {
+      throw new Error('Subtask does not exist')
+    }
+
+    await ensureTodoOwnership({
+      ctx,
+      userId: loggedInUserId,
+      todoId: subTask.todoId,
+    })
+
     await ctx.db.delete('subTasks', args.subTaskId)
   },
 })
@@ -160,23 +245,16 @@ export const updateTodo = mutation({
   handler: async (ctx, args) => {
     const loggedInUser = await authComponent.getAuthUser(ctx)
     const loggedInUserId = loggedInUser._id
-    const isOwnerOfTodo = await verifyTodoOnwership({
+    await ensureTodoOwnership({
       ctx,
       userId: loggedInUserId,
       todoId: args.todoId,
     })
-    if (!isOwnerOfTodo) {
-      throw new Error('You are not the owner of the list')
-    }
 
     // Get the current todo to check if we need to cancel existing scheduled function
     const currentTodo = await ctx.db.get('todos', args.todoId)
 
-    const dueDate = args.dueDate
-      ? format(args.dueDate, 'yyyy-LL-dd')
-      : undefined
-    const dueTime = args.dueDate ? format(args.dueDate, 'HH:mm') : undefined
-    let status
+    const { dueDate, dueTime } = getDueDateFields(args.dueDate)
 
     const updateData: Record<string, unknown> = {
       title: args.title,
@@ -217,15 +295,61 @@ export const updateTodo = mutation({
   },
 })
 
+export const moveTodoToList = mutation({
+  args: {
+    todoId: v.id('todos'),
+    listId: v.optional(v.id('lists')),
+  },
+  handler: async (ctx, args) => {
+    const loggedInUser = await authComponent.getAuthUser(ctx)
+    const loggedInUserId = loggedInUser._id
+
+    await ensureTodoOwnership({
+      ctx,
+      userId: loggedInUserId,
+      todoId: args.todoId,
+    })
+
+    if (args.listId) {
+      await ensureListOwnership({
+        ctx,
+        userId: loggedInUserId,
+        listId: args.listId,
+      })
+    }
+
+    await ctx.db.patch('todos', args.todoId, {
+      listId: args.listId,
+    })
+  },
+})
+
 export const deleteTodo = mutation({
   args: {
     todoId: v.id('todos'),
   },
   handler: async (ctx, args) => {
+    const loggedInUser = await authComponent.getAuthUser(ctx)
+    await ensureTodoOwnership({
+      ctx,
+      userId: loggedInUser._id,
+      todoId: args.todoId,
+    })
+
     const todo = await ctx.db.get('todos', args.todoId)
     if (!todo) {
       throw new Error('Todod does not exist')
     }
+
+    const subTasks = await ctx.db
+      .query('subTasks')
+      .withIndex('by_todo_id', (q) => q.eq('todoId', args.todoId))
+      .collect()
+
+    for (const subTask of subTasks) {
+      await ctx.db.delete(subTask._id)
+    }
+
     if (todo.markAsOverdueScheudledFunctionId) {
       await ctx.scheduler.cancel(todo.markAsOverdueScheudledFunctionId)
       await ctx.db.delete('todos', args.todoId)
