@@ -62,6 +62,7 @@ export const createAgentThread = mutation({
         return {
           success: true as const,
           threadId: existingThread.agentThreadId,
+          userId,
         }
       }
     } else {
@@ -77,6 +78,7 @@ export const createAgentThread = mutation({
         return {
           success: true as const,
           threadId: existingThread.agentThreadId,
+          userId,
         }
       }
     }
@@ -93,7 +95,7 @@ export const createAgentThread = mutation({
       platform: args.platform,
     })
 
-    return { success: true as const, threadId }
+    return { success: true as const, threadId, userId }
   },
 })
 

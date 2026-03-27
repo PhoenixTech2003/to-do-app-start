@@ -93,6 +93,24 @@ export default defineSchema({
     .index('by_userId', ['userId'])
     .index('by_userId_platform', ['userId', 'platform'])
     .index('by_agentThreadId', ['agentThreadId']),
+  chatSessions: defineTable({
+    userId: v.string(),
+    platform: v.union(v.literal('whatsapp'), v.literal('telegram')),
+    activeWorkspaceId: v.optional(v.id('workspace')),
+    activeListId: v.optional(v.id('lists')),
+    lastTodoSnapshot: v.array(
+      v.object({
+        todoId: v.id('todos'),
+        name: v.string(),
+        due: v.optional(v.string()),
+        priority: v.optional(
+          v.union(v.literal('high'), v.literal('medium'), v.literal('low')),
+        ),
+        completed: v.boolean(),
+      }),
+    ),
+    lastCommandAt: v.number(),
+  }).index('by_userId_platform', ['userId', 'platform']),
   sandboxSnapshots: defineTable({
     toolKey: v.string(),
     runtime: v.string(),
