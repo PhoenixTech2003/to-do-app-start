@@ -24,7 +24,7 @@ export default defineSchema({
     .index('workspaceId', ['workspaceId'])
     .index('createdBy_workspaceId', ['createdBy', 'workspaceId']),
   todos: defineTable({
-    listId: v.id('lists'),
+    listId: v.optional(v.id('lists')),
     markAsOverdueScheudledFunctionId: v.optional(v.id('_scheduled_functions')),
     title: v.string(),
     description: v.optional(v.string()),
@@ -47,8 +47,14 @@ export default defineSchema({
       searchField: 'title',
       filterFields: ['listId', 'createdBy', 'status', 'priority', 'dueDate'],
     })
+    .searchIndex('title_by_createdBy_status', {
+      searchField: 'title',
+      filterFields: ['createdBy', 'status', 'priority', 'dueDate'],
+    })
     .index('by_listId', ['listId'])
     .index('by_list_id_createdBy', ['listId', 'createdBy'])
+    .index('by_createdBy', ['createdBy'])
+    .index('by_createdBy_status', ['createdBy', 'status'])
     .index('by_due_date', ['dueDate'])
     .index('by_status_createdBy_listId', ['status', 'createdBy', 'listId']),
   subTasks: defineTable({

@@ -66,3 +66,40 @@ export const GetWorkspaceLists = query({
       .paginate(args.paginationOpts)
   },
 })
+
+export const GetUserListsForMove = query({
+  args: {
+    searchTerm: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const loggedInUser = await authComponent.getAuthUser(ctx)
+    const loggedInUserId = loggedInUser._id
+
+    const lists = args.searchTerm
+      ? await ctx.db
+          .query('lists')
+          .withSearchIndex('title', (q) =>
+            q.search('title', args.searchTerm ?? '').eq('createdBy', loggedInUserId),
+          )
+          .collect()
+      : await ctx.db
+          .query('lists')
+          .withIndex('createdBy', (q) => q.eq('createdBy', loggedInUserId))
+          .collect()
+
+    const workspaceById = new Map<string, string>()
+    const workspaceIds = [...new Set(lists.map((list) => list.workspaceId))]
+
+    await Promise.all(
+      workspaceIds.map(async (workspaceId) => {
+        const workspace = await ctx.db.get('workspace', workspaceId)
+        workspaceById.set(workspaceId, workspace?.title ?? 'Unknown workspace')
+      }),
+    )
+
+    return lists.map((list) => ({
+      ...list,
+      workspaceTitle: workspaceById.get(list.workspaceId) ?? 'Unknown workspace',
+    }))
+  },
+})

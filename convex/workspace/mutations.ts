@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { mutation } from '../_generated/server'
+import { internal } from '../_generated/api'
 import { authComponent } from '../auth'
 import {
   verifyListOnwership,
@@ -75,6 +76,11 @@ export const deleteList = mutation({
     if (!isOwnerOfWorkspace) {
       throw new Error('You are not the owner of this workspace')
     }
+
+    await ctx.scheduler.runAfter(0, internal.todos.mutations.deleteTodosForList, {
+      listId: args.listId,
+    })
+
     await ctx.db.delete('lists', args.listId)
   },
 })

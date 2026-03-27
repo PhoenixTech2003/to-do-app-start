@@ -14,6 +14,7 @@ interface UpdateDialogProps {
   setDialogIsOpen: (value: boolean) => void
   children: React.ReactNode
   updateDialogTitle: string
+  showTrigger?: boolean
 }
 
 export function UpdateDialog({
@@ -22,18 +23,21 @@ export function UpdateDialog({
   setDialogIsOpen,
   children,
   updateDialogTitle,
+  showTrigger = true,
 }: UpdateDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setDialogIsOpen}>
-      <Button
-        variant="outline"
-        onClick={() => setDialogIsOpen(true)}
-        size="sm"
-        className="flex-1 py-2"
-      >
-        <Pencil className="h-4 w-4" />
-        {triggerTitle}
-      </Button>
+      {showTrigger && (
+        <Button
+          variant="outline"
+          onClick={() => setDialogIsOpen(true)}
+          size="sm"
+          className="flex-1 py-2"
+        >
+          <Pencil className="h-4 w-4" />
+          {triggerTitle}
+        </Button>
+      )}
 
       <DialogContent>
         <DialogHeader>

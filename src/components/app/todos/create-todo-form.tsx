@@ -20,8 +20,21 @@ import { createTodoFormSchema } from '@/validation/create-todo-form-schema'
 import { DateTimePicker } from '@/components/ui/date-time-picker'
 
 interface CreateTodoFormProps {
-  listId: Id<'lists'>
+  listId?: Id<'lists'>
   setCreateDialogIsOpen: (value: boolean) => void
+}
+
+function matchesInboxPendingQuery(args: { searchTerm?: string; priority?: string }, todo: {
+  title: string
+  priority: 'high' | 'medium' | 'low' | 'none'
+}) {
+  const normalizedSearchTerm = args.searchTerm?.trim().toLowerCase()
+  const matchesSearch =
+    !normalizedSearchTerm ||
+    todo.title.toLowerCase().includes(normalizedSearchTerm)
+  const matchesPriority = !args.priority || todo.priority === args.priority
+
+  return matchesSearch && matchesPriority
 }
 
 export function CreateTodoForm({
@@ -47,17 +60,36 @@ export function CreateTodoForm({
       priority,
     } as any
 
-    const pendingQueries = localStore.getAllQueries(
-      api.todos.queries.GetPendingTodos,
-    )
-    for (const { args: qArgs, value } of pendingQueries) {
-      if (qArgs.listId !== argsListId) continue
+    if (argsListId) {
+      const pendingQueries = localStore.getAllQueries(
+        api.todos.queries.GetPendingTodos,
+      )
+      for (const { args: qArgs, value } of pendingQueries) {
+        if (qArgs.listId !== argsListId) continue
+        if (!value) continue
+
+        const isFirstPage = !(qArgs.paginationOpts as { cursor?: string }).cursor
+        if (!isFirstPage) continue
+
+        localStore.setQuery(api.todos.queries.GetPendingTodos, qArgs, {
+          ...value,
+          page: [optimisticTodo, ...value.page],
+          isDone: false,
+          continueCursor: 'optimistic',
+        })
+      }
+      return
+    }
+
+    const inboxQueries = localStore.getAllQueries(api.todos.queries.GetInboxPendingTodos)
+    for (const { args: qArgs, value } of inboxQueries) {
       if (!value) continue
 
       const isFirstPage = !(qArgs.paginationOpts as { cursor?: string }).cursor
       if (!isFirstPage) continue
+      if (!matchesInboxPendingQuery(qArgs, optimisticTodo)) continue
 
-      localStore.setQuery(api.todos.queries.GetPendingTodos, qArgs, {
+      localStore.setQuery(api.todos.queries.GetInboxPendingTodos, qArgs, {
         ...value,
         page: [optimisticTodo, ...value.page],
         isDone: false,
