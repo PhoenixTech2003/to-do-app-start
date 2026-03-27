@@ -24,6 +24,19 @@ interface CreateTodoFormProps {
   setCreateDialogIsOpen: (value: boolean) => void
 }
 
+function matchesInboxPendingQuery(args: { searchTerm?: string; priority?: string }, todo: {
+  title: string
+  priority: 'high' | 'medium' | 'low' | 'none'
+}) {
+  const normalizedSearchTerm = args.searchTerm?.trim().toLowerCase()
+  const matchesSearch =
+    !normalizedSearchTerm ||
+    todo.title.toLowerCase().includes(normalizedSearchTerm)
+  const matchesPriority = !args.priority || todo.priority === args.priority
+
+  return matchesSearch && matchesPriority
+}
+
 export function CreateTodoForm({
   listId,
   setCreateDialogIsOpen,
@@ -74,6 +87,7 @@ export function CreateTodoForm({
 
       const isFirstPage = !(qArgs.paginationOpts as { cursor?: string }).cursor
       if (!isFirstPage) continue
+      if (!matchesInboxPendingQuery(qArgs, optimisticTodo)) continue
 
       localStore.setQuery(api.todos.queries.GetInboxPendingTodos, qArgs, {
         ...value,

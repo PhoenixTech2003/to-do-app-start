@@ -88,15 +88,12 @@ export const GetUserListsForMove = query({
           .collect()
 
     const workspaceById = new Map<string, string>()
+    const workspaceIds = [...new Set(lists.map((list) => list.workspaceId))]
 
     await Promise.all(
-      lists.map(async (list) => {
-        if (workspaceById.has(list.workspaceId)) {
-          return
-        }
-
-        const workspace = await ctx.db.get('workspace', list.workspaceId)
-        workspaceById.set(list.workspaceId, workspace?.title ?? 'Unknown workspace')
+      workspaceIds.map(async (workspaceId) => {
+        const workspace = await ctx.db.get('workspace', workspaceId)
+        workspaceById.set(workspaceId, workspace?.title ?? 'Unknown workspace')
       }),
     )
 

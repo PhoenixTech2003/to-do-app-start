@@ -17,7 +17,7 @@ export const sendPushNotification = action({
     title: v.string(),
     body: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     const { token, title, body } = args
 
     const result = await getMessaging().send({

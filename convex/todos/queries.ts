@@ -40,7 +40,11 @@ function applyPriorityFilter<
     return todosQuery
   }
 
-  return todosQuery.filter((q: any) => q.eq(q.field('priority'), priority))
+  return todosQuery.filter(
+    // Convex's query-builder types are difficult to express generically here, so
+    // the `any` cast keeps `q.field()`/`q.eq()` typed without over-complicating this helper.
+    (q: any) => q.eq(q.field('priority'), priority),
+  )
 }
 
 function buildListTodosQuery({

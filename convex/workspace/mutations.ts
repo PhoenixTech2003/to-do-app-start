@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { mutation } from '../_generated/server'
+import { internal } from '../_generated/api'
 import { authComponent } from '../auth'
 import {
   verifyListOnwership,
@@ -76,27 +77,9 @@ export const deleteList = mutation({
       throw new Error('You are not the owner of this workspace')
     }
 
-    const todos = await ctx.db
-      .query('todos')
-      .withIndex('by_listId', (q) => q.eq('listId', args.listId))
-      .collect()
-
-    for (const todo of todos) {
-      const subtasks = await ctx.db
-        .query('subTasks')
-        .withIndex('by_todo_id', (q) => q.eq('todoId', todo._id))
-        .collect()
-
-      for (const subtask of subtasks) {
-        await ctx.db.delete(subtask._id)
-      }
-
-      if (todo.markAsOverdueScheudledFunctionId) {
-        await ctx.scheduler.cancel(todo.markAsOverdueScheudledFunctionId)
-      }
-
-      await ctx.db.delete(todo._id)
-    }
+    await ctx.scheduler.runAfter(0, internal.todos.mutations.deleteTodosForList, {
+      listId: args.listId,
+    })
 
     await ctx.db.delete('lists', args.listId)
   },

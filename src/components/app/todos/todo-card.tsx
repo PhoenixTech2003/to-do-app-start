@@ -14,11 +14,12 @@ import { forwardRef, useMemo, useState } from 'react'
 import { motion } from 'motion/react'
 import { toast } from 'sonner'
 import { api } from 'convex/_generated/api'
-import { TodoSheet } from './todo-sheet'
-import { TodoCheckInput } from './todo-check-input'
 import { DeleteDialog } from '../delete-dialog'
 import { UpdateDialog } from '../update-dialog'
+import { TodoSheet } from './todo-sheet'
+import { TodoCheckInput } from './todo-check-input'
 import { UpdateTodoForm } from './update-todo-form'
+import type { Id } from 'convex/_generated/dataModel'
 import type { Todo } from '@/types/global'
 import { cn, truncateText } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -51,7 +52,6 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
     const [updateTodoDialogOpen, setUpdateTodoDialogOpen] = useState(false)
     const [deleteTodoDialogOpen, setDeleteTodoDialogOpen] = useState(false)
     const [moveToListOpen, setMoveToListOpen] = useState(false)
-    const [contextMenuOpen, setContextMenuOpen] = useState(false)
     const isMobile = useIsMobile()
     const { data: availableLists = [] } = useQuery(
       convexQuery(api.workspace.queries.GetUserListsForMove, {
@@ -77,7 +77,9 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
           if (!matchesQueryList(qArgs)) continue
           if (!value) continue
 
-          const pageContainsTodo = value.page.some((t: Todo) => t._id === mutationTodoId)
+          const pageContainsTodo = value.page.some(
+            (t: Todo) => t._id === mutationTodoId,
+          )
           if (!pageContainsTodo) continue
 
           localStore.setQuery(queryRef, qArgs, {
@@ -96,11 +98,15 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
       removeTodoFromQueries(api.todos.queries.GetInboxCompletedTodos)
       removeTodoFromQueries(api.todos.queries.GetInboxOverdueTodos)
 
-      const byDateQueries = localStore.getAllQueries(api.globals.queries.getTodosByDate)
+      const byDateQueries = localStore.getAllQueries(
+        api.globals.queries.getTodosByDate,
+      )
       for (const { args: qArgs, value: byDateData } of byDateQueries) {
         if (!byDateData) continue
 
-        const hasTodo = byDateData.todos.some((t: Todo) => t._id === mutationTodoId)
+        const hasTodo = byDateData.todos.some(
+          (t: Todo) => t._id === mutationTodoId,
+        )
         if (!hasTodo) continue
 
         localStore.setQuery(api.globals.queries.getTodosByDate, qArgs, {
@@ -153,16 +159,16 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
         success: () => {
           deleteTodoDialogHandler(false)
           setSheetIsOpen(false)
-          return 'Twodo has been deleted succussfully'
+          return 'Twodo has been deleted successfully'
         },
         error: 'Failed to delete the Twodo',
       })
     }
 
-    function handleMoveToList(listId?: string) {
+    function handleMoveToList(listId?: Id<'lists'>) {
       const moveTodoPromise = moveTodoToList({
         todoId: todo._id,
-        listId: listId as any,
+        listId,
       })
 
       toast.promise(moveTodoPromise, {
@@ -187,7 +193,6 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
       if (action) {
         e.preventDefault()
         e.stopPropagation()
-        setContextMenuOpen(false)
         action()
       }
     }
@@ -256,7 +261,7 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
             ))}
           </CommandList>
         </CommandDialog>
-        <ContextMenu open={contextMenuOpen} onOpenChange={setContextMenuOpen}>
+        <ContextMenu>
           <TodoSheet
             isOpen={sheetIsOpen}
             setIsOpen={setSheetIsOpen}
@@ -281,7 +286,10 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex gap-3 flex-1 min-w-0">
-                    <div onClick={(e) => e.stopPropagation()} className="mt-0.5">
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="mt-0.5"
+                    >
                       <TodoCheckInput todo={todo} />
                     </div>
                     <div className="flex flex-col min-w-0 gap-1">
@@ -354,10 +362,8 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
                 <span
                   className={cn(
                     'shrink-0 font-mono text-[9px] font-bold uppercase tracking-[0.15em] rounded-full px-1.5 py-0.5',
-                    todo.status === 'completed' &&
-                      'bg-chart-3/15 text-chart-3',
-                    todo.status === 'pending' &&
-                      'bg-chart-4/15 text-chart-4',
+                    todo.status === 'completed' && 'bg-chart-3/15 text-chart-3',
+                    todo.status === 'pending' && 'bg-chart-4/15 text-chart-4',
                     todo.status === 'overdue' &&
                       'bg-destructive/15 text-destructive',
                   )}

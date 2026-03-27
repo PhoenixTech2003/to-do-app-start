@@ -31,7 +31,12 @@ export function CreateTodoDialog({
   }
   return (
     <Dialog open={isOpen} onOpenChange={setCreateDialogIsOpen}>
-      <Button onClick={() => setIsOpen(true)} size="icon" className="sm:size-auto sm:px-4 sm:py-2">
+      <Button
+        onClick={() => setIsOpen(true)}
+        size="icon"
+        aria-label={buttonLabel}
+        className="sm:size-auto sm:px-4 sm:py-2"
+      >
         <Plus className="h-4 w-4 sm:mr-2" />
         <span className="hidden sm:inline">{buttonLabel}</span>
       </Button>

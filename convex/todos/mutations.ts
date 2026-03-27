@@ -7,6 +7,8 @@ import { verifyListOnwership, verifyTodoOnwership } from '../globals/helpers'
 import type { MutationCtx } from '../_generated/server'
 import type { Id } from '../_generated/dataModel'
 
+const LIST_TODO_DELETE_BATCH_SIZE = 25
+
 async function ensureTodoOwnership({
   ctx,
   userId,
@@ -52,6 +54,28 @@ function getDueDateFields(dueDate?: string) {
     dueDate: dueDate ? format(dueDate, 'yyyy-LL-dd') : undefined,
     dueTime: dueDate ? format(dueDate, 'HH:mm') : undefined,
   }
+}
+
+async function deleteTodoCascade(ctx: MutationCtx, todoId: Id<'todos'>) {
+  const todo = await ctx.db.get('todos', todoId)
+  if (!todo) {
+    return
+  }
+
+  const subTasks = await ctx.db
+    .query('subTasks')
+    .withIndex('by_todo_id', (q) => q.eq('todoId', todoId))
+    .collect()
+
+  for (const subTask of subTasks) {
+    await ctx.db.delete(subTask._id)
+  }
+
+  if (todo.markAsOverdueScheudledFunctionId) {
+    await ctx.scheduler.cancel(todo.markAsOverdueScheudledFunctionId)
+  }
+
+  await ctx.db.delete(todoId)
 }
 
 export const createTodo = mutation({
@@ -130,6 +154,28 @@ export const ToggleTodoStatusOverdue = internalMutation({
     await ctx.db.patch('todos', args.todoId, {
       status: 'overdue',
     })
+  },
+})
+
+export const deleteTodosForList = internalMutation({
+  args: {
+    listId: v.id('lists'),
+  },
+  handler: async (ctx, args) => {
+    const todos = await ctx.db
+      .query('todos')
+      .withIndex('by_listId', (q) => q.eq('listId', args.listId))
+      .take(LIST_TODO_DELETE_BATCH_SIZE)
+
+    for (const todo of todos) {
+      await deleteTodoCascade(ctx, todo._id)
+    }
+
+    if (todos.length === LIST_TODO_DELETE_BATCH_SIZE) {
+      await ctx.scheduler.runAfter(0, internal.todos.mutations.deleteTodosForList, {
+        listId: args.listId,
+      })
+    }
   },
 })
 
@@ -267,26 +313,24 @@ export const updateTodo = mutation({
 
     await ctx.db.patch('todos', args.todoId, updateData)
 
-    // Handle scheduled function updates
-    if (args.dueDate) {
-      if (currentTodo?.markAsOverdueScheudledFunctionId) {
-        await ctx.scheduler.cancel(currentTodo.markAsOverdueScheudledFunctionId)
-      }
-      if (args.scheduledFunctionRunTime) {
-        const scheduledFunctionId = await ctx.scheduler.runAt(
-          args.scheduledFunctionRunTime,
-          internal.todos.mutations.ToggleTodoStatusOverdue,
-          {
-            todoId: args.todoId,
-          },
-        )
-        const markAsOverdueScheudledFunctionId = scheduledFunctionId
-        await ctx.db.patch('todos', args.todoId, {
-          markAsOverdueScheudledFunctionId,
-        })
-      }
+    // Always cancel the existing overdue job before rescheduling or clearing it.
+    if (currentTodo?.markAsOverdueScheudledFunctionId) {
+      await ctx.scheduler.cancel(currentTodo.markAsOverdueScheudledFunctionId)
+    }
+
+    if (args.dueDate && args.scheduledFunctionRunTime) {
+      const scheduledFunctionId = await ctx.scheduler.runAt(
+        args.scheduledFunctionRunTime,
+        internal.todos.mutations.ToggleTodoStatusOverdue,
+        {
+          todoId: args.todoId,
+        },
+      )
+      const markAsOverdueScheudledFunctionId = scheduledFunctionId
+      await ctx.db.patch('todos', args.todoId, {
+        markAsOverdueScheudledFunctionId,
+      })
     } else {
-      // If no due date, remove the scheduled function reference
       const markAsOverdueScheudledFunctionId = undefined
       await ctx.db.patch('todos', args.todoId, {
         markAsOverdueScheudledFunctionId,
@@ -341,20 +385,6 @@ export const deleteTodo = mutation({
       throw new Error('Todod does not exist')
     }
 
-    const subTasks = await ctx.db
-      .query('subTasks')
-      .withIndex('by_todo_id', (q) => q.eq('todoId', args.todoId))
-      .collect()
-
-    for (const subTask of subTasks) {
-      await ctx.db.delete(subTask._id)
-    }
-
-    if (todo.markAsOverdueScheudledFunctionId) {
-      await ctx.scheduler.cancel(todo.markAsOverdueScheudledFunctionId)
-      await ctx.db.delete('todos', args.todoId)
-      return
-    }
-    await ctx.db.delete('todos', args.todoId)
+    await deleteTodoCascade(ctx, todo._id)
   },
 })

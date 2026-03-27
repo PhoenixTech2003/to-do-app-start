@@ -46,17 +46,20 @@ function InboxLoadingSkeleton() {
   )
 }
 
-function InboxEmptyState() {
+function InboxEmptyState({ searchActive }: { searchActive: boolean }) {
   return (
     <Empty className="py-20">
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <Inbox className="size-5 text-muted-foreground" />
         </EmptyMedia>
-        <EmptyTitle>Your inbox is clear</EmptyTitle>
+        <EmptyTitle>
+          {searchActive ? 'No matches for your search' : 'Your inbox is clear'}
+        </EmptyTitle>
         <EmptyDescription>
-          Todos that haven't been assigned to a list will show up here. Capture
-          quick thoughts now, organize them later.
+          {searchActive
+            ? 'Try a different search term to find the todo you are looking for.'
+            : "Todos that haven't been assigned to a list will show up here. Capture quick thoughts now, organize them later."}
         </EmptyDescription>
       </EmptyHeader>
     </Empty>
@@ -142,6 +145,7 @@ function InboxPage() {
     pendingTodos.length === 0 &&
     overdueTodos.length === 0 &&
     completedTodos.length === 0
+  const searchActive = Boolean(searchTerm?.trim())
 
   return (
     <div className="p-4 sm:p-6 flex flex-col h-full">
@@ -194,7 +198,7 @@ function InboxPage() {
           error={null}
           isEmpty={isEmpty}
           loadingSkeleton={<InboxLoadingSkeleton />}
-          emptyState={<InboxEmptyState />}
+          emptyState={<InboxEmptyState searchActive={searchActive} />}
         >
           <div className="space-y-8">
             {pendingTodos.length > 0 && (
