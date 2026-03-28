@@ -85,8 +85,6 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
           localStore.setQuery(queryRef, qArgs, {
             ...value,
             page: value.page.filter((t: Todo) => t._id !== mutationTodoId),
-            isDone: false,
-            continueCursor: 'optimistic',
           })
         }
       }

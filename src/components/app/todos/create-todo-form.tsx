@@ -68,14 +68,13 @@ export function CreateTodoForm({
         if (qArgs.listId !== argsListId) continue
         if (!value) continue
 
-        const isFirstPage = !(qArgs.paginationOpts as { cursor?: string }).cursor
+        const isFirstPage =
+          (qArgs.paginationOpts as { cursor?: string | null }).cursor == null
         if (!isFirstPage) continue
 
         localStore.setQuery(api.todos.queries.GetPendingTodos, qArgs, {
           ...value,
           page: [optimisticTodo, ...value.page],
-          isDone: false,
-          continueCursor: 'optimistic',
         })
       }
       return
@@ -85,15 +84,14 @@ export function CreateTodoForm({
     for (const { args: qArgs, value } of inboxQueries) {
       if (!value) continue
 
-      const isFirstPage = !(qArgs.paginationOpts as { cursor?: string }).cursor
+      const isFirstPage =
+        (qArgs.paginationOpts as { cursor?: string | null }).cursor == null
       if (!isFirstPage) continue
       if (!matchesInboxPendingQuery(qArgs, optimisticTodo)) continue
 
       localStore.setQuery(api.todos.queries.GetInboxPendingTodos, qArgs, {
         ...value,
         page: [optimisticTodo, ...value.page],
-        isDone: false,
-        continueCursor: 'optimistic',
       })
     }
   })

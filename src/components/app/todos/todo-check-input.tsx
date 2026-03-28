@@ -11,6 +11,12 @@ interface TodoCheckInputProps {
   todo: Todo
 }
 
+type PaginatedTodoResult = {
+  page: Array<Todo>
+  isDone: boolean
+  continueCursor: string
+}
+
 function getTodoStatus({
   status,
   dueDate,
@@ -50,7 +56,7 @@ export function TodoCheckInput({ todo }: TodoCheckInputProps) {
     const findTodoInQueries = (
       queryResults: Array<{
         args: Record<string, unknown>
-        value: { page: Array<Todo> } | undefined
+        value: PaginatedTodoResult | undefined
       }>,
     ) => {
       for (const { args: qArgs, value } of queryResults) {
@@ -116,7 +122,7 @@ export function TodoCheckInput({ todo }: TodoCheckInputProps) {
     const updateQueriesForType = (
       queries: Array<{
         args: Record<string, unknown>
-        value: { page: Array<Todo> } | undefined
+        value: PaginatedTodoResult | undefined
       }>,
       queryRef: any,
       isSource: boolean,
@@ -126,31 +132,24 @@ export function TodoCheckInput({ todo }: TodoCheckInputProps) {
         if (!matchesQueryList(qArgs)) continue
         if (!value) continue
 
-        const isFirstPage = !(qArgs.paginationOpts as { cursor?: string }).cursor
+        const isFirstPage =
+          (qArgs.paginationOpts as { cursor?: string | null }).cursor == null
         const pageContainsTodo = value.page.some((t) => t._id === todoId)
 
-        let nextValue: {
-          page: Array<Todo>
-          isDone?: boolean
-          continueCursor?: string
-        }
+        let nextValue: typeof value | undefined
         if (isSource && pageContainsTodo) {
           nextValue = {
             ...value,
             page: value.page.filter((t) => t._id !== todoId),
-            isDone: false,
-            continueCursor: 'optimistic',
           }
         } else if (isTarget && isFirstPage) {
           nextValue = {
             ...value,
             page: [optimisticTodo, ...value.page],
-            isDone: false,
-            continueCursor: 'optimistic',
           }
         } else continue
 
-        localStore.setQuery(queryRef, qArgs as any, nextValue as any)
+        localStore.setQuery(queryRef, qArgs as any, nextValue)
       }
     }
 

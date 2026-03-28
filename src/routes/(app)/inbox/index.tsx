@@ -30,6 +30,10 @@ const inboxSearchSchema = z.object({
 
 export const Route = createFileRoute('/(app)/inbox/')({
   validateSearch: zodValidator(inboxSearchSchema),
+  loader: async () => {
+    // Data is loaded via Convex hooks for optimistic updates.
+  },
+  pendingComponent: InboxRoutePending,
   component: InboxPage,
 })
 
@@ -41,6 +45,29 @@ function InboxLoadingSkeleton() {
         {Array.from({ length: 4 }).map((_, i) => (
           <Skeleton key={i} className="h-20 w-full rounded-md" />
         ))}
+      </div>
+    </div>
+  )
+}
+
+function InboxRoutePending() {
+  return (
+    <div className="p-4 sm:p-6 flex flex-col h-full">
+      <div className="mb-8 flex items-center justify-between">
+        <div className="flex items-center gap-4 min-w-0">
+          <Skeleton className="h-8 w-8 rounded-md shrink-0" />
+          <div className="min-w-0 space-y-2">
+            <Skeleton className="h-7 w-24 rounded" />
+            <Skeleton className="h-3 w-44 rounded" />
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Skeleton className="hidden h-8 w-24 rounded-md sm:block" />
+          <Skeleton className="h-8 w-28 rounded-md" />
+        </div>
+      </div>
+      <div className="flex-1 w-full">
+        <InboxLoadingSkeleton />
       </div>
     </div>
   )
