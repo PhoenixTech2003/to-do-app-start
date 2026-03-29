@@ -1,5 +1,6 @@
 import {
   CheckCircleIcon,
+  Flame,
   Home,
   Inbox,
   MessageCircle,
@@ -26,6 +27,7 @@ const appNavItems = [
   { title: 'Workspaces', url: '/dashboard', icon: Home },
   { title: 'Inbox', url: '/inbox', icon: Inbox },
   { title: 'Today', url: '/today', icon: CheckCircleIcon },
+  { title: 'Habits', url: '/habits', icon: Flame },
   { title: 'Pomodoro', url: '/pomodoro', icon: Timer },
   { title: 'Chat', url: '/chat', icon: MessageCircle, beta: true },
 ] satisfies Array<NavItem>

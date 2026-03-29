@@ -33,6 +33,8 @@ import type * as dashboard_mutations from "../dashboard/mutations.js";
 import type * as dashboard_queries from "../dashboard/queries.js";
 import type * as globals_helpers from "../globals/helpers.js";
 import type * as globals_queries from "../globals/queries.js";
+import type * as habits_mutations from "../habits/mutations.js";
+import type * as habits_queries from "../habits/queries.js";
 import type * as http from "../http.js";
 import type * as integrations_mutations from "../integrations/mutations.js";
 import type * as integrations_queries from "../integrations/queries.js";
@@ -77,6 +79,8 @@ declare const fullApi: ApiFromModules<{
   "dashboard/queries": typeof dashboard_queries;
   "globals/helpers": typeof globals_helpers;
   "globals/queries": typeof globals_queries;
+  "habits/mutations": typeof habits_mutations;
+  "habits/queries": typeof habits_queries;
   http: typeof http;
   "integrations/mutations": typeof integrations_mutations;
   "integrations/queries": typeof integrations_queries;

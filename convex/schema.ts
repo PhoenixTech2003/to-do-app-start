@@ -132,7 +132,12 @@ export default defineSchema({
     lastUpdatedAt: v.number(),
   })
     .index('by_articleUrl', ['articleUrl'])
-    .index('by_archiveDate', ['source', 'archiveYear', 'archiveMonth', 'archiveDay'])
+    .index('by_archiveDate', [
+      'source',
+      'archiveYear',
+      'archiveMonth',
+      'archiveDay',
+    ])
     .index('by_source_scrapedAt', ['source', 'scrapedAt']),
   newsSourceState: defineTable({
     source: v.string(),
@@ -142,4 +147,31 @@ export default defineSchema({
     lastArchiveDay: v.number(),
     lastScheduledWindow: v.optional(v.string()),
   }).index('by_source', ['source']),
+  habits: defineTable({
+    title: v.string(),
+    description: v.optional(v.string()),
+    frequency: v.union(v.literal('daily'), v.literal('weekly')),
+    category: v.union(
+      v.literal('health'),
+      v.literal('fitness'),
+      v.literal('learning'),
+      v.literal('mindfulness'),
+      v.literal('productivity'),
+      v.literal('social'),
+      v.literal('creative'),
+      v.literal('other'),
+    ),
+    currentStreak: v.number(),
+    longestStreak: v.number(),
+    totalCompletions: v.number(),
+    createdBy: v.string(),
+  }).index('by_createdBy', ['createdBy']),
+  habitCompletions: defineTable({
+    habitId: v.id('habits'),
+    completedDate: v.string(),
+    createdBy: v.string(),
+  })
+    .index('by_habitId', ['habitId'])
+    .index('by_createdBy_date', ['createdBy', 'completedDate'])
+    .index('by_habitId_date', ['habitId', 'completedDate']),
 })
