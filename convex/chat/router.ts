@@ -1,6 +1,9 @@
 import {
   formatContext,
+  formatContextSet,
+  formatCreated,
   formatHelp,
+  formatLinkResult,
   formatListList,
   formatTodoAdded,
   formatTodoCompleted,
@@ -183,17 +186,7 @@ export async function processIncomingChatMessage({
 
   if (parsed.action === 'integration.link_telegram') {
     const linked = await services.linkTelegram(parsed.token)
-    return respond(
-      linked
-        ? {
-            format: 'text',
-            body: 'Your Telegram account has been linked to Twodo successfully! You can now manage your tasks from here.',
-          }
-        : {
-            format: 'text',
-            body: 'Invalid or expired link token. Please generate a new one at https://twodo.skilldiggers.dev/integrations',
-          },
-    )
+    return respond(formatLinkResult(linked))
   }
 
   if (parsed.action === 'workspace.list') {
@@ -209,10 +202,7 @@ export async function processIncomingChatMessage({
       activeWorkspaceId: workspace.value.id,
       activeListId: null,
     })
-    return respond({
-      format: 'text',
-      body: `✅ Active workspace: ${workspace.value.name}`,
-    })
+    return respond(formatContextSet('workspace', workspace.value.name))
   }
 
   if (parsed.action === 'workspace.add') {
@@ -221,10 +211,7 @@ export async function processIncomingChatMessage({
       activeWorkspaceId: workspace.id,
       activeListId: null,
     })
-    return respond({
-      format: 'text',
-      body: `✅ Active workspace: ${workspace.name}`,
-    })
+    return respond(formatCreated('workspace', workspace.name))
   }
 
   if (parsed.action === 'list.list') {
@@ -257,10 +244,7 @@ export async function processIncomingChatMessage({
       activeWorkspaceId: list.value.workspaceId,
       activeListId: list.value.id,
     })
-    return respond({
-      format: 'text',
-      body: `✅ Active list: ${list.value.name}`,
-    })
+    return respond(formatContextSet('list', list.value.name))
   }
 
   if (parsed.action === 'list.add') {
@@ -286,10 +270,7 @@ export async function processIncomingChatMessage({
       activeWorkspaceId: list.workspaceId,
       activeListId: list.id,
     })
-    return respond({
-      format: 'text',
-      body: `✅ Active list: ${list.name}`,
-    })
+    return respond(formatCreated('list', list.name))
   }
 
   if (parsed.action === 'todo.add') {
