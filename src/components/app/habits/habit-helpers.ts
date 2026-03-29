@@ -128,6 +128,17 @@ export function getLevel(totalXP: number) {
   }
 }
 
+export const CATEGORY_FILL: Record<Category, string> = {
+  health: 'bg-rose-400',
+  fitness: 'bg-orange-400',
+  learning: 'bg-blue-400',
+  mindfulness: 'bg-violet-400',
+  productivity: 'bg-emerald-400',
+  social: 'bg-sky-400',
+  creative: 'bg-pink-400',
+  other: 'bg-amber-400',
+}
+
 export const MONTH_LABELS = [
   'Jan',
   'Feb',

@@ -62,6 +62,33 @@ export const getActivityData = query({
   },
 })
 
+export const getHabitCompletions = query({
+  args: {
+    habitId: v.id('habits'),
+    startDate: v.string(),
+    endDate: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx)
+    const habit = await ctx.db.get(args.habitId)
+    if (!habit || habit.createdBy !== user._id) {
+      throw new Error('Habit not found')
+    }
+
+    const completions = await ctx.db
+      .query('habitCompletions')
+      .withIndex('by_habitId_date', (q) =>
+        q
+          .eq('habitId', args.habitId)
+          .gte('completedDate', args.startDate)
+          .lte('completedDate', args.endDate),
+      )
+      .collect()
+
+    return completions.map((c) => c.completedDate)
+  },
+})
+
 export const getWeekCompletions = query({
   args: {
     startDate: v.string(),
