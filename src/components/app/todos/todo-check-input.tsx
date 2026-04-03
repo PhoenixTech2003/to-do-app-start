@@ -85,6 +85,25 @@ export function TodoCheckInput({ todo }: TodoCheckInputProps) {
     const inboxOverdueQueries = localStore.getAllQueries(
       api.todos.queries.GetInboxOverdueTodos,
     )
+    const globalUpcomingQueries = localStore.getAllQueries(
+      api.globals.queries.GetAllUpcomingTodos,
+    )
+    const globalOverdueQueries = localStore.getAllQueries(
+      api.globals.queries.GetAllOverdueTodos,
+    )
+
+    const findTodoInGlobalQueries = (
+      queryResults: Array<{
+        args: Record<string, unknown>
+        value: PaginatedTodoResult | undefined
+      }>,
+    ) => {
+      for (const { args: qArgs, value } of queryResults) {
+        const found = value?.page.find((t) => t._id === todoId)
+        if (found) return { found, args: qArgs, value }
+      }
+      return null
+    }
 
     const pendingMatch = findTodoInQueries(pendingQueries)
     const completedMatch = findTodoInQueries(completedQueries)
@@ -92,6 +111,8 @@ export function TodoCheckInput({ todo }: TodoCheckInputProps) {
     const inboxPendingMatch = findTodoInQueries(inboxPendingQueries)
     const inboxCompletedMatch = findTodoInQueries(inboxCompletedQueries)
     const inboxOverdueMatch = findTodoInQueries(inboxOverdueQueries)
+    const globalUpcomingMatch = findTodoInGlobalQueries(globalUpcomingQueries)
+    const globalOverdueMatch = findTodoInGlobalQueries(globalOverdueQueries)
 
     let currentTodo =
       pendingMatch?.found ??
@@ -99,9 +120,10 @@ export function TodoCheckInput({ todo }: TodoCheckInputProps) {
       overdueMatch?.found ??
       inboxPendingMatch?.found ??
       inboxCompletedMatch?.found ??
-      inboxOverdueMatch?.found
+      inboxOverdueMatch?.found ??
+      globalUpcomingMatch?.found ??
+      globalOverdueMatch?.found
 
-    // On today page, only getTodosByDate is loaded - find todo there if not in paginated queries
     if (!currentTodo) {
       const byDateQueries = localStore.getAllQueries(
         api.globals.queries.getTodosByDate,
@@ -127,9 +149,10 @@ export function TodoCheckInput({ todo }: TodoCheckInputProps) {
       queryRef: any,
       isSource: boolean,
       isTarget: boolean,
+      global = false,
     ) => {
       for (const { args: qArgs, value } of queries) {
-        if (!matchesQueryList(qArgs)) continue
+        if (!global && !matchesQueryList(qArgs)) continue
         if (!value) continue
 
         const isFirstPage =
@@ -188,6 +211,20 @@ export function TodoCheckInput({ todo }: TodoCheckInputProps) {
       api.todos.queries.GetInboxOverdueTodos,
       !!inboxOverdueMatch,
       newStatus === 'overdue',
+    )
+    updateQueriesForType(
+      globalUpcomingQueries,
+      api.globals.queries.GetAllUpcomingTodos,
+      !!globalUpcomingMatch,
+      newStatus === 'pending',
+      true,
+    )
+    updateQueriesForType(
+      globalOverdueQueries,
+      api.globals.queries.GetAllOverdueTodos,
+      !!globalOverdueMatch,
+      newStatus === 'overdue',
+      true,
     )
 
     // Update getTodosByDate - any query that contains this todo (today page, etc.)

@@ -71,10 +71,13 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
         return todo.listId === undefined
       }
 
-      const removeTodoFromQueries = (queryRef: any) => {
+      const removeTodoFromQueries = (
+        queryRef: any,
+        global = false,
+      ) => {
         const queries = localStore.getAllQueries(queryRef)
         for (const { args: qArgs, value } of queries) {
-          if (!matchesQueryList(qArgs)) continue
+          if (!global && !matchesQueryList(qArgs)) continue
           if (!value) continue
 
           const pageContainsTodo = value.page.some(
@@ -95,6 +98,8 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
       removeTodoFromQueries(api.todos.queries.GetInboxPendingTodos)
       removeTodoFromQueries(api.todos.queries.GetInboxCompletedTodos)
       removeTodoFromQueries(api.todos.queries.GetInboxOverdueTodos)
+      removeTodoFromQueries(api.globals.queries.GetAllUpcomingTodos, true)
+      removeTodoFromQueries(api.globals.queries.GetAllOverdueTodos, true)
 
       const byDateQueries = localStore.getAllQueries(
         api.globals.queries.getTodosByDate,

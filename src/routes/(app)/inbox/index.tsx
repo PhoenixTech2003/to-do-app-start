@@ -5,7 +5,15 @@ import { formatForDisplay } from '@tanstack/react-hotkeys'
 import { useEffect, useRef, useState } from 'react'
 import { usePaginatedQuery } from 'convex/react'
 import { api } from 'convex/_generated/api'
-import { Inbox, Search } from 'lucide-react'
+import {
+  AlertTriangle,
+  CalendarClock,
+  Inbox,
+  PackageOpen,
+  Search,
+} from 'lucide-react'
+import { format } from 'date-fns'
+import { motion } from 'motion/react'
 import { z } from 'zod'
 import { BackButton } from '@/components/app/back-button'
 import { PaginationController } from '@/components/app/pagination-controller'
@@ -16,6 +24,7 @@ import { TodoCard } from '@/components/app/todos/todo-card'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import {
   Empty,
   EmptyDescription,
@@ -30,22 +39,33 @@ const inboxSearchSchema = z.object({
 
 export const Route = createFileRoute('/(app)/inbox/')({
   validateSearch: zodValidator(inboxSearchSchema),
-  loader: async () => {
-    // Data is loaded via Convex hooks for optimistic updates.
-  },
+  loader: async () => {},
   pendingComponent: InboxRoutePending,
   component: InboxPage,
 })
 
 function InboxLoadingSkeleton() {
   return (
-    <div className="flex flex-col gap-3">
-      <Skeleton className="h-5 w-32 rounded" />
-      <div className="space-y-2">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-20 w-full rounded-md" />
+    <div className="space-y-8">
+      <div className="grid grid-cols-3 rounded-md border bg-card divide-x divide-border">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="p-3 sm:p-4 space-y-2">
+            <Skeleton className="h-3 w-16 rounded" />
+            <Skeleton className="h-6 w-10 rounded" />
+            <Skeleton className="h-2.5 w-20 rounded" />
+          </div>
         ))}
       </div>
+      {Array.from({ length: 2 }).map((_s, i) => (
+        <div key={i} className="flex flex-col gap-3">
+          <Skeleton className="h-5 w-32 rounded" />
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_r, j) => (
+              <Skeleton key={j} className="h-20 w-full rounded-md" />
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
@@ -81,7 +101,9 @@ function InboxEmptyState({ searchActive }: { searchActive: boolean }) {
           <Inbox className="size-5 text-muted-foreground" />
         </EmptyMedia>
         <EmptyTitle>
-          {searchActive ? 'No matches for your search' : 'Your inbox is clear'}
+          {searchActive
+            ? 'No matches for your search'
+            : 'Your inbox is clear'}
         </EmptyTitle>
         <EmptyDescription>
           {searchActive
@@ -93,6 +115,61 @@ function InboxEmptyState({ searchActive }: { searchActive: boolean }) {
   )
 }
 
+function InboxStatCell({
+  label,
+  value,
+  icon: Icon,
+  accentClass,
+}: {
+  label: string
+  value: number
+  icon: React.ComponentType<{ className?: string }>
+  accentClass: string
+}) {
+  return (
+    <div className="p-3 sm:p-4">
+      <div className="flex items-center gap-1.5 mb-1">
+        <Icon className={cn('size-3', accentClass)} />
+        <span className="text-[10px] font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+          {label}
+        </span>
+      </div>
+      <p className="text-lg font-bold tabular-nums font-mono">{value}</p>
+    </div>
+  )
+}
+
+function SectionHeader({
+  label,
+  count,
+  dotClass,
+  delay = 0,
+}: {
+  label: string
+  count: number
+  dotClass: string
+  delay?: number
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, delay }}
+      className="flex items-center justify-between pb-2 border-b border-border"
+    >
+      <div className="flex items-center gap-2">
+        <div className={cn('h-1.5 w-1.5 rounded-full', dotClass)} />
+        <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+          {label}
+        </h2>
+      </div>
+      <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">
+        {count}
+      </span>
+    </motion.div>
+  )
+}
+
 function InboxPage() {
   const { searchTerm } = Route.useSearch()
   const navigate = Route.useNavigate()
@@ -100,6 +177,7 @@ function InboxPage() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [localSearch, setLocalSearch] = useState(searchTerm ?? '')
   const pendingSearchRef = useRef<string | null>(null)
+  const today = format(new Date(), 'yyyy-LL-dd')
 
   useEffect(() => {
     const urlValue = searchTerm ?? ''
@@ -131,6 +209,31 @@ function InboxPage() {
   }
 
   const {
+    results: upcomingTodos,
+    status: upcomingStatus,
+    loadMore: loadMoreUpcoming,
+  } = usePaginatedQuery(
+    api.globals.queries.GetAllUpcomingTodos,
+    {
+      today,
+      searchTerm: searchTerm || undefined,
+    },
+    { initialNumItems: 6 },
+  )
+
+  const {
+    results: allOverdueTodos,
+    status: allOverdueStatus,
+    loadMore: loadMoreAllOverdue,
+  } = usePaginatedQuery(
+    api.globals.queries.GetAllOverdueTodos,
+    {
+      searchTerm: searchTerm || undefined,
+    },
+    { initialNumItems: 6 },
+  )
+
+  const {
     results: pendingTodos,
     status: pendingStatus,
     loadMore: loadMorePending,
@@ -141,17 +244,7 @@ function InboxPage() {
     },
     { initialNumItems: 6 },
   )
-  const {
-    results: overdueTodos,
-    status: overdueStatus,
-    loadMore: loadMoreOverdue,
-  } = usePaginatedQuery(
-    api.todos.queries.GetInboxOverdueTodos,
-    {
-      searchTerm: searchTerm || undefined,
-    },
-    { initialNumItems: 6 },
-  )
+
   const {
     results: completedTodos,
     status: completedStatus,
@@ -165,12 +258,14 @@ function InboxPage() {
   )
 
   const isLoading =
+    upcomingStatus === 'LoadingFirstPage' ||
+    allOverdueStatus === 'LoadingFirstPage' ||
     pendingStatus === 'LoadingFirstPage' ||
-    overdueStatus === 'LoadingFirstPage' ||
     completedStatus === 'LoadingFirstPage'
   const isEmpty =
+    upcomingTodos.length === 0 &&
+    allOverdueTodos.length === 0 &&
     pendingTodos.length === 0 &&
-    overdueTodos.length === 0 &&
     completedTodos.length === 0
   const searchActive = Boolean(searchTerm?.trim())
 
@@ -193,7 +288,9 @@ function InboxPage() {
               Inbox
             </h2>
             <p className="text-xs font-mono text-muted-foreground mt-0.5">
-              Capture now, organize later
+              {allOverdueTodos.length > 0
+                ? `${allOverdueTodos.length} overdue — needs attention`
+                : 'Capture now, organize later'}
             </p>
           </div>
         </div>
@@ -227,20 +324,106 @@ function InboxPage() {
           loadingSkeleton={<InboxLoadingSkeleton />}
           emptyState={<InboxEmptyState searchActive={searchActive} />}
         >
-          <div className="space-y-8">
-            {pendingTodos.length > 0 && (
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center justify-between pb-2 border-b border-border">
-                  <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-chart-4" />
-                    <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-                      Unsorted
-                    </h2>
-                  </div>
-                  <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">
-                    {pendingTodos.length}
-                  </span>
+          <div className="space-y-10">
+            {/* Stats Strip */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="grid grid-cols-3 rounded-md border bg-card divide-x divide-border"
+            >
+              <InboxStatCell
+                label="Overdue"
+                value={allOverdueTodos.length}
+                icon={AlertTriangle}
+                accentClass="text-destructive"
+              />
+              <InboxStatCell
+                label="Upcoming"
+                value={upcomingTodos.length}
+                icon={CalendarClock}
+                accentClass="text-chart-4"
+              />
+              <InboxStatCell
+                label="Unsorted"
+                value={pendingTodos.length}
+                icon={PackageOpen}
+                accentClass="text-chart-2"
+              />
+            </motion.div>
+
+            {/* Overdue — All Lists */}
+            {allOverdueTodos.length > 0 && (
+              <motion.section
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.06 }}
+                className="flex flex-col gap-3"
+              >
+                <SectionHeader
+                  label="Overdue — All Lists"
+                  count={allOverdueTodos.length}
+                  dotClass="bg-destructive"
+                  delay={0.06}
+                />
+                <div className="space-y-2">
+                  {allOverdueTodos.map((todo) => (
+                    <TodoCard key={todo._id} todo={todo} />
+                  ))}
                 </div>
+                <PaginationController
+                  status={allOverdueStatus}
+                  loadMore={loadMoreAllOverdue}
+                  resultsCount={allOverdueTodos.length}
+                  label="Overdue Todos"
+                  initialNumItems={6}
+                />
+              </motion.section>
+            )}
+
+            {/* Upcoming — All Lists */}
+            {upcomingTodos.length > 0 && (
+              <motion.section
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.12 }}
+                className="flex flex-col gap-3"
+              >
+                <SectionHeader
+                  label="Upcoming — All Lists"
+                  count={upcomingTodos.length}
+                  dotClass="bg-chart-4"
+                  delay={0.12}
+                />
+                <div className="space-y-2">
+                  {upcomingTodos.map((todo) => (
+                    <TodoCard key={todo._id} todo={todo} />
+                  ))}
+                </div>
+                <PaginationController
+                  status={upcomingStatus}
+                  loadMore={loadMoreUpcoming}
+                  resultsCount={upcomingTodos.length}
+                  label="Upcoming Todos"
+                  initialNumItems={6}
+                />
+              </motion.section>
+            )}
+
+            {/* Unsorted — Inbox Only */}
+            {pendingTodos.length > 0 && (
+              <motion.section
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.18 }}
+                className="flex flex-col gap-3"
+              >
+                <SectionHeader
+                  label="Unsorted"
+                  count={pendingTodos.length}
+                  dotClass="bg-chart-2"
+                  delay={0.18}
+                />
                 <div className="space-y-2">
                   {pendingTodos.map((todo) => (
                     <TodoCard key={todo._id} todo={todo} />
@@ -253,50 +436,23 @@ function InboxPage() {
                   label="Inbox Todos"
                   initialNumItems={6}
                 />
-              </div>
+              </motion.section>
             )}
 
-            {overdueTodos.length > 0 && (
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center justify-between pb-2 border-b border-border">
-                  <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-destructive" />
-                    <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-                      Overdue
-                    </h2>
-                  </div>
-                  <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">
-                    {overdueTodos.length}
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  {overdueTodos.map((todo) => (
-                    <TodoCard key={todo._id} todo={todo} />
-                  ))}
-                </div>
-                <PaginationController
-                  status={overdueStatus}
-                  loadMore={loadMoreOverdue}
-                  resultsCount={overdueTodos.length}
-                  label="Overdue Inbox Todos"
-                  initialNumItems={6}
-                />
-              </div>
-            )}
-
+            {/* Completed — Inbox Only */}
             {completedTodos.length > 0 && (
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center justify-between pb-2 border-b border-border">
-                  <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-chart-3" />
-                    <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-                      Completed
-                    </h2>
-                  </div>
-                  <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">
-                    {completedTodos.length}
-                  </span>
-                </div>
+              <motion.section
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.24 }}
+                className="flex flex-col gap-3"
+              >
+                <SectionHeader
+                  label="Completed"
+                  count={completedTodos.length}
+                  dotClass="bg-chart-3"
+                  delay={0.24}
+                />
                 <div className="space-y-2">
                   {completedTodos.map((todo) => (
                     <TodoCard key={todo._id} todo={todo} />
@@ -309,7 +465,7 @@ function InboxPage() {
                   label="Completed Inbox Todos"
                   initialNumItems={6}
                 />
-              </div>
+              </motion.section>
             )}
           </div>
         </StateHandler>
