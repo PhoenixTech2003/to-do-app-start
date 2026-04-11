@@ -3,8 +3,6 @@ import {
   Flame,
   Home,
   Inbox,
-  MessageCircle,
-  PuzzleIcon,
   Timer,
 } from 'lucide-react'
 import { Link, useLocation } from '@tanstack/react-router'
@@ -19,7 +17,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
 } from '@/components/ui/sidebar'
 import { BetaBadge } from '@/components/ui/beta-badge'
 
@@ -29,11 +26,6 @@ const appNavItems = [
   { title: 'Today', url: '/today', icon: CheckCircleIcon },
   { title: 'Habits', url: '/habits', icon: Flame },
   { title: 'Pomodoro', url: '/pomodoro', icon: Timer },
-  { title: 'Chat', url: '/chat', icon: MessageCircle, beta: true },
-] satisfies Array<NavItem>
-
-const settingsNavItems = [
-  { title: 'Integrations', url: '/integrations', icon: PuzzleIcon },
 ] satisfies Array<NavItem>
 
 type NavItem = {
@@ -98,26 +90,6 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
               {appNavItems.map((item) => {
-                const isActive = location.pathname.startsWith(item.url)
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <NavLink item={item} isActive={isActive} />
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarSeparator className="my-2 opacity-60" />
-
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-3 text-[10px] font-mono font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Settings
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-0.5">
-              {settingsNavItems.map((item) => {
                 const isActive = location.pathname.startsWith(item.url)
                 return (
                   <SidebarMenuItem key={item.title}>
