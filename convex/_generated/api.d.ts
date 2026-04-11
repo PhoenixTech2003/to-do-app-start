@@ -9,7 +9,6 @@
  */
 
 import type * as auth from "../auth.js";
-import type * as crons from "../crons.js";
 import type * as dashboard_mutations from "../dashboard/mutations.js";
 import type * as dashboard_queries from "../dashboard/queries.js";
 import type * as globals_helpers from "../globals/helpers.js";
@@ -33,7 +32,6 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
-  crons: typeof crons;
   "dashboard/mutations": typeof dashboard_mutations;
   "dashboard/queries": typeof dashboard_queries;
   "globals/helpers": typeof globals_helpers;
