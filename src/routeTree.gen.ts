@@ -14,13 +14,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as appTodayIndexRouteImport } from './routes/(app)/today/index'
 import { Route as appPomodoroIndexRouteImport } from './routes/(app)/pomodoro/index'
-import { Route as appIntegrationsIndexRouteImport } from './routes/(app)/integrations/index'
 import { Route as appInboxIndexRouteImport } from './routes/(app)/inbox/index'
 import { Route as appHabitsIndexRouteImport } from './routes/(app)/habits/index'
 import { Route as appDashboardIndexRouteImport } from './routes/(app)/dashboard/index'
-import { Route as appChatIndexRouteImport } from './routes/(app)/chat/index'
-import { Route as ApiWebhooksWhatsappRouteImport } from './routes/api/webhooks/whatsapp'
-import { Route as ApiWebhooksTelegramRouteImport } from './routes/api/webhooks/telegram'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as appDashboardWorkspaceWorkspaceIdListsIndexRouteImport } from './routes/(app)/dashboard/workspace/$workspaceId/lists/index'
 import { Route as appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRouteImport } from './routes/(app)/dashboard/workspace/$workspaceId/lists/$listId/todos/index'
@@ -49,11 +45,6 @@ const appPomodoroIndexRoute = appPomodoroIndexRouteImport.update({
   path: '/pomodoro/',
   getParentRoute: () => appRouteRoute,
 } as any)
-const appIntegrationsIndexRoute = appIntegrationsIndexRouteImport.update({
-  id: '/integrations/',
-  path: '/integrations/',
-  getParentRoute: () => appRouteRoute,
-} as any)
 const appInboxIndexRoute = appInboxIndexRouteImport.update({
   id: '/inbox/',
   path: '/inbox/',
@@ -68,21 +59,6 @@ const appDashboardIndexRoute = appDashboardIndexRouteImport.update({
   id: '/dashboard/',
   path: '/dashboard/',
   getParentRoute: () => appRouteRoute,
-} as any)
-const appChatIndexRoute = appChatIndexRouteImport.update({
-  id: '/chat/',
-  path: '/chat/',
-  getParentRoute: () => appRouteRoute,
-} as any)
-const ApiWebhooksWhatsappRoute = ApiWebhooksWhatsappRouteImport.update({
-  id: '/api/webhooks/whatsapp',
-  path: '/api/webhooks/whatsapp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiWebhooksTelegramRoute = ApiWebhooksTelegramRouteImport.update({
-  id: '/api/webhooks/telegram',
-  path: '/api/webhooks/telegram',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
@@ -106,13 +82,9 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/signup': typeof authSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/webhooks/telegram': typeof ApiWebhooksTelegramRoute
-  '/api/webhooks/whatsapp': typeof ApiWebhooksWhatsappRoute
-  '/chat/': typeof appChatIndexRoute
   '/dashboard/': typeof appDashboardIndexRoute
   '/habits/': typeof appHabitsIndexRoute
   '/inbox/': typeof appInboxIndexRoute
-  '/integrations/': typeof appIntegrationsIndexRoute
   '/pomodoro/': typeof appPomodoroIndexRoute
   '/today/': typeof appTodayIndexRoute
   '/dashboard/workspace/$workspaceId/lists/': typeof appDashboardWorkspaceWorkspaceIdListsIndexRoute
@@ -122,13 +94,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/signup': typeof authSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/webhooks/telegram': typeof ApiWebhooksTelegramRoute
-  '/api/webhooks/whatsapp': typeof ApiWebhooksWhatsappRoute
-  '/chat': typeof appChatIndexRoute
   '/dashboard': typeof appDashboardIndexRoute
   '/habits': typeof appHabitsIndexRoute
   '/inbox': typeof appInboxIndexRoute
-  '/integrations': typeof appIntegrationsIndexRoute
   '/pomodoro': typeof appPomodoroIndexRoute
   '/today': typeof appTodayIndexRoute
   '/dashboard/workspace/$workspaceId/lists': typeof appDashboardWorkspaceWorkspaceIdListsIndexRoute
@@ -140,13 +108,9 @@ export interface FileRoutesById {
   '/(app)': typeof appRouteRouteWithChildren
   '/(auth)/signup': typeof authSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/webhooks/telegram': typeof ApiWebhooksTelegramRoute
-  '/api/webhooks/whatsapp': typeof ApiWebhooksWhatsappRoute
-  '/(app)/chat/': typeof appChatIndexRoute
   '/(app)/dashboard/': typeof appDashboardIndexRoute
   '/(app)/habits/': typeof appHabitsIndexRoute
   '/(app)/inbox/': typeof appInboxIndexRoute
-  '/(app)/integrations/': typeof appIntegrationsIndexRoute
   '/(app)/pomodoro/': typeof appPomodoroIndexRoute
   '/(app)/today/': typeof appTodayIndexRoute
   '/(app)/dashboard/workspace/$workspaceId/lists/': typeof appDashboardWorkspaceWorkspaceIdListsIndexRoute
@@ -158,13 +122,9 @@ export interface FileRouteTypes {
     | '/'
     | '/signup'
     | '/api/auth/$'
-    | '/api/webhooks/telegram'
-    | '/api/webhooks/whatsapp'
-    | '/chat/'
     | '/dashboard/'
     | '/habits/'
     | '/inbox/'
-    | '/integrations/'
     | '/pomodoro/'
     | '/today/'
     | '/dashboard/workspace/$workspaceId/lists/'
@@ -174,13 +134,9 @@ export interface FileRouteTypes {
     | '/'
     | '/signup'
     | '/api/auth/$'
-    | '/api/webhooks/telegram'
-    | '/api/webhooks/whatsapp'
-    | '/chat'
     | '/dashboard'
     | '/habits'
     | '/inbox'
-    | '/integrations'
     | '/pomodoro'
     | '/today'
     | '/dashboard/workspace/$workspaceId/lists'
@@ -191,13 +147,9 @@ export interface FileRouteTypes {
     | '/(app)'
     | '/(auth)/signup'
     | '/api/auth/$'
-    | '/api/webhooks/telegram'
-    | '/api/webhooks/whatsapp'
-    | '/(app)/chat/'
     | '/(app)/dashboard/'
     | '/(app)/habits/'
     | '/(app)/inbox/'
-    | '/(app)/integrations/'
     | '/(app)/pomodoro/'
     | '/(app)/today/'
     | '/(app)/dashboard/workspace/$workspaceId/lists/'
@@ -209,8 +161,6 @@ export interface RootRouteChildren {
   appRouteRoute: typeof appRouteRouteWithChildren
   authSignupRoute: typeof authSignupRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
-  ApiWebhooksTelegramRoute: typeof ApiWebhooksTelegramRoute
-  ApiWebhooksWhatsappRoute: typeof ApiWebhooksWhatsappRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -250,13 +200,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appPomodoroIndexRouteImport
       parentRoute: typeof appRouteRoute
     }
-    '/(app)/integrations/': {
-      id: '/(app)/integrations/'
-      path: '/integrations'
-      fullPath: '/integrations/'
-      preLoaderRoute: typeof appIntegrationsIndexRouteImport
-      parentRoute: typeof appRouteRoute
-    }
     '/(app)/inbox/': {
       id: '/(app)/inbox/'
       path: '/inbox'
@@ -277,27 +220,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/'
       preLoaderRoute: typeof appDashboardIndexRouteImport
       parentRoute: typeof appRouteRoute
-    }
-    '/(app)/chat/': {
-      id: '/(app)/chat/'
-      path: '/chat'
-      fullPath: '/chat/'
-      preLoaderRoute: typeof appChatIndexRouteImport
-      parentRoute: typeof appRouteRoute
-    }
-    '/api/webhooks/whatsapp': {
-      id: '/api/webhooks/whatsapp'
-      path: '/api/webhooks/whatsapp'
-      fullPath: '/api/webhooks/whatsapp'
-      preLoaderRoute: typeof ApiWebhooksWhatsappRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/webhooks/telegram': {
-      id: '/api/webhooks/telegram'
-      path: '/api/webhooks/telegram'
-      fullPath: '/api/webhooks/telegram'
-      preLoaderRoute: typeof ApiWebhooksTelegramRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -324,11 +246,9 @@ declare module '@tanstack/react-router' {
 }
 
 interface appRouteRouteChildren {
-  appChatIndexRoute: typeof appChatIndexRoute
   appDashboardIndexRoute: typeof appDashboardIndexRoute
   appHabitsIndexRoute: typeof appHabitsIndexRoute
   appInboxIndexRoute: typeof appInboxIndexRoute
-  appIntegrationsIndexRoute: typeof appIntegrationsIndexRoute
   appPomodoroIndexRoute: typeof appPomodoroIndexRoute
   appTodayIndexRoute: typeof appTodayIndexRoute
   appDashboardWorkspaceWorkspaceIdListsIndexRoute: typeof appDashboardWorkspaceWorkspaceIdListsIndexRoute
@@ -336,11 +256,9 @@ interface appRouteRouteChildren {
 }
 
 const appRouteRouteChildren: appRouteRouteChildren = {
-  appChatIndexRoute: appChatIndexRoute,
   appDashboardIndexRoute: appDashboardIndexRoute,
   appHabitsIndexRoute: appHabitsIndexRoute,
   appInboxIndexRoute: appInboxIndexRoute,
-  appIntegrationsIndexRoute: appIntegrationsIndexRoute,
   appPomodoroIndexRoute: appPomodoroIndexRoute,
   appTodayIndexRoute: appTodayIndexRoute,
   appDashboardWorkspaceWorkspaceIdListsIndexRoute:
@@ -358,8 +276,6 @@ const rootRouteChildren: RootRouteChildren = {
   appRouteRoute: appRouteRouteWithChildren,
   authSignupRoute: authSignupRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
-  ApiWebhooksTelegramRoute: ApiWebhooksTelegramRoute,
-  ApiWebhooksWhatsappRoute: ApiWebhooksWhatsappRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
