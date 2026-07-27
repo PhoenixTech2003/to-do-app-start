@@ -2,6 +2,7 @@ import { paginationOptsValidator } from 'convex/server'
 import { v } from 'convex/values'
 import { query } from '../_generated/server'
 import { authComponent } from '../auth'
+import { attachTodoLocations } from './helpers'
 
 export const GetAllUpcomingTodos = query({
   args: {
@@ -43,7 +44,12 @@ export const GetAllUpcomingTodos = query({
         )
     }
 
-    return await todosQuery.paginate(args.paginationOpts)
+    const results = await todosQuery.paginate(args.paginationOpts)
+
+    return {
+      ...results,
+      page: await attachTodoLocations({ ctx, todos: results.page }),
+    }
   },
 })
 
@@ -74,7 +80,12 @@ export const GetAllOverdueTodos = query({
         )
     }
 
-    return await todosQuery.paginate(args.paginationOpts)
+    const results = await todosQuery.paginate(args.paginationOpts)
+
+    return {
+      ...results,
+      page: await attachTodoLocations({ ctx, todos: results.page }),
+    }
   },
 })
 

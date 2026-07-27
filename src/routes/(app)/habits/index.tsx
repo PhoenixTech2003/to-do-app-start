@@ -3,6 +3,8 @@ import { useQuery } from 'convex/react'
 import { api } from 'convex/_generated/api'
 import { endOfWeek, format, startOfWeek, subDays } from 'date-fns'
 import { AnimatePresence, motion } from 'motion/react'
+import { TrendingDown } from 'lucide-react'
+import { isDecaying } from 'convex/habits/xp'
 import { BackButton } from '@/components/app/back-button'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
@@ -23,10 +25,7 @@ export const Route = createFileRoute('/(app)/habits/')({
 function HabitsPage() {
   const now = new Date()
   const today = format(now, 'yyyy-MM-dd')
-  const weekStart = format(
-    startOfWeek(now, { weekStartsOn: 1 }),
-    'yyyy-MM-dd',
-  )
+  const weekStart = format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd')
   const weekEnd = format(endOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd')
   const yearStart = format(subDays(now, 364), 'yyyy-MM-dd')
 
@@ -59,7 +58,9 @@ function HabitsPage() {
     (max, h) => Math.max(max, h.longestStreak),
     0,
   )
-  const totalXP = habits.reduce((sum, h) => sum + h.totalCompletions * 10, 0)
+  const totalXP = habits.reduce((sum, h) => sum + h.xp, 0)
+  const totalDecay = habits.reduce((sum, h) => sum + h.decayXp, 0)
+  const decayingHabits = habits.filter(isDecaying)
   const levelInfo = getLevel(totalXP)
   const totalCompletionsYear = Object.values(activityData).reduce(
     (s, n) => s + n,
@@ -132,10 +133,35 @@ function HabitsPage() {
                 <span className="text-xs font-normal text-muted-foreground ml-1">
                   XP
                 </span>
+                {totalDecay > 0 && (
+                  <span className="text-[10px] font-normal text-destructive/80 ml-1.5 tabular-nums">
+                    −{totalDecay}
+                  </span>
+                )}
               </p>
               <Progress value={levelInfo.progress} className="h-0.5 mt-1.5" />
             </div>
           </motion.div>
+
+          {/* Decay banner */}
+          {decayingHabits.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.03 }}
+              className="flex items-center gap-2.5 rounded-md border border-destructive/25 bg-destructive/5 px-3 py-2.5 -mt-6"
+            >
+              <TrendingDown className="size-3.5 shrink-0 text-destructive/80" />
+              <p className="text-[11px] font-mono text-destructive/90 min-w-0 truncate">
+                {decayingHabits.length === 1
+                  ? `${decayingHabits[0].title} is draining XP`
+                  : `${decayingHabits.length} habits are draining XP`}
+              </p>
+              <span className="ml-auto shrink-0 text-[11px] font-mono font-bold tabular-nums text-destructive">
+                −{totalDecay} XP
+              </span>
+            </motion.div>
+          )}
 
           {/* Today's Habits */}
           <motion.section

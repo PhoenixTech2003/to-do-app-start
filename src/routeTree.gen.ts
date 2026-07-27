@@ -13,7 +13,6 @@ import { Route as appRouteRouteImport } from './routes/(app)/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as appTodayIndexRouteImport } from './routes/(app)/today/index'
-import { Route as appPomodoroIndexRouteImport } from './routes/(app)/pomodoro/index'
 import { Route as appInboxIndexRouteImport } from './routes/(app)/inbox/index'
 import { Route as appHabitsIndexRouteImport } from './routes/(app)/habits/index'
 import { Route as appDashboardIndexRouteImport } from './routes/(app)/dashboard/index'
@@ -38,11 +37,6 @@ const authSignupRoute = authSignupRouteImport.update({
 const appTodayIndexRoute = appTodayIndexRouteImport.update({
   id: '/today/',
   path: '/today/',
-  getParentRoute: () => appRouteRoute,
-} as any)
-const appPomodoroIndexRoute = appPomodoroIndexRouteImport.update({
-  id: '/pomodoro/',
-  path: '/pomodoro/',
   getParentRoute: () => appRouteRoute,
 } as any)
 const appInboxIndexRoute = appInboxIndexRouteImport.update({
@@ -85,7 +79,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof appDashboardIndexRoute
   '/habits/': typeof appHabitsIndexRoute
   '/inbox/': typeof appInboxIndexRoute
-  '/pomodoro/': typeof appPomodoroIndexRoute
   '/today/': typeof appTodayIndexRoute
   '/dashboard/workspace/$workspaceId/lists/': typeof appDashboardWorkspaceWorkspaceIdListsIndexRoute
   '/dashboard/workspace/$workspaceId/lists/$listId/todos/': typeof appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute
@@ -97,7 +90,6 @@ export interface FileRoutesByTo {
   '/dashboard': typeof appDashboardIndexRoute
   '/habits': typeof appHabitsIndexRoute
   '/inbox': typeof appInboxIndexRoute
-  '/pomodoro': typeof appPomodoroIndexRoute
   '/today': typeof appTodayIndexRoute
   '/dashboard/workspace/$workspaceId/lists': typeof appDashboardWorkspaceWorkspaceIdListsIndexRoute
   '/dashboard/workspace/$workspaceId/lists/$listId/todos': typeof appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute
@@ -111,7 +103,6 @@ export interface FileRoutesById {
   '/(app)/dashboard/': typeof appDashboardIndexRoute
   '/(app)/habits/': typeof appHabitsIndexRoute
   '/(app)/inbox/': typeof appInboxIndexRoute
-  '/(app)/pomodoro/': typeof appPomodoroIndexRoute
   '/(app)/today/': typeof appTodayIndexRoute
   '/(app)/dashboard/workspace/$workspaceId/lists/': typeof appDashboardWorkspaceWorkspaceIdListsIndexRoute
   '/(app)/dashboard/workspace/$workspaceId/lists/$listId/todos/': typeof appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute
@@ -125,7 +116,6 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/habits/'
     | '/inbox/'
-    | '/pomodoro/'
     | '/today/'
     | '/dashboard/workspace/$workspaceId/lists/'
     | '/dashboard/workspace/$workspaceId/lists/$listId/todos/'
@@ -137,7 +127,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/habits'
     | '/inbox'
-    | '/pomodoro'
     | '/today'
     | '/dashboard/workspace/$workspaceId/lists'
     | '/dashboard/workspace/$workspaceId/lists/$listId/todos'
@@ -150,7 +139,6 @@ export interface FileRouteTypes {
     | '/(app)/dashboard/'
     | '/(app)/habits/'
     | '/(app)/inbox/'
-    | '/(app)/pomodoro/'
     | '/(app)/today/'
     | '/(app)/dashboard/workspace/$workspaceId/lists/'
     | '/(app)/dashboard/workspace/$workspaceId/lists/$listId/todos/'
@@ -191,13 +179,6 @@ declare module '@tanstack/react-router' {
       path: '/today'
       fullPath: '/today/'
       preLoaderRoute: typeof appTodayIndexRouteImport
-      parentRoute: typeof appRouteRoute
-    }
-    '/(app)/pomodoro/': {
-      id: '/(app)/pomodoro/'
-      path: '/pomodoro'
-      fullPath: '/pomodoro/'
-      preLoaderRoute: typeof appPomodoroIndexRouteImport
       parentRoute: typeof appRouteRoute
     }
     '/(app)/inbox/': {
@@ -249,7 +230,6 @@ interface appRouteRouteChildren {
   appDashboardIndexRoute: typeof appDashboardIndexRoute
   appHabitsIndexRoute: typeof appHabitsIndexRoute
   appInboxIndexRoute: typeof appInboxIndexRoute
-  appPomodoroIndexRoute: typeof appPomodoroIndexRoute
   appTodayIndexRoute: typeof appTodayIndexRoute
   appDashboardWorkspaceWorkspaceIdListsIndexRoute: typeof appDashboardWorkspaceWorkspaceIdListsIndexRoute
   appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute: typeof appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRoute
@@ -259,7 +239,6 @@ const appRouteRouteChildren: appRouteRouteChildren = {
   appDashboardIndexRoute: appDashboardIndexRoute,
   appHabitsIndexRoute: appHabitsIndexRoute,
   appInboxIndexRoute: appInboxIndexRoute,
-  appPomodoroIndexRoute: appPomodoroIndexRoute,
   appTodayIndexRoute: appTodayIndexRoute,
   appDashboardWorkspaceWorkspaceIdListsIndexRoute:
     appDashboardWorkspaceWorkspaceIdListsIndexRoute,

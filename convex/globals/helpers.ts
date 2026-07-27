@@ -1,5 +1,73 @@
-import type { Id } from '../_generated/dataModel'
+import type { Doc, Id } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
+
+export type TodoLocation = {
+  listId: Id<'lists'> | null
+  listTitle: string | null
+  workspaceId: Id<'workspace'> | null
+  workspaceTitle: string | null
+}
+
+export const attachTodoLocations =
+  async function AttachesListAndWorkspaceTitlesToTodos({
+    ctx,
+    todos,
+  }: {
+    ctx: QueryCtx
+    todos: Array<Doc<'todos'>>
+  }) {
+    const listIds = [
+      ...new Set(
+        todos
+          .map((todo) => todo.listId)
+          .filter((listId): listId is Id<'lists'> => listId !== undefined),
+      ),
+    ]
+
+    const lists = await Promise.all(
+      listIds.map(async (listId) => await ctx.db.get('lists', listId)),
+    )
+    const listById = new Map(
+      lists
+        .filter((list): list is Doc<'lists'> => list !== null)
+        .map((list) => [list._id, list]),
+    )
+
+    const workspaceIds = [
+      ...new Set([...listById.values()].map((list) => list.workspaceId)),
+    ]
+    const workspaceTitleById = new Map<string, string>()
+    await Promise.all(
+      workspaceIds.map(async (workspaceId) => {
+        const workspace = await ctx.db.get('workspace', workspaceId)
+        workspaceTitleById.set(
+          workspaceId,
+          workspace?.title ?? 'Unknown workspace',
+        )
+      }),
+    )
+
+    return todos.map((todo) => {
+      const list = todo.listId ? listById.get(todo.listId) : undefined
+
+      const location: TodoLocation = list
+        ? {
+            listId: list._id,
+            listTitle: list.title,
+            workspaceId: list.workspaceId,
+            workspaceTitle:
+              workspaceTitleById.get(list.workspaceId) ?? 'Unknown workspace',
+          }
+        : {
+            listId: null,
+            listTitle: null,
+            workspaceId: null,
+            workspaceTitle: null,
+          }
+
+      return { ...todo, location }
+    })
+  }
 
 export const verifyWorkspaceOnwership =
   async function VerifiesIfAPersonOwnsAWorkspace({

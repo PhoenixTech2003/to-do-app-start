@@ -1,11 +1,13 @@
 import { convexQuery, useConvexMutation } from '@convex-dev/react-query'
 import { useQuery } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { format } from 'date-fns'
 import {
   CalendarIcon,
   ClockIcon,
   ExternalLink,
   FolderInput,
+  FolderOpen,
   Inbox,
   Pencil,
   Trash2,
@@ -20,7 +22,7 @@ import { TodoSheet } from './todo-sheet'
 import { TodoCheckInput } from './todo-check-input'
 import { UpdateTodoForm } from './update-todo-form'
 import type { Id } from 'convex/_generated/dataModel'
-import type { Todo } from '@/types/global'
+import type { Todo, TodoLocation } from '@/types/global'
 import { cn, truncateText } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/use-mobile'
 import {
@@ -43,7 +45,40 @@ import {
 } from '@/components/ui/command'
 
 interface TodoCardProps {
-  todo: Todo
+  todo: Todo & { location?: TodoLocation }
+}
+
+const chipClasses =
+  'flex items-center gap-1.5 min-w-0 max-w-full rounded-sm border border-hairline bg-surface-sunken px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground'
+
+function TodoLocationChip({ location }: { location: TodoLocation }) {
+  if (!location.listId || !location.workspaceId) {
+    return (
+      <span className={chipClasses}>
+        <Inbox className="size-3 shrink-0" />
+        <span className="truncate">Inbox</span>
+      </span>
+    )
+  }
+
+  return (
+    <Link
+      to="/dashboard/workspace/$workspaceId/lists/$listId/todos"
+      params={{ workspaceId: location.workspaceId, listId: location.listId }}
+      search={{ view: 'list' }}
+      onClick={(e) => e.stopPropagation()}
+      title={`${location.workspaceTitle} / ${location.listTitle}`}
+      className={cn(
+        chipClasses,
+        'transition-colors hover:bg-muted hover:text-foreground',
+      )}
+    >
+      <FolderOpen className="size-3 shrink-0" />
+      <span className="truncate">{location.workspaceTitle}</span>
+      <span className="text-muted-foreground/40">/</span>
+      <span className="truncate text-foreground/70">{location.listTitle}</span>
+    </Link>
+  )
 }
 
 export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
@@ -124,11 +159,13 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
       ? truncateText(todo.description)
       : todo.description
 
-    const priorityBorder: Record<string, string> = {
-      high: 'border-l-destructive',
-      medium: 'border-l-chart-4',
-      low: 'border-l-chart-2',
-      none: 'border-l-border',
+    // The spine colour encodes priority. `none` falls back to a plain rule so
+    // an unprioritised task still reads as part of the same system.
+    const spineColor: Record<string, string> = {
+      high: 'var(--destructive)',
+      medium: 'var(--chart-4)',
+      low: 'var(--chart-2)',
+      none: 'var(--border)',
     }
     const listsForMove = useMemo(
       () => availableLists.filter((list) => list._id !== todo.listId),
@@ -279,12 +316,21 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.2 }}
+                whileHover={{ y: -1 }}
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                 onClick={() => setSheetIsOpen(true)}
+                style={
+                  {
+                    '--spine': spineColor[todo.priority] ?? spineColor.none,
+                  } as React.CSSProperties
+                }
                 className={cn(
-                  'group relative flex flex-col gap-2 p-4 bg-card border border-border rounded-md cursor-pointer transition-colors duration-200 hover:bg-accent border-l-[3px]',
-                  priorityBorder[todo.priority] || priorityBorder.none,
-                  todo.status === 'completed' && 'opacity-50',
+                  'spine group relative flex flex-col gap-2 py-4 pl-5 pr-4 bg-card rounded-md cursor-pointer',
+                  'border border-hairline',
+                  'shadow-[inset_0_1px_0_0_var(--edge-highlight),var(--elev-1)]',
+                  'transition-[box-shadow,border-color,background-color] duration-[var(--dur-2)] ease-[var(--ease-out)]',
+                  'hover:border-hairline-strong hover:shadow-[inset_0_1px_0_0_var(--edge-highlight),var(--elev-3)]',
+                  todo.status === 'completed' && 'spine-drained opacity-60',
                 )}
               >
                 <div className="flex items-start justify-between gap-4">
@@ -313,34 +359,41 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
                     </div>
                   </div>
 
-                  <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">
-                    {todo.priority !== 'none' ? todo.priority : ''}
-                  </span>
+                  {todo.priority !== 'none' && (
+                    <span className="label-meta shrink-0 pt-0.5 text-muted-foreground/70 transition-colors duration-[var(--dur-2)] group-hover:text-muted-foreground">
+                      {todo.priority}
+                    </span>
+                  )}
                 </div>
 
-                {(todo.dueDate || todo.dueTime) && (
-                  <div className="flex items-center gap-3 pl-8">
-                    <div
-                      className={cn(
-                        'flex items-center gap-3 font-mono text-[11px]',
-                        todo.status === 'overdue'
-                          ? 'text-destructive'
-                          : 'text-muted-foreground',
-                      )}
-                    >
-                      {todo.dueDate && (
-                        <span className="flex items-center gap-1">
-                          <CalendarIcon className="h-3 w-3" />
-                          {format(todo.dueDate, 'dd MMM yyyy')}
-                        </span>
-                      )}
-                      {todo.dueTime && (
-                        <span className="flex items-center gap-1">
-                          <ClockIcon className="h-3 w-3" />
-                          {todo.dueTime}
-                        </span>
-                      )}
-                    </div>
+                {(todo.location || todo.dueDate || todo.dueTime) && (
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pl-8">
+                    {todo.location && (
+                      <TodoLocationChip location={todo.location} />
+                    )}
+                    {(todo.dueDate || todo.dueTime) && (
+                      <div
+                        className={cn(
+                          'flex items-center gap-3 font-mono text-[11px]',
+                          todo.status === 'overdue'
+                            ? 'text-destructive'
+                            : 'text-muted-foreground',
+                        )}
+                      >
+                        {todo.dueDate && (
+                          <span className="flex items-center gap-1">
+                            <CalendarIcon className="h-3 w-3" />
+                            {format(todo.dueDate, 'dd MMM yyyy')}
+                          </span>
+                        )}
+                        {todo.dueTime && (
+                          <span className="flex items-center gap-1">
+                            <ClockIcon className="h-3 w-3" />
+                            {todo.dueTime}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </motion.div>
@@ -348,13 +401,15 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
           </TodoSheet>
           <ContextMenuContent
             onKeyDown={handleContextMenuKeyDown}
-            className={cn(
-              'w-64 border-l-[3px] p-0',
-              todo.priority === 'high' && 'border-l-destructive',
-              todo.priority === 'medium' && 'border-l-chart-4',
-              todo.priority === 'low' && 'border-l-chart-2',
-              todo.priority === 'none' && 'border-l-primary/40',
-            )}
+            style={
+              {
+                '--spine':
+                  todo.priority === 'none'
+                    ? 'var(--primary)'
+                    : spineColor[todo.priority],
+              } as React.CSSProperties
+            }
+            className="spine w-64 p-0 pl-[3px]"
           >
             {/* ── Header ── */}
             <div className="px-3 pt-3 pb-2">

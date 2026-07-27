@@ -2,6 +2,7 @@ import { v } from 'convex/values'
 import { format, subDays } from 'date-fns'
 import { authComponent } from '../auth'
 import { query } from '../_generated/server'
+import { DECAY_LOOKBACK_DAYS, computeHabitXp } from './xp'
 
 export const getHabitsWithStatus = query({
   args: {
@@ -15,18 +16,35 @@ export const getHabitsWithStatus = query({
       .withIndex('by_createdBy', (q) => q.eq('createdBy', user._id))
       .collect()
 
+    const decayWindowStart = format(
+      subDays(new Date(args.today + 'T12:00:00'), DECAY_LOOKBACK_DAYS - 1),
+      'yyyy-MM-dd',
+    )
+
     const habitsWithStatus = await Promise.all(
       habits.map(async (habit) => {
-        const todayCompletion = await ctx.db
+        const completions = await ctx.db
           .query('habitCompletions')
           .withIndex('by_habitId_date', (q) =>
-            q.eq('habitId', habit._id).eq('completedDate', args.today),
+            q
+              .eq('habitId', habit._id)
+              .gte('completedDate', decayWindowStart)
+              .lte('completedDate', args.today),
           )
-          .first()
+          .collect()
+
+        const completionDates = completions.map((c) => c.completedDate)
 
         return {
           ...habit,
-          completedToday: !!todayCompletion,
+          completedToday: completionDates.includes(args.today),
+          ...computeHabitXp({
+            frequency: habit.frequency,
+            totalCompletions: habit.totalCompletions,
+            createdAt: habit._creationTime,
+            completionDates,
+            today: args.today,
+          }),
         }
       }),
     )

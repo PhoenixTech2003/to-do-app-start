@@ -3,11 +3,11 @@ import { useMutation } from 'convex/react'
 import { api } from 'convex/_generated/api'
 import { toast } from 'sonner'
 import { AnimatePresence, motion } from 'motion/react'
-import { CheckIcon, Flame, Trash2 } from 'lucide-react'
+import { CheckIcon, Flame, Trash2, TrendingDown } from 'lucide-react'
+import { isDecaying } from 'convex/habits/xp'
 import { CATEGORY_META } from './habit-helpers'
 import { HabitDetailSheet } from './habit-detail-sheet'
-import type { Id } from 'convex/_generated/dataModel'
-import type { Category } from './habit-helpers'
+import type { HabitWithStatus } from '@/types/global'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
@@ -16,18 +16,7 @@ export function HabitCard({
   index,
   today,
 }: {
-  habit: {
-    _id: Id<'habits'>
-    _creationTime: number
-    title: string
-    description?: string
-    category: Category
-    currentStreak: number
-    longestStreak: number
-    totalCompletions: number
-    completedToday: boolean
-    frequency: string
-  }
+  habit: HabitWithStatus
   index: number
   today: string
 }) {
@@ -37,6 +26,8 @@ export function HabitCard({
   const [sheetOpen, setSheetOpen] = useState(false)
   const meta = CATEGORY_META[habit.category]
   const Icon = meta.icon
+  const decaying = isDecaying(habit)
+  const missedUnit = habit.frequency === 'weekly' ? 'w' : 'd'
 
   function handleToggle(e: React.MouseEvent) {
     e.stopPropagation()
@@ -126,7 +117,7 @@ export function HabitCard({
           )}
         </div>
 
-        {habit.currentStreak > 0 && (
+        {habit.currentStreak > 0 ? (
           <div className="flex items-center gap-1 shrink-0">
             <Flame
               className={cn(
@@ -147,7 +138,32 @@ export function HabitCard({
               {habit.currentStreak}d
             </span>
           </div>
-        )}
+        ) : habit.missedStreak > 0 ? (
+          <div
+            className="flex items-center gap-1 shrink-0"
+            title={
+              decaying
+                ? `Draining ${habit.decayXp} XP — ${habit.missedStreak} missed`
+                : `${habit.graceLeft} more missed and XP starts draining`
+            }
+          >
+            <TrendingDown
+              className={cn(
+                'size-3',
+                decaying ? 'text-destructive' : 'text-muted-foreground/60',
+              )}
+            />
+            <span
+              className={cn(
+                'font-mono text-[10px] font-bold tabular-nums',
+                decaying ? 'text-destructive' : 'text-muted-foreground',
+              )}
+            >
+              {habit.missedStreak}
+              {missedUnit}
+            </span>
+          </div>
+        ) : null}
 
         <button
           onClick={handleDelete}

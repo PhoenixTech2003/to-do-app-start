@@ -8,13 +8,9 @@ import { getToken, onMessage } from 'firebase/messaging'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { BellIcon, LoaderCircle, LogOut } from 'lucide-react'
-import {
-  convexQuery,
-  useConvexAction,
-  useConvexMutation,
-} from '@convex-dev/react-query'
+import { useConvexMutation } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   SidebarInset,
   SidebarProvider,
@@ -29,8 +25,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
-import { usePomoBackgroundTimer } from '@/hooks/use-pomo-background-timer'
-import { playNotificationSound } from '@/components/app/pomodoro/pomo-helpers'
 import { env } from '@/env'
 import { getFirebaseMessaging } from '@/firebase/firebase-config'
 
@@ -69,31 +63,6 @@ export function DashboardLayout() {
   const createPushNotificationToken = useConvexMutation(
     api.notifications.mutation.createPushNotificationToken,
   )
-  const sendPushNotification = useConvexAction(
-    api.notifications.actions.sendPushNotification,
-  )
-  const { data: pushTokenData } = useQuery(
-    {
-      ...convexQuery(api.notifications.queries.getPushNotificationToken),
-      enabled: !isSigningOut,
-    },
-  )
-
-  const onPhaseComplete = useCallback(
-    (completed: string, next: string) => {
-      const token = pushTokenData?.data?.token
-      if (!token) return
-      playNotificationSound()
-      sendPushNotification({
-        token,
-        title: `${completed} complete`,
-        body: `Time for ${next}. Press play when you're ready.`,
-      })
-    },
-    [pushTokenData?.data?.token, sendPushNotification],
-  )
-
-  usePomoBackgroundTimer(onPhaseComplete)
 
   useEffect(() => {
     if (!isPending && !isRefetching && !data) {
@@ -133,9 +102,9 @@ export function DashboardLayout() {
   if (isSigningOut) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-5 py-4 text-sm text-muted-foreground shadow-sm">
+        <div className="flex items-center gap-3 rounded-2xl border border-hairline bg-card px-5 py-4 text-sm text-muted-foreground shadow-[inset_0_1px_0_0_var(--edge-highlight),var(--elev-3)]">
           <LoaderCircle className="size-4 animate-spin text-primary" />
-          Signing you out...
+          Signing you out
         </div>
       </div>
     )
@@ -145,12 +114,15 @@ export function DashboardLayout() {
     <SidebarProvider>
       <AppSidebar />
       <main className="flex min-w-0 flex-1 flex-col h-screen max-h-screen overflow-hidden">
-        <SidebarInset className="flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden">
-          <header className="flex shrink-0 items-center gap-4 px-6 h-14 z-30 bg-background border-b border-border">
+        {/* The workspace is a sheet of paper resting on the sidebar surface. */}
+        <SidebarInset className="flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden md:peer-data-[variant=inset]:border md:peer-data-[variant=inset]:border-hairline md:peer-data-[variant=inset]:shadow-[inset_0_1px_0_0_var(--edge-highlight),var(--elev-3)]">
+          {/* Content scrolls in the sibling below, not under this bar, so it
+              stays opaque — no blur to pay for. */}
+          <header className="flex shrink-0 items-center gap-4 px-6 h-14 z-30 border-b border-hairline bg-background">
             <SidebarTrigger />
             <div className="flex-1 min-w-0">
               {isPending || isRefetching ? (
-                <span className="text-muted-foreground text-sm">loading…</span>
+                <span className="text-muted-foreground text-sm">Loading…</span>
               ) : (
                 <p className="text-sm truncate text-muted-foreground">
                   Welcome back,{' '}

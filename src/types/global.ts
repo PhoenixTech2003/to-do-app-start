@@ -1,10 +1,10 @@
 import type { api } from 'convex/_generated/api'
 
 export type WorkspacesList =
-  typeof api.dashboard.queries.getUserWorkspaces._returnType['page']
+  (typeof api.dashboard.queries.getUserWorkspaces._returnType)['page']
 
 export type ListItems =
-  typeof api.workspace.queries.GetWorkspaceLists._returnType['page']
+  (typeof api.workspace.queries.GetWorkspaceLists._returnType)['page']
 
 export type WorkspaceItem = WorkspacesList[number]
 
@@ -16,8 +16,16 @@ export type Todos = TodosPageData['todos']
 
 export type Todo = Todos[number]
 
+export type TodoLocation =
+  (typeof api.globals.queries.GetAllOverdueTodos._returnType)['page'][number]['location']
+
 export type SubTasksData = typeof api.todos.queries.GetAllSubtasks._returnType
 
 export type SubTasks = SubTasksData['subtasks']
 
 export type SubTask = SubTasks[number]
+
+export type HabitsWithStatus =
+  typeof api.habits.queries.getHabitsWithStatus._returnType
+
+export type HabitWithStatus = HabitsWithStatus[number]

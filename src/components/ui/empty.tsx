@@ -7,7 +7,10 @@ function Empty({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="empty"
       className={cn(
-        "flex min-w-0 flex-1 flex-col items-center justify-center gap-6 rounded-lg border-dashed p-6 text-center text-balance md:p-12",
+        // An empty state is a well waiting to be filled, not a dashed
+        // placeholder box. (`border-dashed` here previously had no border
+        // width, so it rendered nothing at all.)
+        "flex min-w-0 flex-1 flex-col items-center justify-center gap-6 rounded-lg border border-hairline bg-surface-sunken p-6 text-center text-balance text-sm text-muted-foreground md:p-10",
         className
       )}
       {...props}

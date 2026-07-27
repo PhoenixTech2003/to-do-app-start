@@ -1,10 +1,4 @@
-import {
-  CheckCircleIcon,
-  Flame,
-  Home,
-  Inbox,
-  Timer,
-} from 'lucide-react'
+import { CheckCircleIcon, Flame, Home, Inbox } from 'lucide-react'
 import { Link, useLocation } from '@tanstack/react-router'
 import { motion } from 'motion/react'
 import {
@@ -25,7 +19,6 @@ const appNavItems = [
   { title: 'Inbox', url: '/inbox', icon: Inbox },
   { title: 'Today', url: '/today', icon: CheckCircleIcon },
   { title: 'Habits', url: '/habits', icon: Flame },
-  { title: 'Pomodoro', url: '/pomodoro', icon: Timer },
 ] satisfies Array<NavItem>
 
 type NavItem = {
@@ -45,20 +38,22 @@ function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
     >
       <Link
         to={item.url}
-        className="flex items-center gap-3 py-2.5 px-3 rounded-md"
+        className="flex items-center gap-3 py-2.5 px-3 rounded-md transition-colors duration-[var(--dur-2)] ease-[var(--ease-standard)]"
       >
+        {/* The same spine that marks priority on a todo marks position in the
+            nav: one device, one meaning — "this is the live one". */}
         {isActive && (
-          <motion.div
+          <motion.span
             layoutId="active-indicator"
-            className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full bg-primary"
-            transition={{ type: 'spring', bounce: 0.15, duration: 0.5 }}
+            className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full bg-linear-to-b from-primary to-primary/50"
+            transition={{ type: 'spring', bounce: 0, duration: 0.35 }}
           />
         )}
         <item.icon
-          className={`h-4 w-4 shrink-0 ${isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'} transition-colors`}
+          className={`h-4 w-4 shrink-0 transition-colors duration-[var(--dur-2)] ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`}
         />
         <span
-          className={`text-sm truncate ${isActive ? 'font-semibold text-foreground' : 'text-muted-foreground group-hover:text-foreground'} transition-colors`}
+          className={`text-sm truncate transition-colors duration-[var(--dur-2)] ${isActive ? 'font-semibold text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}
         >
           {item.title}
         </span>
@@ -84,7 +79,7 @@ export function AppSidebar() {
 
       <SidebarContent className="flex flex-col gap-1 px-2">
         <SidebarGroup>
-          <SidebarGroupLabel className="px-3 text-[10px] font-mono font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          <SidebarGroupLabel className="px-3 label-meta text-muted-foreground/70">
             App
           </SidebarGroupLabel>
           <SidebarGroupContent>

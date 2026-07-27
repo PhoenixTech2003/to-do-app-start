@@ -8,14 +8,13 @@ interface WorkspaceListProps {
 export function WorkspaceList({ workspaceListData }: WorkspaceListProps) {
   if (workspaceListData.length === 0) {
     return (
-      <div>
-        No workspace created at the moment click the button at the top right to
-        add a workspace
-      </div>
+      <p className="text-sm text-muted-foreground">
+        No workspaces yet. Create one to start grouping your lists.
+      </p>
     )
   }
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid items-stretch gap-4 md:grid-cols-2 lg:grid-cols-3">
       {workspaceListData.map((workspace) => (
         <WorkspaceCard key={workspace._id} workspaceData={workspace} />
       ))}

@@ -3,6 +3,7 @@ import { api } from 'convex/_generated/api'
 import { PaginationController } from '../pagination-controller'
 import { StateHandler } from '../state-handler'
 import { TodoCard } from './todo-card'
+import { TodoSectionHeading } from './section-heading'
 import type { Id } from 'convex/_generated/dataModel'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Empty } from '@/components/ui/empty'
@@ -29,13 +30,8 @@ function OverdueTodosLoadingSkeleton() {
 function OverdueTodosEmptyState() {
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2 pb-2 border-b border-border">
-        <div className="h-1.5 w-1.5 rounded-full bg-destructive" />
-        <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-          Overdue
-        </h2>
-      </div>
-      <Empty>No overdue tasks</Empty>
+      <TodoSectionHeading tone="overdue" title="Overdue" />
+      <Empty>Nothing overdue. You're on top of it.</Empty>
     </div>
   )
 }
@@ -76,17 +72,11 @@ export function OverdueTodosSection({
       emptyState={<OverdueTodosEmptyState />}
     >
       <div className="flex flex-col gap-3 mb-8">
-        <div className="flex items-center justify-between pb-2 border-b border-border">
-          <div className="flex items-center gap-2">
-            <div className="h-1.5 w-1.5 rounded-full bg-destructive" />
-            <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-              Overdue
-            </h2>
-          </div>
-          <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">
-            {todos.length}
-          </span>
-        </div>
+        <TodoSectionHeading
+          tone="overdue"
+          title="Overdue"
+          count={todos.length}
+        />
         <div className="space-y-2">
           {todos.map((todo) => (
             <TodoCard key={todo._id} todo={todo} />

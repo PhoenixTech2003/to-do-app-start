@@ -10,10 +10,11 @@ import {
   startOfWeek,
   subDays,
 } from 'date-fns'
-import { Flame, Trash2, Trophy } from 'lucide-react'
+import { Flame, Trash2, TrendingDown, Trophy } from 'lucide-react'
+import { DECAY_GRACE_UNITS, isDecaying } from 'convex/habits/xp'
 import { CATEGORY_FILL, CATEGORY_META } from './habit-helpers'
 import type { Category } from './habit-helpers'
-import type { Id } from 'convex/_generated/dataModel'
+import type { HabitWithStatus } from '@/types/global'
 import {
   Sheet,
   SheetContent,
@@ -31,19 +32,6 @@ import {
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 
-type HabitDetail = {
-  _id: Id<'habits'>
-  _creationTime: number
-  title: string
-  description?: string
-  category: Category
-  frequency: string
-  currentStreak: number
-  longestStreak: number
-  totalCompletions: number
-  completedToday: boolean
-}
-
 const CELL = 8
 const GAP = 2
 
@@ -59,7 +47,7 @@ export function HabitDetailSheet({
   open,
   onOpenChange,
 }: {
-  habit: HabitDetail
+  habit: HabitWithStatus
   today: string
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -92,7 +80,8 @@ export function HabitDetailSheet({
     100,
     Math.round((habit.totalCompletions / expectedCompletions) * 100),
   )
-  const xp = habit.totalCompletions * 10
+  const decaying = isDecaying(habit)
+  const unitLabel = habit.frequency === 'weekly' ? 'week' : 'day'
   const isNewRecord =
     habit.currentStreak > 0 && habit.currentStreak >= habit.longestStreak
 
@@ -219,18 +208,51 @@ export function HabitDetailSheet({
           </motion.div>
 
           {/* Stats grid */}
-          <motion.div
-            {...stagger(1)}
-            className="grid grid-cols-4 rounded-md border bg-card divide-x divide-border"
-          >
-            <MiniStat label="Done" value={String(habit.totalCompletions)} />
-            <MiniStat label="XP" value={String(xp)} />
-            <MiniStat label="Days" value={String(daysActive)} />
-            <MiniStat label="Rate" value={`${completionRate}%`} />
+          <motion.div {...stagger(1)}>
+            <div className="grid grid-cols-4 rounded-md border bg-card divide-x divide-border">
+              <MiniStat label="Done" value={String(habit.totalCompletions)} />
+              <MiniStat label="XP" value={String(habit.xp)} />
+              <MiniStat label="Days" value={String(daysActive)} />
+              <MiniStat label="Rate" value={`${completionRate}%`} />
+            </div>
+
+            {habit.decayXp > 0 ? (
+              <p className="mt-2 text-center text-[10px] font-mono text-destructive/80">
+                {habit.earnedXp} earned − {habit.decayXp} lost to{' '}
+                {habit.decayedUnits} missed {unitLabel}
+                {habit.decayedUnits === 1 ? '' : 's'}
+              </p>
+            ) : habit.missedStreak > 0 ? (
+              <p className="mt-2 text-center text-[10px] font-mono text-muted-foreground">
+                {habit.missedStreak} {unitLabel}
+                {habit.missedStreak === 1 ? '' : 's'} missed · {habit.graceLeft}{' '}
+                left before XP drains
+              </p>
+            ) : null}
           </motion.div>
 
+          {/* Decay warning */}
+          {decaying && (
+            <motion.div
+              {...stagger(2)}
+              className="flex items-start gap-2.5 rounded-md border border-destructive/25 bg-destructive/5 p-3"
+            >
+              <TrendingDown className="size-3.5 shrink-0 text-destructive/80 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-[11px] font-mono font-semibold text-destructive/90">
+                  Draining XP
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">
+                  {DECAY_GRACE_UNITS} missed {unitLabel}s are forgiven — every{' '}
+                  {unitLabel} after that costs XP. Complete it once to reset the
+                  slide.
+                </p>
+              </div>
+            </motion.div>
+          )}
+
           {/* 12-week strip */}
-          <motion.div {...stagger(2)}>
+          <motion.div {...stagger(3)}>
             <div className="flex items-center gap-2 mb-3">
               <div className={cn('h-1.5 w-1.5 rounded-full', fill)} />
               <h3 className="text-[10px] font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
@@ -249,7 +271,7 @@ export function HabitDetailSheet({
 
           {/* Recent completions */}
           {completions !== undefined && completions.length > 0 && (
-            <motion.div {...stagger(3)}>
+            <motion.div {...stagger(4)}>
               <h3 className="text-[10px] font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-2">
                 Recent
               </h3>
@@ -271,7 +293,7 @@ export function HabitDetailSheet({
           )}
 
           {/* Delete */}
-          <motion.div {...stagger(4)} className="pt-2">
+          <motion.div {...stagger(5)} className="pt-2">
             <Button
               variant="outline"
               size="sm"

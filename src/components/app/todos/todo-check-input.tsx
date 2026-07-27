@@ -275,23 +275,29 @@ export function TodoCheckInput({ todo }: TodoCheckInputProps) {
     <button
       onClick={handleClick}
       className={cn(
-        'relative flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border-2 transition-colors duration-150',
+        'relative flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] border',
+        'transition-[background-color,border-color,box-shadow] duration-[var(--dur-2)] ease-[var(--ease-out)]',
+        'active:scale-95 active:duration-[var(--dur-1)]',
         isCompleted
-          ? 'bg-primary border-primary'
-          : 'bg-transparent border-border hover:border-primary',
+          ? // Filled: ink laid down, with a lit top edge so it sits proud.
+            'border-primary bg-primary shadow-[inset_0_1px_0_0_rgba(255,255,255,0.22),var(--elev-1)]'
+          : // Empty: a shallow well cut into the card.
+            'border-hairline-strong bg-surface-sunken shadow-inset-well hover:border-primary/70 hover:bg-primary/5',
       )}
+      aria-pressed={isCompleted}
       aria-label={`Mark ${todo.title} ${isCompleted ? 'incomplete' : 'complete'}`}
     >
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {isCompleted && (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0 }}
-            transition={{ duration: 0.15 }}
+          <motion.span
+            className="flex"
+            initial={{ scale: 0.4, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.4, opacity: 0 }}
+            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
           >
-            <CheckIcon className="h-3 w-3 text-primary-foreground stroke-[3px]" />
-          </motion.div>
+            <CheckIcon className="h-3 w-3 text-primary-foreground stroke-[3.5px]" />
+          </motion.span>
         )}
       </AnimatePresence>
     </button>
