@@ -10,10 +10,10 @@ import {
   startOfWeek,
   subDays,
 } from 'date-fns'
-import { Flame, Trash2, TrendingDown, Trophy } from 'lucide-react'
+import { Trash2, TrendingDown } from 'lucide-react'
 import { DECAY_GRACE_UNITS, isDecaying } from 'convex/habits/xp'
-import { CATEGORY_FILL, CATEGORY_META } from './habit-helpers'
-import type { Category } from './habit-helpers'
+import { CATEGORY_META } from './habit-helpers'
+import { TallyWall, tallySizeFor } from './tally'
 import type { HabitWithStatus } from '@/types/global'
 import {
   Sheet,
@@ -22,7 +22,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -32,15 +31,24 @@ import {
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 
-const CELL = 8
+const CELL = 9
 const GAP = 2
 
 const stagger = (i: number) => ({
   initial: { opacity: 0, y: 8 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.25, delay: i * 0.05 },
+  transition: {
+    duration: 0.28,
+    delay: i * 0.05,
+    ease: [0.22, 1, 0.36, 1] as const,
+  },
 })
 
+/**
+ * One habit's own record, kept in the same hand as the page it opens from:
+ * its run as a wall of marks, its figures ruled like a statement, its history
+ * printed in ink.
+ */
 export function HabitDetailSheet({
   habit,
   today,
@@ -53,11 +61,9 @@ export function HabitDetailSheet({
   onOpenChange: (open: boolean) => void
 }) {
   const meta = CATEGORY_META[habit.category]
-  const fill = CATEGORY_FILL[habit.category]
   const Icon = meta.icon
 
-  const now = new Date()
-  const stripStart = format(subDays(now, 83), 'yyyy-MM-dd')
+  const stripStart = format(subDays(new Date(), 83), 'yyyy-MM-dd')
 
   const completions = useQuery(
     api.habits.queries.getHabitCompletions,
@@ -88,220 +94,170 @@ export function HabitDetailSheet({
   function handleDelete() {
     const promise = deleteHabit({ habitId: habit._id })
     toast.promise(promise, {
-      loading: 'Removing habit...',
+      loading: 'Removing habit…',
       success: () => {
         onOpenChange(false)
         return 'Habit removed'
       },
-      error: 'Failed to delete',
+      error: 'Could not remove that habit. Try again.',
     })
   }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-md overflow-y-auto">
+      <SheetContent className="overflow-y-auto sm:max-w-md">
         <SheetHeader>
-          <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                'flex size-9 shrink-0 items-center justify-center rounded-lg',
-                meta.bg,
-              )}
-            >
-              <Icon className={cn('size-4', meta.accent)} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <SheetTitle className="text-base font-bold tracking-tight truncate">
-                {habit.title}
-              </SheetTitle>
-              {habit.description && (
-                <SheetDescription className="text-xs line-clamp-2 mt-0.5">
-                  {habit.description}
-                </SheetDescription>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 mt-2">
-            <Badge
-              variant="outline"
-              className={cn(
-                'text-[9px] px-1.5 py-0 h-4 border-transparent',
-                meta.bg,
-                meta.accent,
-              )}
-            >
-              <Icon className="size-2.5 mr-0.5" />
-              {meta.label}
-            </Badge>
-            <Badge
-              variant="outline"
-              className="text-[9px] px-1.5 py-0 h-4 text-muted-foreground"
-            >
-              {habit.frequency}
-            </Badge>
-            <Badge
-              variant="outline"
-              className="text-[9px] px-1.5 py-0 h-4 text-muted-foreground"
-            >
-              {daysActive}d active
-            </Badge>
-          </div>
+          <SheetTitle className="truncate text-base font-bold tracking-tight">
+            {habit.title}
+          </SheetTitle>
+          {habit.description && (
+            <SheetDescription className="mt-0.5 line-clamp-2 text-xs">
+              {habit.description}
+            </SheetDescription>
+          )}
+          <p className="mt-2 flex items-center gap-2 text-muted-foreground/80">
+            <Icon className={cn('size-3 opacity-70', meta.accent)} />
+            <span className="label-meta">{meta.label}</span>
+            <span aria-hidden="true" className="opacity-40">
+              ·
+            </span>
+            <span className="label-meta">{habit.frequency}</span>
+            <span aria-hidden="true" className="opacity-40">
+              ·
+            </span>
+            <span className="label-meta" data-numeric>
+              {daysActive}d kept
+            </span>
+          </p>
         </SheetHeader>
 
-        <div className="px-4 pb-6 space-y-5">
-          {/* Streak hero */}
-          <motion.div {...stagger(0)}>
-            <div className="grid grid-cols-2 gap-2.5">
-              <div
-                className={cn(
-                  'relative rounded-lg border p-4 text-center overflow-hidden',
-                  meta.bg,
-                )}
-              >
-                {isNewRecord && (
-                  <div className="absolute inset-0 bg-gradient-to-t from-transparent to-amber-400/5" />
-                )}
-                <div className="relative">
-                  <div className="flex items-center justify-center gap-1 mb-1">
-                    <Flame
-                      className={cn(
-                        'size-3.5',
-                        habit.currentStreak >= 7
-                          ? 'text-amber-400'
-                          : meta.accent,
-                      )}
-                    />
-                  </div>
-                  <p
-                    className={cn(
-                      'text-3xl font-black font-mono tabular-nums tracking-tighter',
-                      isNewRecord ? 'text-amber-400' : meta.accent,
-                    )}
-                  >
-                    {habit.currentStreak}
-                  </p>
-                  <p className="text-[9px] font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-1">
-                    Current Streak
-                  </p>
-                </div>
-              </div>
-
-              <div className="rounded-lg border p-4 text-center bg-muted/20">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <Trophy className="size-3.5 text-muted-foreground/50" />
-                </div>
-                <p className="text-3xl font-black font-mono tabular-nums tracking-tighter text-muted-foreground/70">
-                  {habit.longestStreak}
-                </p>
-                <p className="text-[9px] font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-1">
-                  Personal Best
-                </p>
-              </div>
+        <div className="space-y-5 px-4 pb-6">
+          {/* This habit's own run */}
+          <motion.div
+            {...stagger(0)}
+            className="edge-lit rounded-lg border border-hairline-strong bg-card px-4 py-3.5 shadow-elev-1"
+          >
+            <div className="flex items-baseline justify-between gap-3 pb-3">
+              <span className="label-meta text-muted-foreground">
+                Days in a row
+              </span>
+              {isNewRecord && (
+                <span className="label-meta text-primary">Personal best</span>
+              )}
             </div>
-            {isNewRecord && (
-              <div className="flex justify-center mt-2">
-                <Badge className="bg-amber-400/15 text-amber-400 border-amber-400/30 text-[9px] font-mono font-bold uppercase tracking-wider hover:bg-amber-400/15">
-                  New Record
-                </Badge>
-              </div>
+
+            {habit.currentStreak === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No run going. Mark it today to start one.
+              </p>
+            ) : (
+              <TallyWall
+                count={habit.currentStreak}
+                markedToday={habit.completedToday}
+                size={tallySizeFor(habit.currentStreak)}
+              />
             )}
-          </motion.div>
 
-          {/* Stats grid */}
-          <motion.div {...stagger(1)}>
-            <div className="grid grid-cols-4 rounded-md border bg-card divide-x divide-border">
-              <MiniStat label="Done" value={String(habit.totalCompletions)} />
-              <MiniStat label="XP" value={String(habit.xp)} />
-              <MiniStat label="Days" value={String(daysActive)} />
-              <MiniStat label="Rate" value={`${completionRate}%`} />
+            <div className="mt-4 flex items-baseline justify-between gap-3 border-t border-hairline pt-3">
+              <p className="flex items-baseline gap-2">
+                <span
+                  data-numeric
+                  className="font-mono text-2xl leading-none font-bold tracking-[-0.04em]"
+                >
+                  {habit.currentStreak}
+                </span>
+                <span className="text-xs text-muted-foreground">in a row</span>
+              </p>
+              <p className="font-mono text-[11px] text-muted-foreground">
+                longest <span data-numeric>{habit.longestStreak}</span>
+              </p>
             </div>
-
-            {habit.decayXp > 0 ? (
-              <p className="mt-2 text-center text-[10px] font-mono text-destructive/80">
-                {habit.earnedXp} earned − {habit.decayXp} lost to{' '}
-                {habit.decayedUnits} missed {unitLabel}
-                {habit.decayedUnits === 1 ? '' : 's'}
-              </p>
-            ) : habit.missedStreak > 0 ? (
-              <p className="mt-2 text-center text-[10px] font-mono text-muted-foreground">
-                {habit.missedStreak} {unitLabel}
-                {habit.missedStreak === 1 ? '' : 's'} missed · {habit.graceLeft}{' '}
-                left before XP drains
-              </p>
-            ) : null}
           </motion.div>
 
-          {/* Decay warning */}
+          {/* Figures */}
+          <motion.dl {...stagger(1)}>
+            <Line label="Marked" value={String(habit.totalCompletions)} />
+            <Line label="Kept" value={`${completionRate}%`} />
+            <Line label="XP" value={habit.xp.toLocaleString()} />
+          </motion.dl>
+
+          {habit.decayXp > 0 ? (
+            <p className="-mt-3 font-mono text-[11px] text-muted-foreground">
+              <span data-numeric>{habit.earnedXp}</span> earned{' '}
+              <span className="text-destructive">
+                − <span data-numeric>{habit.decayXp}</span> drained over{' '}
+                <span data-numeric>{habit.decayedUnits}</span> missed{' '}
+                {unitLabel}
+                {habit.decayedUnits === 1 ? '' : 's'}
+              </span>
+            </p>
+          ) : habit.missedStreak > 0 ? (
+            <p className="-mt-3 font-mono text-[11px] text-muted-foreground">
+              <span data-numeric>{habit.missedStreak}</span> {unitLabel}
+              {habit.missedStreak === 1 ? '' : 's'} missed ·{' '}
+              <span data-numeric>{habit.graceLeft}</span> left before XP drains
+            </p>
+          ) : null}
+
           {decaying && (
             <motion.div
               {...stagger(2)}
-              className="flex items-start gap-2.5 rounded-md border border-destructive/25 bg-destructive/5 p-3"
+              className="flex items-start gap-2.5 border-t border-destructive/20 pt-3"
             >
-              <TrendingDown className="size-3.5 shrink-0 text-destructive/80 mt-0.5" />
-              <div className="min-w-0">
-                <p className="text-[11px] font-mono font-semibold text-destructive/90">
-                  Draining XP
-                </p>
-                <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">
-                  {DECAY_GRACE_UNITS} missed {unitLabel}s are forgiven — every{' '}
-                  {unitLabel} after that costs XP. Complete it once to reset the
-                  slide.
-                </p>
-              </div>
+              <TrendingDown className="mt-0.5 size-3.5 shrink-0 text-destructive/80" />
+              <p className="min-w-0 text-[12px] leading-relaxed text-muted-foreground">
+                {DECAY_GRACE_UNITS} missed {unitLabel}s are forgiven — every{' '}
+                {unitLabel} after that costs XP. Mark it once to stop the slide.
+              </p>
             </motion.div>
           )}
 
-          {/* 12-week strip */}
+          {/* Last 12 weeks */}
           <motion.div {...stagger(3)}>
-            <div className="flex items-center gap-2 mb-3">
-              <div className={cn('h-1.5 w-1.5 rounded-full', fill)} />
-              <h3 className="text-[10px] font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-                Last 12 Weeks
-              </h3>
+            <h3 className="label-meta border-b border-hairline-strong pb-2 text-muted-foreground">
+              Last 12 weeks
+            </h3>
+            <div className="pt-3">
+              {completions === undefined ? (
+                <Skeleton className="h-[84px] w-full rounded-lg" />
+              ) : (
+                <WeeksSheet completions={completions} today={today} />
+              )}
             </div>
-            {completions === undefined ? (
-              <Skeleton className="h-[78px] w-full rounded-md" />
-            ) : (
-              <ActivityStrip
-                completions={completions}
-                category={habit.category}
-              />
-            )}
           </motion.div>
 
-          {/* Recent completions */}
+          {/* Recent marks */}
           {completions !== undefined && completions.length > 0 && (
             <motion.div {...stagger(4)}>
-              <h3 className="text-[10px] font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-2">
-                Recent
+              <h3 className="label-meta border-b border-hairline-strong pb-2 text-muted-foreground">
+                Recent marks
               </h3>
-              <div className="flex flex-wrap gap-1.5">
+              <ul className="flex flex-wrap gap-x-3 gap-y-1.5 pt-3">
                 {completions
                   .slice(-10)
                   .reverse()
                   .map((date) => (
-                    <Badge
+                    <li
                       key={date}
-                      variant="outline"
-                      className="text-[9px] font-mono text-muted-foreground px-2 py-0.5"
+                      data-numeric
+                      className="font-mono text-[11px] text-muted-foreground"
                     >
-                      {format(new Date(date + 'T12:00:00'), 'MMM d')}
-                    </Badge>
+                      {format(new Date(date + 'T12:00:00'), 'd MMM')}
+                    </li>
                   ))}
-              </div>
+              </ul>
             </motion.div>
           )}
 
-          {/* Delete */}
           <motion.div {...stagger(5)} className="pt-2">
             <Button
               variant="outline"
               size="sm"
               onClick={handleDelete}
-              className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20 text-xs gap-2"
+              className="w-full gap-2 border-destructive/20 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
             >
               <Trash2 className="size-3" />
-              Delete Habit
+              Remove habit
             </Button>
           </motion.div>
         </div>
@@ -310,56 +266,55 @@ export function HabitDetailSheet({
   )
 }
 
-function MiniStat({ label, value }: { label: string; value: string }) {
+function Line({ label, value }: { label: string; value: string }) {
   return (
-    <div className="p-2.5 text-center">
-      <p className="text-base font-bold tabular-nums font-mono">{value}</p>
-      <p className="text-[8px] font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-0.5">
-        {label}
-      </p>
+    <div className="flex items-baseline justify-between gap-3 border-b border-hairline py-2.5 last:border-b-0">
+      <dt className="label-meta text-muted-foreground">{label}</dt>
+      <dd data-numeric className="font-mono text-sm font-semibold">
+        {value}
+      </dd>
     </div>
   )
 }
 
-function ActivityStrip({
+/** Twelve weeks in the page's two inks: kept days in graphite, today in terracotta. */
+function WeeksSheet({
   completions,
-  category,
+  today,
 }: {
   completions: Array<string>
-  category: Category
+  today: string
 }) {
-  const fill = CATEGORY_FILL[category]
-  const completionSet = useMemo(() => new Set(completions), [completions])
+  const kept = useMemo(() => new Set(completions), [completions])
 
-  const { weeks, todayStr } = useMemo(() => {
-    const now = new Date()
-    const todayStr = format(now, 'yyyy-MM-dd')
-    const start = subDays(now, 83)
-    const gridStart = startOfWeek(start, { weekStartsOn: 1 })
-    const gridEnd = endOfWeek(now, { weekStartsOn: 1 })
+  const weeks = useMemo(() => {
+    const gridStart = startOfWeek(subDays(new Date(), 83), { weekStartsOn: 1 })
+    const gridEnd = endOfWeek(new Date(), { weekStartsOn: 1 })
     const allDays = eachDayOfInterval({ start: gridStart, end: gridEnd })
 
-    const weeks: Array<Array<Date>> = []
+    const grid: Array<Array<Date>> = []
     for (let i = 0; i < allDays.length; i += 7) {
-      weeks.push(allDays.slice(i, i + 7))
+      grid.push(allDays.slice(i, i + 7))
     }
-
-    return { weeks, todayStr }
+    return grid
   }, [])
 
   const dayLabels = ['M', '', 'W', '', 'F', '', '']
 
   return (
-    <div className="rounded-md border bg-card p-3 overflow-x-auto">
+    <div
+      className="overflow-x-auto rounded-lg border border-hairline-strong bg-surface-sunken px-3 py-3"
+      style={{ boxShadow: 'var(--elev-inset)' }}
+    >
       <div className="flex min-w-fit" style={{ gap: GAP }}>
-        <div className="flex flex-col shrink-0" style={{ width: 14, gap: GAP }}>
+        <div className="flex shrink-0 flex-col" style={{ width: 14, gap: GAP }}>
           {dayLabels.map((label, i) => (
             <div
               key={i}
               className="flex items-center justify-end"
               style={{ height: CELL }}
             >
-              <span className="text-[7px] font-mono text-muted-foreground/40 leading-none">
+              <span className="label-meta leading-none text-muted-foreground/45">
                 {label}
               </span>
             </div>
@@ -370,17 +325,12 @@ function ActivityStrip({
           <div key={wi} className="flex flex-col" style={{ gap: GAP }}>
             {week.map((date) => {
               const dateStr = format(date, 'yyyy-MM-dd')
-              const isCompleted = completionSet.has(dateStr)
-              const isFuture = dateStr > todayStr
-              const isToday = dateStr === todayStr
+              const isKept = kept.has(dateStr)
+              const isToday = dateStr === today
 
-              if (isFuture) {
+              if (dateStr > today) {
                 return (
-                  <div
-                    key={dateStr}
-                    style={{ width: CELL, height: CELL }}
-                    className="rounded-[1.5px]"
-                  />
+                  <div key={dateStr} style={{ width: CELL, height: CELL }} />
                 )
               }
 
@@ -388,16 +338,25 @@ function ActivityStrip({
                 <Tooltip key={dateStr}>
                   <TooltipTrigger asChild>
                     <div
-                      style={{ width: CELL, height: CELL }}
-                      className={cn(
-                        'rounded-[1.5px] transition-colors',
-                        isCompleted ? fill : 'bg-muted/20 dark:bg-muted/10',
-                        isToday && 'ring-1 ring-foreground/25',
-                      )}
+                      style={{
+                        width: CELL,
+                        height: CELL,
+                        borderRadius: 1.5,
+                        background: isToday
+                          ? isKept
+                            ? 'var(--primary)'
+                            : 'color-mix(in srgb, var(--foreground) 6%, transparent)'
+                          : isKept
+                            ? 'color-mix(in srgb, var(--foreground) 72%, transparent)'
+                            : 'color-mix(in srgb, var(--foreground) 6%, transparent)',
+                        boxShadow: isToday
+                          ? '0 0 0 1px var(--primary)'
+                          : undefined,
+                      }}
                     />
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="text-[10px] font-mono">
-                    {isCompleted ? 'Done' : 'Missed'} · {format(date, 'MMM d')}
+                  <TooltipContent side="top" className="font-mono text-[11px]">
+                    {isKept ? 'Marked' : 'Missed'} · {format(date, 'd MMM')}
                   </TooltipContent>
                 </Tooltip>
               )

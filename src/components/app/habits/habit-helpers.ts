@@ -8,6 +8,7 @@ import {
   Target,
   Users,
 } from 'lucide-react'
+import { addDays, format, subDays } from 'date-fns'
 
 export const CATEGORIES = [
   'health',
@@ -137,6 +138,75 @@ export const CATEGORY_FILL: Record<Category, string> = {
   social: 'bg-sky-400',
   creative: 'bg-pink-400',
   other: 'bg-amber-400',
+}
+
+const DATE_FORMAT = 'yyyy-MM-dd'
+
+export type Run = {
+  /** Days in a row with at least one habit marked. */
+  length: number
+  /** Whether today already has a mark. Today never breaks a run on its own. */
+  markedToday: boolean
+  /** First day of the current run, or null when there is no run. */
+  startedOn: string | null
+  /** Longest run inside the activity window, current run included. */
+  longest: number
+}
+
+/**
+ * The run is the page's headline figure: consecutive days on which any habit
+ * was marked. It is derived from the same activity map the year sheet draws,
+ * so the wall and the sheet can never disagree.
+ *
+ * Today is treated as still in play — an unmarked today does not end the run,
+ * it just leaves the next slot empty.
+ */
+export function computeRun(
+  activity: Record<string, number>,
+  today: string,
+): Run {
+  const todayDate = new Date(today + 'T12:00:00')
+  const marked = (date: Date) => (activity[format(date, DATE_FORMAT)] ?? 0) > 0
+
+  const markedToday = marked(todayDate)
+  let cursor = markedToday ? todayDate : subDays(todayDate, 1)
+  let length = 0
+  while (marked(cursor)) {
+    length++
+    cursor = subDays(cursor, 1)
+  }
+
+  const dates = Object.keys(activity)
+    .filter((date) => (activity[date] ?? 0) > 0)
+    .sort()
+  let longest = 0
+  let streak = 0
+  let previous: string | null = null
+  for (const date of dates) {
+    const expected =
+      previous === null
+        ? null
+        : format(addDays(new Date(previous + 'T12:00:00'), 1), DATE_FORMAT)
+    streak = expected === date ? streak + 1 : 1
+    if (streak > longest) longest = streak
+    previous = date
+  }
+
+  return {
+    length,
+    markedToday,
+    startedOn:
+      length > 0
+        ? format(
+            subDays(
+              markedToday ? todayDate : subDays(todayDate, 1),
+              length - 1,
+            ),
+            DATE_FORMAT,
+          )
+        : null,
+    longest: Math.max(longest, length),
+  }
 }
 
 export const MONTH_LABELS = [

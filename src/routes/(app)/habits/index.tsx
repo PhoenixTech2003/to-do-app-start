@@ -3,15 +3,13 @@ import { useQuery } from 'convex/react'
 import { api } from 'convex/_generated/api'
 import { endOfWeek, format, startOfWeek, subDays } from 'date-fns'
 import { AnimatePresence, motion } from 'motion/react'
-import { TrendingDown } from 'lucide-react'
 import { isDecaying } from 'convex/habits/xp'
 import { BackButton } from '@/components/app/back-button'
-import { Progress } from '@/components/ui/progress'
-import { cn } from '@/lib/utils'
-import { getLevel } from '@/components/app/habits/habit-helpers'
-import { StatCell } from '@/components/app/habits/stat-cell'
-import { HabitCard } from '@/components/app/habits/habit-card'
-import { YearGraph } from '@/components/app/habits/year-graph'
+import { computeRun } from '@/components/app/habits/habit-helpers'
+import { RunWall } from '@/components/app/habits/run-wall'
+import { HabitRow } from '@/components/app/habits/habit-row'
+import { StandingLedger } from '@/components/app/habits/standing-ledger'
+import { YearSheet } from '@/components/app/habits/year-sheet'
 import { CreateHabitDialog } from '@/components/app/habits/create-habit-dialog'
 import { HabitsEmptyState } from '@/components/app/habits/habits-empty-state'
 import { HabitsPageSkeleton } from '@/components/app/habits/habits-page-skeleton'
@@ -21,6 +19,8 @@ export const Route = createFileRoute('/(app)/habits/')({
   pendingComponent: HabitsPageSkeleton,
   component: HabitsPage,
 })
+
+const RISE = { duration: 0.42, ease: [0.22, 1, 0.36, 1] } as const
 
 function HabitsPage() {
   const now = new Date()
@@ -46,26 +46,14 @@ function HabitsPage() {
 
   if (isLoading) return <HabitsPageSkeleton />
 
-  const completedCount = habits.filter((h) => h.completedToday).length
+  const doneToday = habits.filter((h) => h.completedToday).length
   const totalHabits = habits.length
-  const completionRate =
-    totalHabits > 0 ? Math.round((completedCount / totalHabits) * 100) : 0
-  const bestStreak = habits.reduce(
-    (max, h) => Math.max(max, h.currentStreak),
-    0,
-  )
-  const longestEver = habits.reduce(
-    (max, h) => Math.max(max, h.longestStreak),
-    0,
-  )
   const totalXP = habits.reduce((sum, h) => sum + h.xp, 0)
+  const totalEarned = habits.reduce((sum, h) => sum + h.earnedXp, 0)
   const totalDecay = habits.reduce((sum, h) => sum + h.decayXp, 0)
   const decayingHabits = habits.filter(isDecaying)
-  const levelInfo = getLevel(totalXP)
-  const totalCompletionsYear = Object.values(activityData).reduce(
-    (s, n) => s + n,
-    0,
-  )
+  const run = computeRun(activityData, today)
+  const marksThisYear = Object.values(activityData).reduce((s, n) => s + n, 0)
 
   const weeklyPossible = totalHabits * 7
   const weeklyRate =
@@ -74,26 +62,24 @@ function HabitsPage() {
       : 0
 
   return (
-    <div className="p-4 sm:p-6 flex flex-col h-full">
-      <header className="mb-8 flex items-center justify-between">
-        <div className="flex items-center gap-4 min-w-0">
+    <div className="mx-auto flex h-full w-full max-w-6xl flex-col p-4 sm:p-6">
+      <header className="mb-6 flex items-center justify-between gap-4 sm:mb-8">
+        <div className="flex min-w-0 items-center gap-4">
           <BackButton />
           <div className="min-w-0">
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+            <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
               Habits
-            </h2>
-            <p className="text-xs font-mono text-muted-foreground mt-0.5">
+            </h1>
+            <p className="mt-0.5 text-xs text-muted-foreground">
               {totalHabits === 0
-                ? 'Build the life you want, one day at a time'
-                : completionRate === 100
-                  ? 'Perfect day. Every single one.'
-                  : bestStreak >= 14
-                    ? `${bestStreak}-day streak. Keep rewriting.`
-                    : `${completedCount}/${totalHabits} today`}
+                ? 'One mark a day is the whole method.'
+                : doneToday === totalHabits
+                  ? 'All marked. The day is closed.'
+                  : `${totalHabits - doneToday} left to mark today`}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="shrink-0">
           <CreateHabitDialog />
         </div>
       </header>
@@ -101,123 +87,83 @@ function HabitsPage() {
       {totalHabits === 0 ? (
         <HabitsEmptyState />
       ) : (
-        <div className="flex-1 w-full space-y-10 pb-6">
-          {/* Stat Strip */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="grid grid-cols-2 sm:grid-cols-4 rounded-md border bg-card divide-y sm:divide-y-0 sm:divide-x divide-border"
-          >
-            <StatCell
-              label="Streak"
-              value={`${bestStreak}d`}
-              sub={`best ${longestEver}d`}
-            />
-            <StatCell
-              label="Today"
-              value={`${completedCount}/${totalHabits}`}
-              sub={`${completionRate}%`}
-            />
-            <StatCell
-              label="Week"
-              value={`${weeklyRate}%`}
-              sub={`${weekCompletions} done`}
-            />
-            <div className="p-3 sm:p-4">
-              <span className="text-[10px] font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-                Lv.{levelInfo.level} {levelInfo.title}
-              </span>
-              <p className="text-lg font-bold tabular-nums font-mono mt-0.5">
-                {totalXP}
-                <span className="text-xs font-normal text-muted-foreground ml-1">
-                  XP
-                </span>
-                {totalDecay > 0 && (
-                  <span className="text-[10px] font-normal text-destructive/80 ml-1.5 tabular-nums">
-                    −{totalDecay}
-                  </span>
-                )}
-              </p>
-              <Progress value={levelInfo.progress} className="h-0.5 mt-1.5" />
-            </div>
-          </motion.div>
+        <div className="w-full flex-1 space-y-6 pb-8">
+          <RunWall
+            run={run}
+            today={today}
+            doneToday={doneToday}
+            totalHabits={totalHabits}
+          />
 
-          {/* Decay banner */}
-          {decayingHabits.length > 0 && (
-            <motion.div
+          <div className="grid gap-6 lg:grid-cols-12">
+            <motion.section
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.03 }}
-              className="flex items-center gap-2.5 rounded-md border border-destructive/25 bg-destructive/5 px-3 py-2.5 -mt-6"
+              transition={{ ...RISE, delay: 0.06 }}
+              className="lg:col-span-8"
+              aria-label="Today's habits"
             >
-              <TrendingDown className="size-3.5 shrink-0 text-destructive/80" />
-              <p className="text-[11px] font-mono text-destructive/90 min-w-0 truncate">
-                {decayingHabits.length === 1
-                  ? `${decayingHabits[0].title} is draining XP`
-                  : `${decayingHabits.length} habits are draining XP`}
-              </p>
-              <span className="ml-auto shrink-0 text-[11px] font-mono font-bold tabular-nums text-destructive">
-                −{totalDecay} XP
-              </span>
-            </motion.div>
-          )}
+              <div className="flex items-baseline justify-between border-b border-hairline-strong pb-2">
+                <h2 className="label-meta text-muted-foreground">Today</h2>
+                <span
+                  data-numeric
+                  className="font-mono text-[11px] font-semibold text-muted-foreground"
+                >
+                  {doneToday}/{totalHabits}
+                </span>
+              </div>
 
-          {/* Today's Habits */}
+              <ul>
+                <AnimatePresence mode="popLayout">
+                  {habits.map((habit, i) => (
+                    <HabitRow
+                      key={habit._id}
+                      habit={habit}
+                      index={i}
+                      today={today}
+                    />
+                  ))}
+                </AnimatePresence>
+              </ul>
+            </motion.section>
+
+            <div className="lg:col-span-4">
+              <StandingLedger
+                doneToday={doneToday}
+                totalHabits={totalHabits}
+                weeklyRate={weeklyRate}
+                weekCompletions={weekCompletions}
+                totalXP={totalXP}
+                totalEarned={totalEarned}
+                totalDecay={totalDecay}
+                decayingHabits={decayingHabits}
+              />
+            </div>
+          </div>
+
           <motion.section
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.06 }}
+            transition={{ ...RISE, delay: 0.12 }}
+            aria-label="The last twelve months"
           >
-            <div className="flex items-center justify-between pb-2 border-b border-border mb-4">
-              <div className="flex items-center gap-2">
-                <div
-                  className={cn(
-                    'h-1.5 w-1.5 rounded-full',
-                    completionRate === 100 ? 'bg-chart-3' : 'bg-chart-4',
-                  )}
-                />
-                <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-                  Today&apos;s Habits
-                </h2>
-              </div>
-              <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">
-                {completedCount}/{totalHabits}
+            <div className="flex items-baseline justify-between border-b border-hairline-strong pb-2">
+              <h2 className="label-meta text-muted-foreground">
+                Last 12 months
+              </h2>
+              <span
+                data-numeric
+                className="font-mono text-[11px] font-semibold text-muted-foreground"
+              >
+                {marksThisYear.toLocaleString()} marks
               </span>
             </div>
-
-            <div className="space-y-2">
-              <AnimatePresence mode="popLayout">
-                {habits.map((habit, i) => (
-                  <HabitCard
-                    key={habit._id}
-                    habit={habit}
-                    index={i}
-                    today={today}
-                  />
-                ))}
-              </AnimatePresence>
+            <div className="pt-3">
+              <YearSheet
+                activityData={activityData}
+                totalHabits={totalHabits}
+              />
             </div>
-          </motion.section>
-
-          {/* Year Graph */}
-          <motion.section
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.12 }}
-          >
-            <div className="flex items-center justify-between pb-2 border-b border-border mb-4">
-              <div className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-emerald-400/60" />
-                <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-                  {format(now, 'yyyy')} Activity
-                </h2>
-              </div>
-              <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">
-                {totalCompletionsYear} completions
-              </span>
-            </div>
-            <YearGraph activityData={activityData} totalHabits={totalHabits} />
           </motion.section>
         </div>
       )}

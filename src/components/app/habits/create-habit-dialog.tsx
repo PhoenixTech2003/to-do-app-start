@@ -3,6 +3,8 @@ import { useMutation } from 'convex/react'
 import { api } from 'convex/_generated/api'
 import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
+import { CATEGORIES, CATEGORY_META  } from './habit-helpers'
+import type {Category} from './habit-helpers';
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -23,7 +25,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
-import { CATEGORIES, CATEGORY_META, type Category } from './habit-helpers'
 
 export function CreateHabitDialog() {
   const [open, setOpen] = useState(false)
