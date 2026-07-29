@@ -2,7 +2,15 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { useConvexMutation } from '@convex-dev/react-query'
 import { useQuery } from 'convex/react'
-import { addMonths, format, isSameDay, isSameMonth, isToday } from 'date-fns'
+import {
+  addMonths,
+  format,
+  getISOWeek,
+  isSameDay,
+  isSameMonth,
+  isThisWeek,
+  isToday,
+} from 'date-fns'
 import {
   CalendarMinus,
   ChevronLeft,
@@ -10,7 +18,7 @@ import {
   Inbox,
   Plus,
 } from 'lucide-react'
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { api } from 'convex/_generated/api'
@@ -66,12 +74,21 @@ function getStatusCounts(todos: Array<CalendarTodo>) {
   }
 }
 
-function ActivityRail({ todos }: { todos: Array<CalendarTodo> }) {
+/**
+ * The day's load, printed in the cell's left margin. Ink density is the whole
+ * signal — how much is on the day, how much of it is spent — so the sheet needs
+ * no legend. Only what is late takes colour.
+ */
+function LoadRail({ todos }: { todos: Array<CalendarTodo> }) {
   const counts = getStatusCounts(todos)
   const segments = [
-    { count: counts.overdue, className: 'bg-destructive' },
-    { count: counts.pending, className: 'bg-chart-4' },
-    { count: counts.completed, className: 'bg-chart-3' },
+    { key: 'overdue', count: counts.overdue, className: 'bg-destructive' },
+    { key: 'pending', count: counts.pending, className: 'bg-foreground/50' },
+    {
+      key: 'completed',
+      count: counts.completed,
+      className: 'bg-foreground/12',
+    },
   ].filter((segment) => segment.count > 0)
 
   if (segments.length === 0) return null
@@ -83,11 +100,28 @@ function ActivityRail({ todos }: { todos: Array<CalendarTodo> }) {
     >
       {segments.map((segment) => (
         <span
-          key={segment.className}
+          key={segment.key}
           className={segment.className}
           style={{ flexGrow: segment.count }}
         />
       ))}
+    </span>
+  )
+}
+
+/** The ledger's margin: one line number per ruled week. */
+function WeekMarker({ week }: { week: Date }) {
+  const current = isThisWeek(week, { weekStartsOn: 1 })
+
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'hidden items-center justify-center border-r border-b border-hairline bg-card font-mono text-[10px] font-medium tabular-nums sm:flex',
+        current ? 'text-primary' : 'text-muted-foreground/55',
+      )}
+    >
+      {getISOWeek(week)}
     </span>
   )
 }
@@ -107,7 +141,9 @@ function CalendarDay({
 }) {
   const selected = isSameDay(day, selectedDate)
   const outside = !isSameMonth(day, month)
+  const today = isToday(day)
   const counts = getStatusCounts(todos)
+  const open = counts.pending + counts.overdue
 
   return (
     <button
@@ -116,23 +152,23 @@ function CalendarDay({
       aria-pressed={selected}
       aria-label={`${format(day, 'EEEE d MMMM')}, ${todos.length} task${todos.length === 1 ? '' : 's'}`}
       className={cn(
-        'group relative min-h-[4.5rem] min-w-0 border-r border-b border-hairline bg-card p-2 pl-3 text-left',
+        'group relative flex min-w-0 flex-col overflow-hidden border-r border-b border-hairline bg-card p-2 pl-3 text-left',
         'transition-[background-color,box-shadow] duration-[var(--dur-2)] ease-[var(--ease-standard)]',
         'hover:z-10 hover:bg-accent/45 focus-visible:z-20',
-        'sm:min-h-[6rem] xl:min-h-[7.25rem]',
-        outside && 'bg-surface-sunken/55 text-muted-foreground/45',
+        outside && 'bg-surface-sunken/55 text-muted-foreground/40',
         selected &&
-          'z-10 bg-primary/[0.07] shadow-[inset_0_0_0_2px_var(--primary)] hover:bg-primary/[0.09]',
+          'z-10 bg-primary/[0.06] shadow-[inset_0_0_0_2px_var(--primary)] hover:bg-primary/[0.09]',
       )}
     >
-      <ActivityRail todos={todos} />
-      <span className="flex items-start justify-between gap-1">
+      <LoadRail todos={todos} />
+
+      <span className="flex shrink-0 items-center justify-between gap-1">
         <span
           data-numeric
           className={cn(
-            'flex size-6 items-center justify-center rounded-full font-mono text-[11px] font-semibold',
-            isToday(day) && 'bg-foreground text-background',
-            selected && !isToday(day) && 'bg-primary text-primary-foreground',
+            'flex size-[1.375rem] items-center justify-center rounded-full font-mono text-[12px] font-semibold tabular-nums',
+            today && 'bg-foreground text-background',
+            selected && !today && 'text-primary',
           )}
         >
           {format(day, 'd')}
@@ -140,7 +176,14 @@ function CalendarDay({
         {todos.length > 0 && (
           <span
             data-numeric
-            className="font-mono text-[10px] font-semibold text-muted-foreground xl:hidden"
+            className={cn(
+              'font-mono text-[10px] font-semibold tabular-nums',
+              counts.overdue > 0
+                ? 'text-destructive'
+                : open > 0
+                  ? 'text-foreground/70'
+                  : 'text-muted-foreground/45',
+            )}
           >
             {todos.length}
           </span>
@@ -148,23 +191,23 @@ function CalendarDay({
       </span>
 
       {todos.length > 0 && (
-        <span className="mt-2 hidden min-w-0 space-y-1 xl:block">
-          {todos.slice(0, 2).map((todo) => (
+        <span className="mt-1.5 hidden min-h-0 min-w-0 flex-1 flex-col gap-[3px] xl:flex">
+          {todos.slice(0, 3).map((todo) => (
             <span
               key={todo._id}
               className={cn(
-                'block truncate font-mono text-[9px] leading-4 text-muted-foreground',
+                'block truncate text-[10px] leading-[1.4] text-foreground/75',
                 todo.status === 'completed' &&
-                  'line-through decoration-muted-foreground/40',
+                  'text-muted-foreground/60 line-through decoration-muted-foreground/40',
                 todo.status === 'overdue' && 'text-destructive',
               )}
             >
-              {todo.dueTime ?? '—'} · {todo.title}
+              {todo.title}
             </span>
           ))}
-          {todos.length > 2 && (
-            <span className="label-meta block text-muted-foreground/60">
-              +{todos.length - 2} more
+          {todos.length > 3 && (
+            <span className="label-meta block text-muted-foreground/55">
+              +{todos.length - 3}
             </span>
           )}
         </span>
@@ -363,7 +406,7 @@ function CalendarPage() {
   const isMobile = useIsMobile()
   const today = new Date()
   const month = parseCalendarMonth(search.month, today)
-  const { monthStart, monthEnd, days } = getMonthGrid(month)
+  const { monthStart, monthEnd, weeks } = getMonthGrid(month)
   const requestedDate = parseCalendarDate(search.date)
   const selectedDate =
     requestedDate && isSameMonth(requestedDate, month)
@@ -426,9 +469,11 @@ function CalendarPage() {
     })
   }
 
+  // shrink-0 matters: this is a flex item in a scrolling pane, so without it
+  // min-h-full lets the pane squash the sheet instead of scrolling it.
   return (
-    <div className="flex min-h-full flex-col">
-      <header className="mb-5 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+    <div className="flex min-h-full shrink-0 flex-col">
+      <header className="mb-5 flex shrink-0 flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex min-w-0 items-start gap-4">
           <BackButton />
           <div className="min-w-0">
@@ -486,48 +531,47 @@ function CalendarPage() {
         </div>
       </header>
 
-      <div className="grid min-h-0 gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
+      <div className="grid shrink-0 grow gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
         <section
           aria-label={`${format(month, 'MMMM yyyy')} calendar`}
           className="edge-lit min-w-0 overflow-hidden rounded-lg border border-hairline bg-card shadow-elev-2"
         >
-          <div className="grid grid-cols-7 border-l border-t border-hairline bg-surface-sunken">
+          {/* One sheet: a week-number margin, then seven ruled columns. Rows
+              share whatever height the pane has left, down to a floor — so the
+              month fills the page, and the page scrolls once it can't. */}
+          <div
+            className="grid h-full grid-cols-7 border-l border-t border-hairline sm:grid-cols-[2.25rem_repeat(7,minmax(0,1fr))]"
+            style={{
+              gridTemplateRows: `auto repeat(${weeks.length}, minmax(4.75rem, 1fr))`,
+            }}
+          >
+            <div className="label-meta hidden border-r border-b border-hairline bg-surface-sunken py-2 text-center text-muted-foreground/50 sm:block">
+              Wk
+            </div>
             {weekdays.map((weekday) => (
               <div
                 key={weekday}
-                className="label-meta border-r border-b border-hairline py-2 text-center text-muted-foreground"
+                className="label-meta border-r border-b border-hairline bg-surface-sunken py-2 text-center text-muted-foreground"
               >
                 <span className="hidden sm:inline">{weekday}</span>
                 <span className="sm:hidden">{weekday[0]}</span>
               </div>
             ))}
-            {days.map((day) => (
-              <CalendarDay
-                key={dateKey(day)}
-                day={day}
-                month={month}
-                selectedDate={selectedDate}
-                todos={todosByDate.get(dateKey(day)) ?? []}
-                onSelect={selectDate}
-              />
+            {weeks.map((week) => (
+              <Fragment key={dateKey(week[0])}>
+                <WeekMarker week={week[0]} />
+                {week.map((day) => (
+                  <CalendarDay
+                    key={dateKey(day)}
+                    day={day}
+                    month={month}
+                    selectedDate={selectedDate}
+                    todos={todosByDate.get(dateKey(day)) ?? []}
+                    onSelect={selectDate}
+                  />
+                ))}
+              </Fragment>
             ))}
-          </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-hairline bg-surface-sunken px-4 py-2.5 font-mono text-[9px] text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="size-1.5 rounded-full bg-chart-4" />
-              Pending
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="size-1.5 rounded-full bg-chart-3" />
-              Completed
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="size-1.5 rounded-full bg-destructive" />
-              Overdue
-            </span>
-            <span className="ml-auto hidden text-muted-foreground/60 sm:inline">
-              The margin shows each day’s mix
-            </span>
           </div>
         </section>
 

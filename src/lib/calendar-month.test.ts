@@ -15,6 +15,15 @@ describe('calendar month helpers', () => {
     expect(dateKey(days.at(-1)!)).toBe('2026-08-02')
   })
 
+  it('rules the grid into whole weeks', () => {
+    const { weeks } = getMonthGrid(new Date(2026, 6, 1))
+
+    expect(weeks).toHaveLength(5)
+    expect(weeks.every((week) => week.length === 7)).toBe(true)
+    expect(dateKey(weeks[0][0])).toBe('2026-06-29')
+    expect(dateKey(weeks.at(-1)!.at(-1)!)).toBe('2026-08-02')
+  })
+
   it('rejects impossible URL dates and months', () => {
     const fallback = new Date(2026, 6, 15)
 

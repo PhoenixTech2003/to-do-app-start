@@ -35,12 +35,16 @@ export function getMonthGrid(month: Date) {
   const monthEnd = endOfMonth(month)
   const gridStart = startOfWeek(monthStart, { weekStartsOn: 1 })
   const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 1 })
+  const days = eachDayOfInterval({ start: gridStart, end: gridEnd })
 
-  return {
-    monthStart,
-    monthEnd,
-    days: eachDayOfInterval({ start: gridStart, end: gridEnd }),
+  // The sheet is ruled by week, not by day: the month view draws one band per
+  // week so the left margin can carry the week number.
+  const weeks: Array<Array<Date>> = []
+  for (let i = 0; i < days.length; i += 7) {
+    weeks.push(days.slice(i, i + 7))
   }
+
+  return { monthStart, monthEnd, days, weeks }
 }
 
 export function dateKey(date: Date) {
