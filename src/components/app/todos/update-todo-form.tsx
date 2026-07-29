@@ -30,15 +30,15 @@ export function UpdateTodoForm({
   setUpdateDialogIsOpen,
 }: UpdateTodoFormProps) {
   const updateTodo = useConvexMutation(api.todos.mutations.updateTodo)
-  const dueTime = todo.dueTime || '00:00'
-  const dueDate = todo.dueDate
-    ? format(todo.dueDate, 'yyyy-MM-dd')
-    : format(new Date(), 'yyyy-MM-dd')
-  const parsedDate = parse(
-    `${dueDate} ${dueTime}`,
-    'yyyy-MM-dd HH:mm',
-    new Date(),
-  )
+  // A todo with no due date stays without one — the picker opens empty rather
+  // than silently proposing today.
+  const parsedDate = todo.dueDate
+    ? parse(
+        `${format(todo.dueDate, 'yyyy-MM-dd')} ${todo.dueTime || '00:00'}`,
+        'yyyy-MM-dd HH:mm',
+        new Date(),
+      )
+    : undefined
   const defaultValues: z.input<typeof createTodoFormSchema> = {
     title: todo.title,
     description: todo.description,
