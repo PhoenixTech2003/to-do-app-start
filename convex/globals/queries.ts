@@ -107,7 +107,7 @@ export const getTodosByDate = query({
           q
             .search('title', args.searchTerm!)
             .eq('createdBy', loggedInUserId)
-            .eq('dueDate', args.date)
+            .eq('dueDate', args.date),
         )
     } else {
       todosQuery = ctx.db
@@ -117,13 +117,15 @@ export const getTodosByDate = query({
     }
 
     if (args.priority) {
-      todosQuery = todosQuery.filter((q) => q.eq(q.field('priority'), args.priority))
+      todosQuery = todosQuery.filter((q) =>
+        q.eq(q.field('priority'), args.priority),
+      )
     }
 
     const todos = await todosQuery.collect()
 
     return {
-      todos,
+      todos: await attachTodoLocations({ ctx, todos }),
     }
   },
 })

@@ -89,51 +89,63 @@ function DashboardPage() {
         onOpenChange={setSearchOpen}
         alwaysVisible={isMobile}
       />
-      <StateHandler
-        isLoading={isLoading}
-        isFetching={isFetching}
-        isError={isError}
-        error={error}
-        isEmpty={data.length === 0}
-        loadingSkeleton={<DashboardLoadingSkeleton />}
-        emptyState={<NoWorkspacesEmptyState />}
-        errorTitle="Failed to load workspaces"
-        errorDescription="An error occurred while loading your workspaces. Please try again."
-      >
-        <div className="space-y-6 pb-24">
-          <div className="flex items-end justify-between gap-3 border-b border-hairline pb-4">
-            <div className="min-w-0">
-              <p className="label-meta mb-1.5 text-muted-foreground/70">
-                Dashboard
-              </p>
-              <h1 className="truncate text-2xl sm:text-3xl font-bold">
-                Workspaces
-              </h1>
-            </div>
-            <div className="flex shrink-0 items-center gap-2 sm:gap-4">
-              <Button
-                variant="outline"
-                size="sm"
-                className="hidden sm:inline-flex gap-1.5"
-                onClick={() => setSearchOpen(true)}
-                aria-label="Open search"
-              >
-                <Search className="h-4 w-4" />
-                {formatForDisplay('Mod+K')}
-              </Button>
-              <CreateWorkspaceDialog />
-            </div>
+      {/* The header stays outside the state handler: an empty account still
+          needs its title, its search and its way to create the first one. */}
+      <div className="space-y-6 pb-8">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="truncate text-xl font-bold tracking-tight sm:text-2xl">
+              Workspaces
+            </h1>
+            <p
+              data-numeric
+              className="mt-1 font-mono text-[11px] text-muted-foreground"
+            >
+              {isLoading
+                ? 'Loading'
+                : data.length === 1
+                  ? '1 workspace'
+                  : `${data.length} workspaces`}
+              {searchTerm ? ` matching “${searchTerm}”` : ''}
+            </p>
           </div>
-          <WorkspaceList workspaceListData={data} />
-          <PaginationController
-            status={paginationStatus}
-            loadMore={loadMore}
-            resultsCount={data.length}
-            label="Workspaces"
-            initialNumItems={6}
-          />
+          <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden sm:inline-flex gap-1.5"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Open search"
+            >
+              <Search className="h-4 w-4" />
+              {formatForDisplay('Mod+K')}
+            </Button>
+            <CreateWorkspaceDialog />
+          </div>
         </div>
-      </StateHandler>
+
+        <StateHandler
+          isLoading={isLoading}
+          isFetching={isFetching}
+          isError={isError}
+          error={error}
+          isEmpty={data.length === 0}
+          loadingSkeleton={<DashboardLoadingSkeleton />}
+          emptyState={<NoWorkspacesEmptyState />}
+          errorTitle="Failed to load workspaces"
+          errorDescription="An error occurred while loading your workspaces. Please try again."
+        >
+          <WorkspaceList workspaceListData={data}>
+            <PaginationController
+              status={paginationStatus}
+              loadMore={loadMore}
+              resultsCount={data.length}
+              label="Workspaces"
+              initialNumItems={6}
+            />
+          </WorkspaceList>
+        </StateHandler>
+      </div>
     </>
   )
 }

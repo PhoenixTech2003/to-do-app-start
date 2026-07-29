@@ -237,7 +237,7 @@ export function TodoCheckInput({ todo }: TodoCheckInputProps) {
       if (!hasTodo) continue
 
       const nextTodos = byDateData.todos.map((t) =>
-        t._id === todoId ? optimisticTodo : t,
+        t._id === todoId ? { ...t, status: newStatus } : t,
       )
       localStore.setQuery(api.globals.queries.getTodosByDate, qArgs, {
         todos: nextTodos,

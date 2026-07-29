@@ -2,13 +2,11 @@ import { useState } from 'react'
 import { useConvexMutation } from '@convex-dev/react-query'
 import { toast } from 'sonner'
 import { api } from 'convex/_generated/api'
-import { useNavigate } from '@tanstack/react-router'
-import { motion } from 'motion/react'
 import { UpdateDialog } from '../update-dialog'
 import { DeleteDialog } from '../delete-dialog'
+import { IndexRow } from '../index-row'
 import { UpdateListDetailsForm } from './update-list-details-form'
 import type { ListItem } from '@/types/global'
-import { Card, CardContent } from '@/components/ui/card'
 import { truncateText } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/use-mobile'
 
@@ -16,76 +14,60 @@ interface ListCardProps {
   listTitle: string
   listItem: ListItem
 }
+
 export function ListCard({ listTitle, listItem }: ListCardProps) {
-  const [isUpdatDialogOpen, setIsUpdateDialogIsOpen] = useState(false)
+  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false)
   const [isOpenDeleteDialog, setIsOpenDeleteDialog] = useState(false)
   const isMobile = useIsMobile()
-
-  const navigate = useNavigate()
-
-  function setIsUpdateDialogIsOpenHandler(value: boolean) {
-    setIsUpdateDialogIsOpen(value)
-  }
-
-  function setIsOpenDeleteDialogHandler(value: boolean) {
-    setIsOpenDeleteDialog(value)
-  }
 
   const deleteList = useConvexMutation(api.workspace.mutations.deleteList)
 
   function handleDelete() {
-    const deleteListPromise = deleteList({
-      listId: listItem._id,
-    })
+    const deleteListPromise = deleteList({ listId: listItem._id })
     toast.promise(deleteListPromise, {
-      loading: 'Please wait while we delete your list',
+      loading: 'Deleting list…',
       success: () => {
-        setIsOpenDeleteDialogHandler(false)
-        return 'List deleted successfully'
+        setIsOpenDeleteDialog(false)
+        return `Deleted ${listTitle}`
       },
-      error: 'Failed to delete the list',
+      error: 'Could not delete the list. Try again.',
     })
   }
 
   return (
-    <motion.div whileHover={{ scale: 1.05 }}>
-      <Card
-        className="bg-card/50 rounded-lg hover:cursor-pointer"
-        onClick={() =>
-          navigate({
-            to: '/dashboard/workspace/$workspaceId/lists/$listId/todos',
-            params: { workspaceId: listItem.workspaceId, listId: listItem._id },
-          })
-        }
+    <IndexRow
+      title={isMobile ? truncateText(listTitle) : listTitle}
+      kind="List"
+      createdAt={listItem._creationTime}
+      linkProps={{
+        to: '/dashboard/workspace/$workspaceId/lists/$listId/todos',
+        params: { workspaceId: listItem.workspaceId, listId: listItem._id },
+        search: { view: 'list' },
+      }}
+      onEdit={() => setIsUpdateDialogOpen(true)}
+      onDelete={() => setIsOpenDeleteDialog(true)}
+      editLabel={`Edit ${listTitle}`}
+      deleteLabel={`Delete ${listTitle}`}
+    >
+      <UpdateDialog
+        showTrigger={false}
+        isOpen={isUpdateDialogOpen}
+        setDialogIsOpen={setIsUpdateDialogOpen}
+        updateDialogTitle="Update list details"
       >
-        <CardContent className="p-4 sm:p-6">
-          <h2 className="mb-4 text-lg sm:text-xl font-bold text-primary truncate">{isMobile ? truncateText(listTitle) : listTitle}</h2>
-
-          <div className="flex gap-2">
-            <div onClick={(e) => e.stopPropagation()}>
-              <UpdateDialog
-                isOpen={isUpdatDialogOpen}
-                setDialogIsOpen={setIsUpdateDialogIsOpenHandler}
-                updateDialogTitle="Update your twodo list"
-              >
-                <UpdateListDetailsForm
-                  setUpdateListDialogIsOpen={setIsUpdateDialogIsOpenHandler}
-                  listData={listItem}
-                />
-              </UpdateDialog>
-            </div>
-            <div onClick={(e) => e.stopPropagation()}>
-              <DeleteDialog
-                isOpen={isOpenDeleteDialog}
-                setIsOpen={setIsOpenDeleteDialogHandler}
-                handleDelete={handleDelete}
-                dialogTitle={`Delete the ${listTitle} list?`}
-                description="Warning: deleting this list will also permanently delete every todo and subtask inside it."
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+        <UpdateListDetailsForm
+          setUpdateListDialogIsOpen={setIsUpdateDialogOpen}
+          listData={listItem}
+        />
+      </UpdateDialog>
+      <DeleteDialog
+        showTrigger={false}
+        isOpen={isOpenDeleteDialog}
+        setIsOpen={setIsOpenDeleteDialog}
+        handleDelete={handleDelete}
+        dialogTitle={`Delete the ${listTitle} list?`}
+        description="Every todo and subtask inside it is deleted too. This can't be undone."
+      />
+    </IndexRow>
   )
 }

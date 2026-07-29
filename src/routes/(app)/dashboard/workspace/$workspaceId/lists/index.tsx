@@ -22,6 +22,7 @@ import { SearchInput } from '@/components/app/search-box'
 import { Button } from '@/components/ui/button'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { PaginationController } from '@/components/app/pagination-controller'
+import { Docket } from '@/components/app/docket'
 
 const searchSchema = z.object({
   searchTerm: z.string().optional(),
@@ -42,7 +43,6 @@ function WorkspaceListsPage() {
   const { searchTerm } = Route.useSearch()
   const [localSearch, setLocalSearch] = useState(searchTerm ?? '')
   const [searchOpen, setSearchOpen] = useState(false)
-  const [showFewer, _setShowFewer] = useState(false)
   const pendingSearchRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -116,84 +116,89 @@ function WorkspaceListsPage() {
         alwaysVisible={isMobile}
         placeholder="Search lists..."
       />
-      <StateHandler
-        isLoading={isLoading}
-        isFetching={isFetching}
-        isError={isError}
-        error={error}
-        isEmpty={lists.length === 0}
-        loadingSkeleton={<WorkspaceLoadingSkeleton />}
-        emptyState={
-          <NoListsEmptyState
-            workspaceName={workspaceDetails?.title}
-            workspaceId={workspaceId as Id<'workspace'>}
-          />
-        }
-        errorTitle="Failed to load lists"
-        errorDescription="An error occurred while loading your workspace lists. Please try again."
-      >
-        <div className="space-y-4 pb-24">
-          <div className="flex items-center justify-between gap-2">
+      {/* Header outside the state handler, so an empty workspace keeps its
+          title and its way back. */}
+      <div className="space-y-6 pb-8">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-4">
             <BackButton />
-            <h1 className="text-xl sm:text-3xl font-bold truncate min-w-0">
-              {workspaceDetails?.title}
-            </h1>
-            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-              <Button
-                variant="outline"
-                size="sm"
-                className="hidden sm:inline-flex gap-1.5"
-                onClick={() => setSearchOpen(true)}
-                aria-label="Open search"
+            <div className="min-w-0">
+              <h1 className="min-w-0 truncate text-xl font-bold tracking-tight sm:text-2xl">
+                {workspaceDetails?.title}
+              </h1>
+              <p
+                data-numeric
+                className="mt-1 font-mono text-[11px] text-muted-foreground"
               >
-                <Search className="h-4 w-4" />
-                {formatForDisplay('Mod+K')}
-              </Button>
-              {workspaceDetails?._id && (
-                <CreateListDialog workspaceId={workspaceDetails._id} />
-              )}
+                {isLoading
+                  ? 'Loading'
+                  : lists.length === 1
+                    ? '1 list'
+                    : `${lists.length} lists`}
+              </p>
             </div>
           </div>
-          <motion.div
-            layout
-            className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
-          >
-            <AnimatePresence mode="popLayout">
-              {displayedLists.map((listDetails, index) => (
-                  <motion.div
-                    key={listDetails._id}
-                    layout
-                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{
-                      opacity: 0,
-                      scale: 0.95,
-                      transition: { duration: 0.1 },
-                    }}
-                    transition={{
-                      duration: 0.4,
-                      delay: showFewer ? 0 : index * 0.05,
-                      ease: [0.21, 1.11, 0.81, 0.99],
-                    }}
-                  >
-                    <ListCard
-                      listTitle={listDetails.title}
-                      listItem={listDetails}
-                    />
-                  </motion.div>
-                ),
-              )}
-            </AnimatePresence>
-          </motion.div>
-          <PaginationController
-            status={paginationStatus}
-            loadMore={loadMore}
-            resultsCount={lists.length}
-            label="Lists"
-            initialNumItems={9}
-          />
+          <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden sm:inline-flex gap-1.5"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Open search"
+            >
+              <Search className="h-4 w-4" />
+              {formatForDisplay('Mod+K')}
+            </Button>
+            {workspaceDetails?._id && (
+              <CreateListDialog workspaceId={workspaceDetails._id} />
+            )}
+          </div>
         </div>
-      </StateHandler>
+
+        <StateHandler
+          isLoading={isLoading}
+          isFetching={isFetching}
+          isError={isError}
+          error={error}
+          isEmpty={lists.length === 0}
+          loadingSkeleton={<WorkspaceLoadingSkeleton />}
+          emptyState={
+            <NoListsEmptyState
+              workspaceName={workspaceDetails?.title}
+              workspaceId={workspaceId as Id<'workspace'>}
+            />
+          }
+          errorTitle="Failed to load lists"
+          errorDescription="An error occurred while loading your workspace lists. Please try again."
+        >
+          <Docket>
+            <AnimatePresence mode="popLayout" initial={false}>
+              {displayedLists.map((listDetails) => (
+                <motion.div
+                  key={listDetails._id}
+                  layout
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4, transition: { duration: 0.12 } }}
+                  transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <ListCard
+                    listTitle={listDetails.title}
+                    listItem={listDetails}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            <PaginationController
+              status={paginationStatus}
+              loadMore={loadMore}
+              resultsCount={lists.length}
+              label="Lists"
+              initialNumItems={9}
+            />
+          </Docket>
+        </StateHandler>
+      </div>
     </>
   )
 }

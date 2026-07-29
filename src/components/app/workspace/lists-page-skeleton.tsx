@@ -1,26 +1,22 @@
+import { Docket, DocketRowsSkeleton } from '@/components/app/docket'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Card, CardContent } from '@/components/ui/card'
 
 export function ListsPageSkeleton() {
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-9 w-64" />
-        <Skeleton className="h-10 w-32" />
+    <div className="space-y-6 pb-8">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-4">
+          <Skeleton className="size-8 shrink-0 rounded-md" />
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-48 rounded" />
+            <Skeleton className="h-3 w-16 rounded" />
+          </div>
+        </div>
+        <Skeleton className="h-9 w-32 rounded-md" />
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Card key={i} className="bg-card/50">
-            <CardContent className="p-6">
-              <Skeleton className="h-7 w-32 mb-4" />
-              <div className="flex gap-2">
-                <Skeleton className="h-9 w-20" />
-                <Skeleton className="h-9 w-20" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <Docket>
+        <DocketRowsSkeleton rows={5} check={false} />
+      </Docket>
     </div>
   )
 }

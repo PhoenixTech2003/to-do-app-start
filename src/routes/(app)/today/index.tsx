@@ -14,8 +14,12 @@ import { BackButton } from '@/components/app/back-button'
 import { TodoCard } from '@/components/app/todos/todo-card'
 import { TodosPageSkeleton } from '@/components/app/todos/todos-page-skeleton'
 import { StateHandler } from '@/components/app/state-handler'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Empty } from '@/components/ui/empty'
+import {
+  Docket,
+  DocketEmpty,
+  DocketRowsSkeleton,
+} from '@/components/app/docket'
+import { TodoSectionHeading } from '@/components/app/todos/section-heading'
 
 import { SearchInput } from '@/components/app/search-box'
 import { Button } from '@/components/ui/button'
@@ -87,6 +91,7 @@ function TodayPage() {
   const todos = data?.todos ?? []
   const pendingTodos = todos.filter((t: any) => t.status === 'pending')
   const completedTodos = todos.filter((t: any) => t.status === 'completed')
+  const lateTodos = todos.filter((t: any) => t.status === 'overdue')
 
   return (
     <div className="p-4 sm:p-6 flex flex-col h-full">
@@ -116,22 +121,42 @@ function TodayPage() {
         }}
       />
 
-      <header className="mb-8 flex items-center justify-between">
-        <div className="flex items-center gap-4 min-w-0">
+      <header className="mb-6 flex items-start justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-4">
           <BackButton />
           <div className="min-w-0">
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+            <h2 className="text-xl font-bold tracking-tight sm:text-2xl">
               Today
             </h2>
-            <p className="text-xs font-mono text-muted-foreground mt-0.5">
-              {format(new Date(), 'EEEE, MMMM do')}
+            {/* The day's standing, in one line. Terracotta only if something
+                is already late — the same rule the whole app runs on. */}
+            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[11px] text-muted-foreground">
+              <time dateTime={deps.today}>
+                {format(new Date(), 'EEEE d MMMM')}
+              </time>
+              {todos.length > 0 && (
+                <>
+                  <span className="text-muted-foreground/30">/</span>
+                  <span data-numeric>
+                    {completedTodos.length} of {todos.length} struck
+                  </span>
+                </>
+              )}
+              {lateTodos.length > 0 && (
+                <>
+                  <span className="text-muted-foreground/30">/</span>
+                  <span data-numeric className="text-destructive">
+                    {lateTodos.length} late
+                  </span>
+                </>
+              )}
             </p>
           </div>
         </div>
         <Button
           variant="outline"
           size="sm"
-          className="hidden sm:inline-flex gap-2 h-8 px-3 rounded-md text-xs"
+          className="hidden h-8 gap-2 rounded-md px-3 text-xs sm:inline-flex"
           onClick={() => setSearchOpen(true)}
           aria-label="Open search"
         >
@@ -142,88 +167,62 @@ function TodayPage() {
         </Button>
       </header>
 
-      <ScrollArea className="flex-1 w-full">
-        <div className="space-y-8">
+      <ScrollArea className="w-full flex-1">
+        <div className="space-y-4 pb-8">
           {(!status || status === 'all' || status === 'pending') && (
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between pb-2 border-b border-border">
-                <div className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-chart-4" />
-                  <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-                    Pending
-                  </h2>
-                </div>
-                <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">
-                  {pendingTodos.length}
-                </span>
-              </div>
-
+            <Docket>
+              <TodoSectionHeading
+                tone="pending"
+                title="Pending"
+                count={pendingTodos.length}
+              />
               <StateHandler
                 isLoading={data === undefined}
                 isError={false}
                 error={null}
                 isEmpty={pendingTodos.length === 0}
-                loadingSkeleton={
-                  <div className="space-y-2">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <Skeleton key={i} className="h-20 w-full rounded-md" />
-                    ))}
-                  </div>
+                loadingSkeleton={<DocketRowsSkeleton />}
+                emptyState={
+                  <DocketEmpty>Nothing left for today.</DocketEmpty>
                 }
-                emptyState={<Empty>No pending tasks for today</Empty>}
                 errorTitle="Failed to load pending tasks"
                 errorDescription="An error occurred. Please try again."
               >
-                <div className="space-y-2">
-                  <AnimatePresence mode="popLayout">
-                    {pendingTodos.map((todo: any) => (
-                      <TodoCard key={todo._id} todo={todo} />
-                    ))}
-                  </AnimatePresence>
-                </div>
+                <AnimatePresence mode="popLayout">
+                  {pendingTodos.map((todo: any) => (
+                    <TodoCard key={todo._id} todo={todo} />
+                  ))}
+                </AnimatePresence>
               </StateHandler>
-            </div>
+            </Docket>
           )}
 
           {(!status || status === 'all' || status === 'completed') && (
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between pb-2 border-b border-border">
-                <div className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-chart-3" />
-                  <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-                    Completed
-                  </h2>
-                </div>
-                <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">
-                  {completedTodos.length}
-                </span>
-              </div>
-
+            <Docket>
+              <TodoSectionHeading
+                tone="completed"
+                title="Completed"
+                count={completedTodos.length}
+              />
               <StateHandler
                 isLoading={data === undefined}
                 isError={false}
                 error={null}
                 isEmpty={completedTodos.length === 0}
-                loadingSkeleton={
-                  <div className="space-y-2">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <Skeleton key={i} className="h-20 w-full rounded-md" />
-                    ))}
-                  </div>
+                loadingSkeleton={<DocketRowsSkeleton rows={2} />}
+                emptyState={
+                  <DocketEmpty>Nothing struck off yet today.</DocketEmpty>
                 }
-                emptyState={<Empty>No completed tasks for today</Empty>}
                 errorTitle="Failed to load completed tasks"
                 errorDescription="An error occurred. Please try again."
               >
-                <div className="space-y-2">
-                  <AnimatePresence mode="popLayout">
-                    {completedTodos.map((todo: any) => (
-                      <TodoCard key={todo._id} todo={todo} />
-                    ))}
-                  </AnimatePresence>
-                </div>
+                <AnimatePresence mode="popLayout">
+                  {completedTodos.map((todo: any) => (
+                    <TodoCard key={todo._id} todo={todo} />
+                  ))}
+                </AnimatePresence>
               </StateHandler>
-            </div>
+            </Docket>
           )}
         </div>
       </ScrollArea>

@@ -12,12 +12,6 @@ interface KanbanLaneProps {
   initialNumItems?: number
 }
 
-const statusDot: Record<string, string> = {
-  Pending: 'bg-chart-4',
-  Completed: 'bg-chart-3',
-  Overdue: 'bg-destructive',
-}
-
 export function KanbanLane({
   title,
   todos,
@@ -31,29 +25,30 @@ export function KanbanLane({
 
   return (
     <div className="flex flex-col h-full min-h-[500px]">
-      <div className="flex items-center justify-between mb-3 pb-2 border-b border-border">
-        <div className="flex items-center gap-2">
-          <div
-            className={cn(
-              'h-1.5 w-1.5 rounded-full',
-              statusDot[title] || 'bg-muted-foreground',
-            )}
-          />
-          <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-            {title}
-          </h2>
-        </div>
-        <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">
+      {/* Lane headers speak the same structural voice as a docket's header
+          band: label left, count in the gutter. Terracotta only for late. */}
+      <div className="mb-3 flex items-center justify-between gap-2 border-b border-hairline-strong pb-2">
+        <h2 className="label-meta truncate text-muted-foreground">{title}</h2>
+        <span
+          data-numeric
+          className={cn(
+            'font-mono text-[11px] font-semibold',
+            title === 'Overdue' && todos.length > 0
+              ? 'text-destructive'
+              : 'text-muted-foreground',
+          )}
+        >
           {todos.length}
         </span>
       </div>
 
       <div
         className={cn(
-          'flex-1 space-y-2 min-h-[200px] rounded-md border border-dashed p-3 transition-colors duration-200',
+          'min-h-[200px] flex-1 space-y-2 rounded-md border border-dashed p-3',
+          'transition-colors duration-[var(--dur-2)] ease-[var(--ease-standard)]',
           isDropTarget
             ? 'border-primary bg-primary/5'
-            : 'border-border hover:border-muted-foreground/30',
+            : 'border-hairline-strong bg-surface-sunken/50 hover:border-muted-foreground/30',
         )}
         ref={ref}
       >

@@ -5,13 +5,7 @@ import { formatForDisplay } from '@tanstack/react-hotkeys'
 import { useEffect, useRef, useState } from 'react'
 import { usePaginatedQuery } from 'convex/react'
 import { api } from 'convex/_generated/api'
-import {
-  AlertTriangle,
-  CalendarClock,
-  Inbox,
-  PackageOpen,
-  Search,
-} from 'lucide-react'
+import { Inbox, Search } from 'lucide-react'
 import { format } from 'date-fns'
 import { motion } from 'motion/react'
 import { z } from 'zod'
@@ -24,7 +18,11 @@ import { TodoCard } from '@/components/app/todos/todo-card'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import {
+  Docket,
+  DocketHeader,
+  DocketRowsSkeleton,
+} from '@/components/app/docket'
 import {
   Empty,
   EmptyDescription,
@@ -46,25 +44,12 @@ export const Route = createFileRoute('/(app)/inbox/')({
 
 function InboxLoadingSkeleton() {
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-3 rounded-md border bg-card divide-x divide-border">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="p-3 sm:p-4 space-y-2">
-            <Skeleton className="h-3 w-16 rounded" />
-            <Skeleton className="h-6 w-10 rounded" />
-            <Skeleton className="h-2.5 w-20 rounded" />
-          </div>
-        ))}
-      </div>
-      {Array.from({ length: 2 }).map((_s, i) => (
-        <div key={i} className="flex flex-col gap-3">
-          <Skeleton className="h-5 w-32 rounded" />
-          <div className="space-y-2">
-            {Array.from({ length: 3 }).map((_r, j) => (
-              <Skeleton key={j} className="h-20 w-full rounded-md" />
-            ))}
-          </div>
-        </div>
+    <div className="space-y-4">
+      {['Unsorted', 'Upcoming'].map((label) => (
+        <Docket key={label}>
+          <DocketHeader label={label} />
+          <DocketRowsSkeleton />
+        </Docket>
       ))}
     </div>
   )
@@ -115,58 +100,34 @@ function InboxEmptyState({ searchActive }: { searchActive: boolean }) {
   )
 }
 
-function InboxStatCell({
-  label,
-  value,
-  icon: Icon,
-  accentClass,
-}: {
-  label: string
-  value: number
-  icon: React.ComponentType<{ className?: string }>
-  accentClass: string
-}) {
-  return (
-    <div className="p-3 sm:p-4">
-      <div className="flex items-center gap-1.5 mb-1">
-        <Icon className={cn('size-3', accentClass)} />
-        <span className="text-[10px] font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-          {label}
-        </span>
-      </div>
-      <p className="text-lg font-bold tabular-nums font-mono">{value}</p>
-    </div>
-  )
-}
-
-function SectionHeader({
+/**
+ * One sheet of the inbox. Sections arrive in the order they ask to be dealt
+ * with — what's late, what's coming, what hasn't been filed, what's done.
+ */
+function InboxSheet({
   label,
   count,
-  dotClass,
-  delay = 0,
+  urgent,
+  delay,
+  children,
 }: {
   label: string
   count: number
-  dotClass: string
-  delay?: number
+  urgent?: boolean
+  delay: number
+  children: React.ReactNode
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 6 }}
+    <motion.section
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, delay }}
-      className="flex items-center justify-between pb-2 border-b border-border"
+      transition={{ duration: 0.28, delay, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="flex items-center gap-2">
-        <div className={cn('h-1.5 w-1.5 rounded-full', dotClass)} />
-        <h2 className="text-xs font-mono font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-          {label}
-        </h2>
-      </div>
-      <span className="font-mono text-[10px] font-bold text-muted-foreground tabular-nums">
-        {count}
-      </span>
-    </motion.div>
+      <Docket>
+        <DocketHeader label={label} count={count} urgent={urgent} />
+        {children}
+      </Docket>
+    </motion.section>
   )
 }
 
@@ -280,17 +241,32 @@ function InboxPage() {
         showTodoFilters={false}
       />
 
-      <header className="mb-8 flex items-center justify-between">
-        <div className="flex items-center gap-4 min-w-0">
+      <header className="mb-6 flex items-start justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-4">
           <BackButton />
           <div className="min-w-0">
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+            <h2 className="text-xl font-bold tracking-tight sm:text-2xl">
               Inbox
             </h2>
-            <p className="text-xs font-mono text-muted-foreground mt-0.5">
-              {allOverdueTodos.length > 0
-                ? `${allOverdueTodos.length} overdue — needs attention`
-                : 'Capture now, organize later'}
+            {/* The standing, in one line rather than a row of stat boxes. */}
+            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[11px] text-muted-foreground">
+              {isEmpty ? (
+                'Capture now, file later'
+              ) : (
+                <>
+                  {allOverdueTodos.length > 0 && (
+                    <>
+                      <span data-numeric className="text-destructive">
+                        {allOverdueTodos.length} late
+                      </span>
+                      <span className="text-muted-foreground/30">/</span>
+                    </>
+                  )}
+                  <span data-numeric>{upcomingTodos.length} upcoming</span>
+                  <span className="text-muted-foreground/30">/</span>
+                  <span data-numeric>{pendingTodos.length} unfiled</span>
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -324,148 +300,82 @@ function InboxPage() {
           loadingSkeleton={<InboxLoadingSkeleton />}
           emptyState={<InboxEmptyState searchActive={searchActive} />}
         >
-          <div className="space-y-10">
-            {/* Stats Strip */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="grid grid-cols-3 rounded-md border bg-card divide-x divide-border"
-            >
-              <InboxStatCell
-                label="Overdue"
-                value={allOverdueTodos.length}
-                icon={AlertTriangle}
-                accentClass="text-destructive"
-              />
-              <InboxStatCell
-                label="Upcoming"
-                value={upcomingTodos.length}
-                icon={CalendarClock}
-                accentClass="text-chart-4"
-              />
-              <InboxStatCell
-                label="Unsorted"
-                value={pendingTodos.length}
-                icon={PackageOpen}
-                accentClass="text-chart-2"
-              />
-            </motion.div>
-
-            {/* Overdue — All Lists */}
+          <div className="space-y-4 pb-8">
             {allOverdueTodos.length > 0 && (
-              <motion.section
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.06 }}
-                className="flex flex-col gap-3"
+              <InboxSheet
+                label="Late — every list"
+                count={allOverdueTodos.length}
+                urgent
+                delay={0}
               >
-                <SectionHeader
-                  label="Overdue — All Lists"
-                  count={allOverdueTodos.length}
-                  dotClass="bg-destructive"
-                  delay={0.06}
-                />
-                <div className="space-y-2">
-                  {allOverdueTodos.map((todo) => (
-                    <TodoCard key={todo._id} todo={todo} />
-                  ))}
-                </div>
+                {allOverdueTodos.map((todo) => (
+                  <TodoCard key={todo._id} todo={todo} />
+                ))}
                 <PaginationController
                   status={allOverdueStatus}
                   loadMore={loadMoreAllOverdue}
                   resultsCount={allOverdueTodos.length}
-                  label="Overdue Todos"
+                  label="Late"
                   initialNumItems={6}
                 />
-              </motion.section>
+              </InboxSheet>
             )}
 
-            {/* Upcoming — All Lists */}
-            {upcomingTodos.length > 0 && (
-              <motion.section
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.12 }}
-                className="flex flex-col gap-3"
-              >
-                <SectionHeader
-                  label="Upcoming — All Lists"
-                  count={upcomingTodos.length}
-                  dotClass="bg-chart-4"
-                  delay={0.12}
-                />
-                <div className="space-y-2">
-                  {upcomingTodos.map((todo) => (
-                    <TodoCard key={todo._id} todo={todo} />
-                  ))}
-                </div>
-                <PaginationController
-                  status={upcomingStatus}
-                  loadMore={loadMoreUpcoming}
-                  resultsCount={upcomingTodos.length}
-                  label="Upcoming Todos"
-                  initialNumItems={6}
-                />
-              </motion.section>
-            )}
-
-            {/* Unsorted — Inbox Only */}
             {pendingTodos.length > 0 && (
-              <motion.section
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.18 }}
-                className="flex flex-col gap-3"
+              <InboxSheet
+                label="Unfiled"
+                count={pendingTodos.length}
+                delay={0.06}
               >
-                <SectionHeader
-                  label="Unsorted"
-                  count={pendingTodos.length}
-                  dotClass="bg-chart-2"
-                  delay={0.18}
-                />
-                <div className="space-y-2">
-                  {pendingTodos.map((todo) => (
-                    <TodoCard key={todo._id} todo={todo} />
-                  ))}
-                </div>
+                {pendingTodos.map((todo) => (
+                  <TodoCard key={todo._id} todo={todo} />
+                ))}
                 <PaginationController
                   status={pendingStatus}
                   loadMore={loadMorePending}
                   resultsCount={pendingTodos.length}
-                  label="Inbox Todos"
+                  label="Unfiled"
                   initialNumItems={6}
                 />
-              </motion.section>
+              </InboxSheet>
             )}
 
-            {/* Completed — Inbox Only */}
-            {completedTodos.length > 0 && (
-              <motion.section
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.24 }}
-                className="flex flex-col gap-3"
+            {upcomingTodos.length > 0 && (
+              <InboxSheet
+                label="Upcoming — every list"
+                count={upcomingTodos.length}
+                delay={0.12}
               >
-                <SectionHeader
-                  label="Completed"
-                  count={completedTodos.length}
-                  dotClass="bg-chart-3"
-                  delay={0.24}
+                {upcomingTodos.map((todo) => (
+                  <TodoCard key={todo._id} todo={todo} />
+                ))}
+                <PaginationController
+                  status={upcomingStatus}
+                  loadMore={loadMoreUpcoming}
+                  resultsCount={upcomingTodos.length}
+                  label="Upcoming"
+                  initialNumItems={6}
                 />
-                <div className="space-y-2">
-                  {completedTodos.map((todo) => (
-                    <TodoCard key={todo._id} todo={todo} />
-                  ))}
-                </div>
+              </InboxSheet>
+            )}
+
+            {completedTodos.length > 0 && (
+              <InboxSheet
+                label="Completed"
+                count={completedTodos.length}
+                delay={0.18}
+              >
+                {completedTodos.map((todo) => (
+                  <TodoCard key={todo._id} todo={todo} />
+                ))}
                 <PaginationController
                   status={completedStatus}
                   loadMore={loadMoreCompleted}
                   resultsCount={completedTodos.length}
-                  label="Completed Inbox Todos"
+                  label="Completed"
                   initialNumItems={6}
                 />
-              </motion.section>
+              </InboxSheet>
             )}
           </div>
         </StateHandler>

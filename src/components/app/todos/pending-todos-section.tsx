@@ -2,11 +2,10 @@ import { usePaginatedQuery } from 'convex/react'
 import { api } from 'convex/_generated/api'
 import { StateHandler } from '../state-handler'
 import { PaginationController } from '../pagination-controller'
+import { Docket, DocketEmpty, DocketRowsSkeleton } from '../docket'
 import { TodoCard } from './todo-card'
 import { TodoSectionHeading } from './section-heading'
 import type { Id } from 'convex/_generated/dataModel'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Empty } from '@/components/ui/empty'
 
 interface PendingTodosSectionProps {
   listId: Id<'lists'>
@@ -16,23 +15,19 @@ interface PendingTodosSectionProps {
 
 function PendingTodosLoadingSkeleton() {
   return (
-    <div className="flex flex-col gap-3">
-      <Skeleton className="h-5 w-24 rounded" />
-      <div className="space-y-2">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-20 w-full rounded-md" />
-        ))}
-      </div>
-    </div>
+    <Docket className="mb-4">
+      <TodoSectionHeading tone="pending" title="Pending" />
+      <DocketRowsSkeleton />
+    </Docket>
   )
 }
 
 function PendingTodosEmptyState() {
   return (
-    <div className="flex flex-col gap-3">
+    <Docket className="mb-4">
       <TodoSectionHeading tone="pending" title="Pending" />
-      <Empty>Nothing pending. Add a task to get started.</Empty>
-    </div>
+      <DocketEmpty>Nothing pending. Add a task to get started.</DocketEmpty>
+    </Docket>
   )
 }
 
@@ -71,17 +66,15 @@ export function PendingTodosSection({
       loadingSkeleton={<PendingTodosLoadingSkeleton />}
       emptyState={<PendingTodosEmptyState />}
     >
-      <div className="flex flex-col gap-3 mb-8">
+      <Docket className="mb-4">
         <TodoSectionHeading
           tone="pending"
           title="Pending"
           count={todos.length}
         />
-        <div className="space-y-2">
-          {todos.map((todo) => (
-            <TodoCard key={todo._id} todo={todo} />
-          ))}
-        </div>
+        {todos.map((todo) => (
+          <TodoCard key={todo._id} todo={todo} />
+        ))}
         <PaginationController
           status={paginationStatus}
           loadMore={loadMore}
@@ -89,7 +82,7 @@ export function PendingTodosSection({
           label="Pending Todos"
           initialNumItems={6}
         />
-      </div>
+      </Docket>
     </StateHandler>
   )
 }

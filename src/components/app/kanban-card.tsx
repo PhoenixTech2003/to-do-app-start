@@ -18,5 +18,7 @@ export function KanbanCard({ todo, index, parent }: KanbanCardProps) {
     },
   })
 
-  return <TodoCard ref={ref} todo={todo} />
+  // Lanes are the one place a todo is an object you pick up, not a printed
+  // line — so it keeps its edges and its elevation.
+  return <TodoCard ref={ref} todo={todo} variant="card" />
 }

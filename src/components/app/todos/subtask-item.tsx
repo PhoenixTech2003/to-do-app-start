@@ -4,6 +4,7 @@ import { DeleteDialog } from '../delete-dialog'
 import { UpdateDialog } from '../update-dialog'
 import { UpdateSubtaskForm } from './update-subtask-form'
 import type { SubTask } from '@/types/global'
+import { cn } from '@/lib/utils'
 
 export function SubtaskItem({
   st,
@@ -18,18 +19,33 @@ export function SubtaskItem({
   const [isOpenDelete, setIsOpenDelete] = useState(false)
 
   return (
-    <div className="flex items-center justify-between gap-3 p-2 rounded">
-      <div className="flex items-center gap-3">
+    <div className="group flex items-center justify-between gap-3 py-2 transition-colors duration-[var(--dur-2)] ease-[var(--ease-standard)] hover:bg-accent/45">
+      <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
+        {/* The same two states as a todo: a shallow well, or ink laid down. */}
         <input
           type="checkbox"
           checked={!!st.completed}
           onChange={(e) => onToggle(st._id, e.target.checked)}
-          className="h-4 w-4"
+          className={cn(
+            'size-4 shrink-0 appearance-none rounded-[5px] border',
+            'transition-[background-color,border-color,box-shadow] duration-[var(--dur-2)] ease-[var(--ease-out)]',
+            'border-hairline-strong bg-surface-sunken shadow-inset-well',
+            'checked:border-primary checked:bg-primary',
+            "checked:bg-[url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-6'/%3E%3C/svg%3E\")] checked:bg-center checked:bg-no-repeat",
+          )}
         />
-        <div className="text-sm">{st.title}</div>
-      </div>
+        <span
+          className={cn(
+            'min-w-0 truncate text-sm',
+            st.completed &&
+              'text-muted-foreground line-through decoration-muted-foreground/50',
+          )}
+        >
+          {st.title}
+        </span>
+      </label>
 
-      <div className="flex gap-2 items-center">
+      <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-[var(--dur-2)] group-hover:opacity-100 focus-within:opacity-100">
         <UpdateDialog
           isOpen={isOpenUpdate}
           setDialogIsOpen={setIsOpenUpdate}

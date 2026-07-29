@@ -1,17 +1,11 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
-import {
-  ArrowRight,
-  BarChart3,
-  Check,
-  Flame,
-  Inbox,
-  Sparkles,
-  Zap,
-} from 'lucide-react'
-import { motion } from 'motion/react'
+import { ArrowRight, Check } from 'lucide-react'
+import { motion, useReducedMotion } from 'motion/react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
 import { BetaBadge } from '@/components/ui/beta-badge'
+import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/')({
   component: LandingPage,
@@ -24,7 +18,7 @@ const stagger = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.08, delayChildren: 0.15 },
+    transition: { staggerChildren: 0.08, delayChildren: 0.1 },
   },
 }
 
@@ -33,54 +27,269 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } },
 }
 
-const capabilities = [
-  'Workspaces',
-  'Kanban boards',
-  'Priority filters',
-  'Command palette',
-  'Habit streaks',
-  'Dark mode',
+/**
+ * The hero is the product, not a picture of it: a real TwoDo sheet, built
+ * from the same margin rule and time gutter every list in the app uses. It
+ * works itself while you read, and stops with today still standing.
+ */
+const SHEET = [
+  { title: 'Send the March invoice', spine: 'var(--destructive)', due: '−2d' },
+  { title: 'Confirm the venue', spine: 'var(--chart-4)', due: '−1d' },
+  { title: 'Write the standup notes', spine: 'var(--chart-2)', due: 'TODAY' },
+  { title: 'Review the open PRs', spine: 'var(--chart-4)', due: 'TODAY' },
+  { title: 'Renew the domain', spine: 'var(--border)', due: '+3d' },
+  { title: 'Plan the summer offsite', spine: 'var(--chart-2)', due: '+2w' },
+] as const
+
+/** Struck in the order you'd actually work them: oldest debt first. */
+const STRIKE_ORDER = [
+  { index: 0, at: 900 },
+  { index: 1, at: 1700 },
+  { index: 3, at: 2600 },
 ]
 
-const features = [
-  {
-    icon: Zap,
-    title: 'Instant capture',
-    desc: 'Add tasks in seconds. No friction, no forms — just type and go.',
-  },
-  {
-    icon: Flame,
-    title: 'Habits & streaks',
-    desc: 'Build daily routines alongside your tasks. Watch streaks grow on a year-at-a-glance graph.',
-  },
-  {
-    icon: BarChart3,
-    title: 'Stay on track',
-    desc: 'Priority levels, due dates, and status filters keep you focused on what matters.',
-  },
-  {
-    icon: Sparkles,
-    title: 'Kanban & list views',
-    desc: 'Switch between board and list layouts. Drag cards across columns effortlessly.',
-  },
-  {
-    icon: Check,
-    title: 'Satisfying completion',
-    desc: 'Check off tasks with a crisp animation. See your progress build up over time.',
-  },
-  {
-    icon: Inbox,
-    title: 'Inbox and Today',
-    desc: 'Capture anything to your inbox, then pull just what matters into Today.',
-  },
-]
+function LiveSheet() {
+  const reduceMotion = useReducedMotion()
+  const [struck, setStruck] = useState<Array<number>>(
+    reduceMotion ? [0, 1, 3] : [],
+  )
+
+  useEffect(() => {
+    if (reduceMotion) return
+    const timers = STRIKE_ORDER.map(({ index, at }) =>
+      setTimeout(() => setStruck((prev) => [...prev, index]), at),
+    )
+    return () => timers.forEach(clearTimeout)
+  }, [reduceMotion])
+
+  const done = struck.length
+  const late = SHEET.filter(
+    (row, i) => row.due.startsWith('−') && !struck.includes(i),
+  ).length
+
+  return (
+    <div
+      aria-label="A TwoDo sheet, working itself"
+      className="edge-lit overflow-hidden rounded-lg border border-hairline bg-card shadow-[var(--elev-4)] [&>*+*]:border-t [&>*+*]:border-hairline"
+    >
+      <div className="flex items-center gap-3 bg-surface-sunken py-2 pr-3 pl-4">
+        <span className="label-meta flex-1 text-muted-foreground">Today</span>
+        <span
+          data-numeric
+          className={cn(
+            'font-mono text-[11px] font-semibold',
+            late > 0 ? 'text-destructive' : 'text-muted-foreground',
+          )}
+        >
+          {late > 0 ? `${late} late` : 'nothing late'}
+        </span>
+      </div>
+
+      {SHEET.map((row, i) => {
+        const isStruck = struck.includes(i)
+        const isToday = row.due === 'TODAY'
+        return (
+          <div
+            key={row.title}
+            style={{ '--spine': row.spine } as React.CSSProperties}
+            className={cn(
+              'spine flex items-center gap-3 py-3 pr-3 pl-4',
+              'transition-opacity duration-[var(--dur-3)] ease-[var(--ease-standard)]',
+              isStruck && 'spine-drained',
+            )}
+          >
+            <span
+              className={cn(
+                'flex size-5 shrink-0 items-center justify-center rounded-[6px] border',
+                'transition-[background-color,border-color] duration-[var(--dur-3)] ease-[var(--ease-out)]',
+                isStruck
+                  ? 'border-primary bg-primary shadow-[inset_0_1px_0_0_rgba(255,255,255,0.22),var(--elev-1)]'
+                  : 'border-hairline-strong bg-surface-sunken shadow-inset-well',
+              )}
+            >
+              <Check
+                className={cn(
+                  'h-3 w-3 stroke-[3.5px] text-primary-foreground transition-opacity duration-[var(--dur-2)]',
+                  isStruck ? 'opacity-100' : 'opacity-0',
+                )}
+              />
+            </span>
+            <span
+              className={cn(
+                'min-w-0 flex-1 truncate text-sm font-medium transition-colors duration-[var(--dur-3)]',
+                isStruck &&
+                  'text-muted-foreground line-through decoration-muted-foreground/50',
+              )}
+            >
+              {row.title}
+            </span>
+            <span
+              data-numeric
+              className={cn(
+                'w-[4.25rem] shrink-0 text-right font-mono text-[11px] font-semibold',
+                'transition-colors duration-[var(--dur-3)]',
+                isStruck
+                  ? 'text-muted-foreground/40'
+                  : row.due.startsWith('−')
+                    ? 'text-destructive'
+                    : isToday
+                      ? 'text-primary'
+                      : 'text-muted-foreground',
+              )}
+            >
+              {row.due}
+            </span>
+          </div>
+        )
+      })}
+
+      <div className="flex items-center gap-3 bg-surface-sunken py-2 pr-3 pl-4">
+        <span className="label-meta flex-1 text-muted-foreground/70">
+          {done} struck
+        </span>
+        <span
+          data-numeric
+          className="w-[4.25rem] shrink-0 text-right font-mono text-[10px] tracking-[0.18em] text-muted-foreground/40 uppercase"
+        >
+          {SHEET.length - done} left
+        </span>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * The two columns, named. The whole app is built on them, so the page says so
+ * once, plainly, instead of listing adjectives.
+ */
+function HowItReads() {
+  return (
+    <section className="px-6 py-20 sm:py-28">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-80px' }}
+        transition={{ duration: 0.5, ease: EASE }}
+        className="mx-auto max-w-3xl"
+      >
+        <p className="label-meta mb-3 text-primary">How a sheet reads</p>
+        <h2 className="mb-10 text-3xl font-bold tracking-tight sm:text-4xl">
+          Two columns, and neither of them moves.
+        </h2>
+
+        <div className="flex items-center gap-4">
+          <div className="hidden w-40 shrink-0 text-right lg:block">
+            <p className="label-meta text-muted-foreground">The margin</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">
+              How much this one matters
+            </p>
+          </div>
+          <span aria-hidden className="hidden h-px w-6 bg-hairline lg:block" />
+
+          <div
+            style={{ '--spine': 'var(--destructive)' } as React.CSSProperties}
+            className="spine edge-lit flex flex-1 items-center gap-3 rounded-lg border border-hairline bg-card py-4 pr-3 pl-4 shadow-[var(--elev-2)]"
+          >
+            <span className="size-5 shrink-0 rounded-[6px] border border-hairline-strong bg-surface-sunken shadow-inset-well" />
+            <span className="min-w-0 flex-1 truncate text-sm font-medium">
+              Send the March invoice
+            </span>
+            <span
+              data-numeric
+              className="w-[4.25rem] shrink-0 text-right font-mono text-[11px] font-semibold text-destructive"
+            >
+              −2d
+            </span>
+          </div>
+
+          <span aria-hidden className="hidden h-px w-6 bg-hairline lg:block" />
+          <div className="hidden w-40 shrink-0 lg:block">
+            <p className="label-meta text-muted-foreground">The gutter</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">
+              How long you have left
+            </p>
+          </div>
+        </div>
+
+        <dl className="mt-6 grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2 lg:hidden">
+          <div>
+            <dt className="label-meta text-muted-foreground">The margin</dt>
+            <dd className="mt-1 text-muted-foreground/80">
+              How much this one matters
+            </dd>
+          </div>
+          <div>
+            <dt className="label-meta text-muted-foreground">The gutter</dt>
+            <dd className="mt-1 text-muted-foreground/80">
+              How long you have left
+            </dd>
+          </div>
+        </dl>
+
+        <p className="mt-10 max-w-xl leading-relaxed text-muted-foreground">
+          Every list in TwoDo is printed the same way, so scanning a workspace
+          works exactly like scanning your inbox. Dates are set as distance —
+          <span className="font-mono text-foreground/80"> −2d</span>,
+          <span className="font-mono text-foreground/80"> TODAY</span>,
+          <span className="font-mono text-foreground/80"> +2w</span> — because
+          that is the part you act on.
+        </p>
+      </motion.div>
+    </section>
+  )
+}
+
+/** What the app does, said once each, in the app's own ruled voice. */
+const SPEC = [
+  ['Capture', 'Send anything to the inbox now and file it later.'],
+  ['Today', 'One sheet of what the day actually asks of you.'],
+  ['Workspaces', 'Group lists by project, client or part of your life.'],
+  ['Board', 'Swap any list to a kanban board and drag between lanes.'],
+  ['Habits', 'A tally sheet for the things you do every day.'],
+  ['Search', 'Mod+K from anywhere, with priority and status filters.'],
+] as const
+
+function Spec() {
+  return (
+    <section className="px-6 pb-20 sm:pb-28">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-80px' }}
+        transition={{ duration: 0.5, ease: EASE }}
+        className="mx-auto max-w-3xl"
+      >
+        <div className="edge-lit overflow-hidden rounded-lg border border-hairline bg-card shadow-[var(--elev-2)] [&>*+*]:border-t [&>*+*]:border-hairline">
+          <div className="bg-surface-sunken px-4 py-2">
+            <h2 className="label-meta text-muted-foreground">
+              What you get
+            </h2>
+          </div>
+          {SPEC.map(([name, what]) => (
+            <div
+              key={name}
+              className="flex flex-col gap-1 px-4 py-4 transition-colors duration-[var(--dur-2)] ease-[var(--ease-standard)] hover:bg-accent/45 sm:flex-row sm:items-baseline sm:gap-6"
+            >
+              <span className="label-meta w-28 shrink-0 text-foreground/80">
+                {name}
+              </span>
+              <span className="text-sm leading-relaxed text-muted-foreground">
+                {what}
+              </span>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    </section>
+  )
+}
 
 function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* ── Nav ── */}
-      <nav className="fixed top-0 inset-x-0 z-50 border-b border-hairline bg-background/75 backdrop-blur-xl backdrop-saturate-150">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+      <nav className="fixed inset-x-0 top-0 z-50 border-b border-hairline bg-background/75 backdrop-blur-xl backdrop-saturate-150">
+        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
           <span className="flex items-center gap-2 text-base font-bold tracking-tight">
             Two<span className="text-primary">Do</span>
             <BetaBadge />
@@ -88,12 +297,12 @@ function LandingPage() {
           <div className="flex items-center gap-3">
             <ThemeSwitcher />
             <Link to="/signup" className="hidden sm:inline-block">
-              <Button variant="ghost" size="sm" className="text-sm h-8">
+              <Button variant="ghost" size="sm" className="h-8 text-sm">
                 Sign in
               </Button>
             </Link>
             <Link to="/signup">
-              <Button size="sm" className="text-sm h-8">
+              <Button size="sm" className="h-8 text-sm">
                 Get started
               </Button>
             </Link>
@@ -101,169 +310,97 @@ function LandingPage() {
         </div>
       </nav>
 
-      {/* ── Hero ── */}
-      <section className="relative pt-28 pb-20 sm:pt-36 sm:pb-28 px-6">
-        {/* A single warm bloom behind the headline — the page's only gradient,
-            sitting where the eye lands first. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-[520px] opacity-[0.55] [mask-image:radial-gradient(60%_60%_at_30%_20%,black,transparent)]"
-          style={{
-            background:
-              'radial-gradient(60% 55% at 28% 18%, color-mix(in srgb, var(--primary) 18%, transparent), transparent 70%)',
-          }}
-        />
-
+      {/* ── Hero ──
+          No gradient bloom behind the headline. The sheet is the picture. */}
+      <section className="px-6 pt-28 pb-16 sm:pt-36 sm:pb-24">
         <motion.div
           variants={stagger}
           initial="hidden"
           animate="show"
-          className="relative max-w-3xl mx-auto"
+          className="mx-auto grid max-w-5xl items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-16"
         >
-          <motion.div variants={fadeUp} className="mb-7 flex items-center gap-3">
-            <BetaBadge variant="pill" />
-            <span className="label-meta text-primary">
-              Productivity, distilled
-            </span>
-          </motion.div>
+          <div>
+            <motion.div variants={fadeUp} className="mb-6">
+              <BetaBadge variant="pill" />
+            </motion.div>
 
-          <motion.h1
-            variants={fadeUp}
-            className="text-[3.25rem] sm:text-7xl md:text-8xl font-black tracking-[-0.045em] leading-[0.92] mb-8"
-          >
-            Get things
-            <br />
-            <span className="text-primary">done.</span>
-          </motion.h1>
-
-          <motion.p
-            variants={fadeUp}
-            className="text-lg sm:text-xl text-muted-foreground max-w-xl leading-relaxed mb-10"
-          >
-            A minimal task manager built for people who value clarity over
-            clutter. Organize. Focus. Ship.
-          </motion.p>
-
-          <motion.div variants={fadeUp} className="flex flex-wrap gap-3">
-            <Link to="/signup">
-              <Button size="lg" className="h-12 px-8 text-sm font-semibold">
-                Start for free
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Button>
-            </Link>
-            <Link to="/signup">
-              <Button
-                variant="outline"
-                size="lg"
-                className="h-12 px-8 text-sm font-semibold"
-              >
-                See how it works
-              </Button>
-            </Link>
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* ── Capability strip ── */}
-      <div className="border-y border-hairline bg-surface-sunken">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex flex-wrap items-center justify-center gap-x-10 gap-y-2.5">
-          {capabilities.map((item) => (
-            <span
-              key={item}
-              className="label-meta flex items-center gap-2 text-muted-foreground"
+            <motion.h1
+              variants={fadeUp}
+              className="mb-6 text-[3rem] leading-[0.95] font-black tracking-[-0.045em] sm:text-6xl"
             >
-              <Check className="h-3 w-3 text-primary" strokeWidth={3} />
-              {item}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Features ── */}
-      <section className="py-20 sm:py-32 px-6">
-        <motion.div
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: '-100px' }}
-          className="max-w-6xl mx-auto"
-        >
-          <motion.div variants={fadeUp} className="mb-14">
-            <p className="label-meta text-primary mb-3">Why TwoDo</p>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-              Everything you need,
+              Know what's
               <br />
-              nothing you don't.
-            </h2>
-          </motion.div>
+              <span className="text-primary">late.</span>
+            </motion.h1>
 
-          {/* Hairline grid: the gap is the rule. No card borders needed. */}
-          <div className="grid gap-px overflow-hidden rounded-xl border border-hairline bg-hairline-strong sm:grid-cols-2 lg:grid-cols-3 shadow-[var(--elev-2)]">
-            {features.map((feature) => (
-              <motion.div
-                key={feature.title}
-                variants={fadeUp}
-                className="group relative bg-card p-8 sm:p-10 transition-colors duration-[var(--dur-3)] ease-[var(--ease-standard)] hover:bg-accent/40"
-              >
-                <div className="mb-5 flex size-9 items-center justify-center rounded-md border border-hairline bg-primary/8 text-primary transition-all duration-[var(--dur-2)] ease-[var(--ease-out)] group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2),var(--elev-2)]">
-                  <feature.icon className="h-4 w-4" />
-                </div>
-                <h3 className="text-lg font-bold mb-2 tracking-tight">
-                  {feature.title}
-                </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {feature.desc}
-                </p>
-              </motion.div>
-            ))}
+            <motion.p
+              variants={fadeUp}
+              className="mb-8 max-w-md text-lg leading-relaxed text-muted-foreground"
+            >
+              TwoDo prints every task on one sheet with a column of time down
+              the side. Everything sits in ink. Only what's overdue takes
+              colour — so there is exactly one thing to look for.
+            </motion.p>
+
+            <motion.div
+              variants={fadeUp}
+              className="flex flex-wrap items-center gap-4"
+            >
+              <Link to="/signup">
+                <Button size="lg" className="h-12 px-8 text-sm font-semibold">
+                  Start for free
+                  <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+              <span className="label-meta text-muted-foreground/70">
+                Free while in beta
+              </span>
+            </motion.div>
           </div>
+
+          <motion.div variants={fadeUp}>
+            <LiveSheet />
+          </motion.div>
         </motion.div>
       </section>
+
+      <HowItReads />
+      <Spec />
 
       {/* ── CTA ── */}
-      <section className="px-6 pb-20 sm:pb-32">
+      <section className="border-y border-hairline bg-surface-sunken px-6 py-20 sm:py-24">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: EASE }}
-          className="relative mx-auto max-w-3xl overflow-hidden rounded-2xl border border-hairline bg-card px-6 py-16 text-center shadow-[inset_0_1px_0_0_var(--edge-highlight),var(--elev-3)] sm:px-16 sm:py-20"
+          transition={{ duration: 0.5, ease: EASE }}
+          className="mx-auto flex max-w-3xl flex-col items-start justify-between gap-8 sm:flex-row sm:items-center"
         >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 opacity-70"
-            style={{
-              background:
-                'radial-gradient(70% 90% at 50% 110%, color-mix(in srgb, var(--primary) 14%, transparent), transparent 70%)',
-            }}
-          />
-          <div className="relative">
-            <h2 className="text-3xl sm:text-5xl font-bold tracking-[-0.03em] mb-5">
-              Ready to simplify
-              <br />
-              your workflow?
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              Start your first sheet.
             </h2>
-            <p className="text-muted-foreground text-lg mb-9 max-w-md mx-auto">
-              Free while we're in beta. Bring your lists across in minutes.
+            <p className="mt-2 text-muted-foreground">
+              It takes about a minute, and nothing is late yet.
             </p>
-            <Link to="/signup">
-              <Button size="lg" className="h-12 px-10 text-sm font-semibold">
-                Get started — it's free
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Button>
-            </Link>
           </div>
+          <Link to="/signup" className="shrink-0">
+            <Button size="lg" className="h-12 px-8 text-sm font-semibold">
+              Get started
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
+          </Link>
         </motion.div>
       </section>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-hairline bg-surface-sunken">
-        <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <footer>
+        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-6 py-8 sm:flex-row">
           <span className="label-meta text-muted-foreground">
             © {new Date().getFullYear()} TwoDo
           </span>
-          <span className="label-meta text-muted-foreground">
-            Crafted with precision
+          <span className="label-meta text-muted-foreground/60">
+            Set in Satoshi &amp; JetBrains Mono
           </span>
         </div>
       </footer>

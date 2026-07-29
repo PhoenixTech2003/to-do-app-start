@@ -1,6 +1,5 @@
-import { AnimatePresence, motion } from 'motion/react'
 import { ArrowDown, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { GUTTER } from './docket'
 import { cn } from '@/lib/utils'
 
 type PaginationStatus =
@@ -18,9 +17,10 @@ interface PaginationControllerProps {
 }
 
 /**
- * Simple Load More pagination for Convex usePaginatedQuery.
- * Only shows when there's more to load (CanLoadMore) or currently loading more (LoadingMore).
- * No Show Less - avoids refreshKey/reset complexity that can cause infinite loading.
+ * The docket's closing rule. A sheet should end with a line, not trail off —
+ * so "there is more" is a ruled band at the foot of the sheet holding the
+ * count on the left and the action in the gutter column, exactly where every
+ * other number on the page sits.
  */
 export function PaginationController({
   status,
@@ -32,71 +32,41 @@ export function PaginationController({
   const canLoadMore = status === 'CanLoadMore'
   const isLoadingMore = status === 'LoadingMore'
 
-  // Only show when we can load more or are loading more
   if (!canLoadMore && !isLoadingMore) return null
 
   return (
-    <div className="flex flex-col items-center gap-6 mt-16 mb-12">
-      <motion.div
-        layout
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-3"
+    <div className="flex items-center gap-3 bg-surface-sunken py-2 pr-3 pl-4">
+      <span
+        data-numeric
+        className="label-meta min-w-0 flex-1 truncate text-muted-foreground/70"
       >
-        <div className="h-px w-8 bg-border" />
-        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-[0.3em]">
-          {resultsCount} {label}
-        </span>
-        <div className="h-px w-8 bg-border" />
-      </motion.div>
-
-      <motion.div
-        layout
-        className="relative group p-1 rounded-full bg-secondary/50 border border-border/50 backdrop-blur-sm shadow-xl"
+        {resultsCount} {label} shown
+      </span>
+      <button
+        type="button"
+        onClick={() => canLoadMore && loadMore(initialNumItems)}
+        disabled={isLoadingMore}
+        className={cn(
+          'label-meta group flex items-center justify-end gap-1.5 rounded-sm py-1 text-muted-foreground',
+          'transition-colors duration-[var(--dur-2)] ease-[var(--ease-standard)]',
+          'hover:text-primary disabled:pointer-events-none disabled:opacity-60',
+        )}
       >
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => canLoadMore && loadMore(initialNumItems)}
-          disabled={isLoadingMore}
-          className={cn(
-            'relative z-10 rounded-full px-6 py-5 h-10 transition-all duration-500',
-            'hover:bg-primary hover:text-primary-foreground group-hover:px-8',
-          )}
-        >
-          <AnimatePresence mode="wait">
-            {isLoadingMore ? (
-              <motion.div
-                key="loading"
-                initial={{ opacity: 0, rotate: -180 }}
-                animate={{ opacity: 1, rotate: 0 }}
-                exit={{ opacity: 0, rotate: 180 }}
-                className="flex items-center gap-2"
-              >
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-[10px] font-black tracking-widest uppercase font-mono">
-                  Loading
-                </span>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="load-more"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="flex items-center gap-2"
-              >
-                <ArrowDown className="h-4 w-4" />
-                <span className="text-[10px] font-black tracking-widest uppercase font-mono">
-                  Load More
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </Button>
-
-        <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl bg-primary/20 -z-10" />
-      </motion.div>
+        {isLoadingMore ? (
+          <>
+            <Loader2 className="size-3 animate-spin" />
+            Loading
+          </>
+        ) : (
+          <>
+            <ArrowDown className="size-3 transition-transform duration-[var(--dur-2)] ease-[var(--ease-out)] group-hover:translate-y-0.5" />
+            More
+          </>
+        )}
+      </button>
+      <span className={cn(GUTTER, 'label-meta text-muted-foreground/40')}>
+        +{initialNumItems}
+      </span>
     </div>
   )
 }

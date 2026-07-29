@@ -1,10 +1,7 @@
 import { convexQuery, useConvexMutation } from '@convex-dev/react-query'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { format } from 'date-fns'
 import {
-  CalendarIcon,
-  ClockIcon,
   ExternalLink,
   FolderInput,
   FolderOpen,
@@ -24,6 +21,8 @@ import { UpdateTodoForm } from './update-todo-form'
 import type { Id } from 'convex/_generated/dataModel'
 import type { Todo, TodoLocation } from '@/types/global'
 import { cn, truncateText } from '@/lib/utils'
+import { GUTTER } from '@/components/app/docket'
+import { gutterInk, gutterTime } from '@/lib/todo-time'
 import { useIsMobile } from '@/hooks/use-mobile'
 import {
   ContextMenu,
@@ -46,6 +45,13 @@ import {
 
 interface TodoCardProps {
   todo: Todo & { location?: TodoLocation }
+  /**
+   * `entry` — a ruled line printed on a docket sheet. The default, and what
+   * every list in the app uses.
+   * `card` — a discrete object you can pick up. Only the kanban board, where
+   *   things are dragged between lanes, earns this.
+   */
+  variant?: 'entry' | 'card'
 }
 
 const chipClasses =
@@ -82,7 +88,7 @@ function TodoLocationChip({ location }: { location: TodoLocation }) {
 }
 
 export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
-  ({ todo }: TodoCardProps, ref) => {
+  ({ todo, variant = 'entry' }: TodoCardProps, ref) => {
     const [sheetIsOpen, setSheetIsOpen] = useState(false)
     const [updateTodoDialogOpen, setUpdateTodoDialogOpen] = useState(false)
     const [deleteTodoDialogOpen, setDeleteTodoDialogOpen] = useState(false)
@@ -167,6 +173,14 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
       low: 'var(--chart-2)',
       none: 'var(--border)',
     }
+
+    // The gutter. Distance, not a date — the absolute date rides along in the
+    // row's title so nothing is actually lost.
+    const due = gutterTime(todo.dueDate, todo.dueTime, todo.status)
+    const rowTitle =
+      todo.priority === 'none'
+        ? `${todo.title} — ${due.long}`
+        : `${todo.title} — ${todo.priority} priority, ${due.long}`
     const listsForMove = useMemo(
       () => availableLists.filter((list) => list._id !== todo.listId),
       [availableLists, todo.listId],
@@ -316,86 +330,65 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
-                whileHover={{ y: -1 }}
                 transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                 onClick={() => setSheetIsOpen(true)}
+                title={rowTitle}
                 style={
                   {
                     '--spine': spineColor[todo.priority] ?? spineColor.none,
                   } as React.CSSProperties
                 }
                 className={cn(
-                  'spine group relative flex flex-col gap-2 py-4 pl-5 pr-4 bg-card rounded-md cursor-pointer',
-                  'border border-hairline',
-                  'shadow-[inset_0_1px_0_0_var(--edge-highlight),var(--elev-1)]',
-                  'transition-[box-shadow,border-color,background-color] duration-[var(--dur-2)] ease-[var(--ease-out)]',
-                  'hover:border-hairline-strong hover:shadow-[inset_0_1px_0_0_var(--edge-highlight),var(--elev-3)]',
-                  todo.status === 'completed' && 'spine-drained opacity-60',
+                  'spine group relative flex cursor-pointer items-start gap-3 py-3 pr-3 pl-4',
+                  variant === 'entry'
+                    ? // A line printed on the sheet. It does not lift; the
+                      // paper under it warms and the margin rule thickens.
+                      'bg-card transition-colors duration-[var(--dur-2)] ease-[var(--ease-standard)] hover:bg-accent/45'
+                    : // A discrete object, for lanes you drag between.
+                      'rounded-md border border-hairline bg-card shadow-[inset_0_1px_0_0_var(--edge-highlight),var(--elev-1)] transition-[box-shadow,border-color] duration-[var(--dur-2)] ease-[var(--ease-out)] hover:border-hairline-strong hover:shadow-[inset_0_1px_0_0_var(--edge-highlight),var(--elev-3)]',
+                  todo.status === 'completed' && 'spine-drained',
                 )}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex gap-3 flex-1 min-w-0">
-                    <div
-                      onClick={(e) => e.stopPropagation()}
-                      className="mt-0.5"
-                    >
-                      <TodoCheckInput todo={todo} />
-                    </div>
-                    <div className="flex flex-col min-w-0 gap-1">
-                      <h3
-                        className={cn(
-                          'text-sm font-medium leading-tight',
-                          todo.status === 'completed' &&
-                            'line-through text-muted-foreground',
-                        )}
-                      >
-                        {title}
-                      </h3>
-                      {description && (
-                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                          {description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                <div onClick={(e) => e.stopPropagation()} className="mt-px">
+                  <TodoCheckInput todo={todo} />
+                </div>
 
-                  {todo.priority !== 'none' && (
-                    <span className="label-meta shrink-0 pt-0.5 text-muted-foreground/70 transition-colors duration-[var(--dur-2)] group-hover:text-muted-foreground">
-                      {todo.priority}
-                    </span>
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <h3
+                    className={cn(
+                      'text-sm leading-snug font-medium',
+                      todo.status === 'completed' &&
+                        'text-muted-foreground line-through decoration-muted-foreground/50',
+                    )}
+                  >
+                    {title}
+                  </h3>
+                  {description && (
+                    <p className="line-clamp-1 text-xs leading-relaxed text-muted-foreground">
+                      {description}
+                    </p>
+                  )}
+                  {todo.location && (
+                    <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                      <TodoLocationChip location={todo.location} />
+                    </div>
                   )}
                 </div>
 
-                {(todo.location || todo.dueDate || todo.dueTime) && (
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pl-8">
-                    {todo.location && (
-                      <TodoLocationChip location={todo.location} />
-                    )}
-                    {(todo.dueDate || todo.dueTime) && (
-                      <div
-                        className={cn(
-                          'flex items-center gap-3 font-mono text-[11px]',
-                          todo.status === 'overdue'
-                            ? 'text-destructive'
-                            : 'text-muted-foreground',
-                        )}
-                      >
-                        {todo.dueDate && (
-                          <span className="flex items-center gap-1">
-                            <CalendarIcon className="h-3 w-3" />
-                            {format(todo.dueDate, 'dd MMM yyyy')}
-                          </span>
-                        )}
-                        {todo.dueTime && (
-                          <span className="flex items-center gap-1">
-                            <ClockIcon className="h-3 w-3" />
-                            {todo.dueTime}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
+                {/* The gutter. Same column on every row of every sheet, so a
+                    stack of entries reads as one stripe of urgency. */}
+                <span
+                  data-numeric
+                  className={cn(
+                    'mt-0.5 font-mono text-[11px] leading-5 font-semibold',
+                    GUTTER,
+                    todo.status === 'completed'
+                      ? 'text-muted-foreground/40'
+                      : gutterInk[due.tone],
+                  )}
+                >
+                  {due.short}
+                </span>
               </motion.div>
             </ContextMenuTrigger>
           </TodoSheet>
