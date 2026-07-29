@@ -1,4 +1,4 @@
-import { CheckCircleIcon, Flame, Home, Inbox } from 'lucide-react'
+import { CalendarDays, CheckCircleIcon, Flame, Home, Inbox } from 'lucide-react'
 import { Link, useLocation } from '@tanstack/react-router'
 import { motion } from 'motion/react'
 import {
@@ -18,6 +18,7 @@ const appNavItems = [
   { title: 'Workspaces', url: '/dashboard', icon: Home },
   { title: 'Inbox', url: '/inbox', icon: Inbox },
   { title: 'Today', url: '/today', icon: CheckCircleIcon },
+  { title: 'Calendar', url: '/calendar', icon: CalendarDays },
   { title: 'Habits', url: '/habits', icon: Flame },
 ] satisfies Array<NavItem>
 

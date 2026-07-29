@@ -55,6 +55,7 @@ export default defineSchema({
     .index('by_list_id_createdBy', ['listId', 'createdBy'])
     .index('by_createdBy', ['createdBy'])
     .index('by_createdBy_status', ['createdBy', 'status'])
+    .index('by_createdBy_dueDate', ['createdBy', 'dueDate'])
     .index('by_due_date', ['dueDate'])
     .index('by_status_createdBy_listId', ['status', 'createdBy', 'listId']),
   subTasks: defineTable({

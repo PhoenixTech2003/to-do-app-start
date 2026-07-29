@@ -16,6 +16,7 @@ import { Route as appTodayIndexRouteImport } from './routes/(app)/today/index'
 import { Route as appInboxIndexRouteImport } from './routes/(app)/inbox/index'
 import { Route as appHabitsIndexRouteImport } from './routes/(app)/habits/index'
 import { Route as appDashboardIndexRouteImport } from './routes/(app)/dashboard/index'
+import { Route as appCalendarIndexRouteImport } from './routes/(app)/calendar/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as appDashboardWorkspaceWorkspaceIdListsIndexRouteImport } from './routes/(app)/dashboard/workspace/$workspaceId/lists/index'
 import { Route as appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRouteImport } from './routes/(app)/dashboard/workspace/$workspaceId/lists/$listId/todos/index'
@@ -54,6 +55,11 @@ const appDashboardIndexRoute = appDashboardIndexRouteImport.update({
   path: '/dashboard/',
   getParentRoute: () => appRouteRoute,
 } as any)
+const appCalendarIndexRoute = appCalendarIndexRouteImport.update({
+  id: '/calendar/',
+  path: '/calendar/',
+  getParentRoute: () => appRouteRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/signup': typeof authSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/calendar/': typeof appCalendarIndexRoute
   '/dashboard/': typeof appDashboardIndexRoute
   '/habits/': typeof appHabitsIndexRoute
   '/inbox/': typeof appInboxIndexRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/signup': typeof authSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/calendar': typeof appCalendarIndexRoute
   '/dashboard': typeof appDashboardIndexRoute
   '/habits': typeof appHabitsIndexRoute
   '/inbox': typeof appInboxIndexRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/(app)': typeof appRouteRouteWithChildren
   '/(auth)/signup': typeof authSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/(app)/calendar/': typeof appCalendarIndexRoute
   '/(app)/dashboard/': typeof appDashboardIndexRoute
   '/(app)/habits/': typeof appHabitsIndexRoute
   '/(app)/inbox/': typeof appInboxIndexRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/'
     | '/signup'
     | '/api/auth/$'
+    | '/calendar/'
     | '/dashboard/'
     | '/habits/'
     | '/inbox/'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/'
     | '/signup'
     | '/api/auth/$'
+    | '/calendar'
     | '/dashboard'
     | '/habits'
     | '/inbox'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/(app)'
     | '/(auth)/signup'
     | '/api/auth/$'
+    | '/(app)/calendar/'
     | '/(app)/dashboard/'
     | '/(app)/habits/'
     | '/(app)/inbox/'
@@ -202,6 +214,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appDashboardIndexRouteImport
       parentRoute: typeof appRouteRoute
     }
+    '/(app)/calendar/': {
+      id: '/(app)/calendar/'
+      path: '/calendar'
+      fullPath: '/calendar/'
+      preLoaderRoute: typeof appCalendarIndexRouteImport
+      parentRoute: typeof appRouteRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -227,6 +246,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface appRouteRouteChildren {
+  appCalendarIndexRoute: typeof appCalendarIndexRoute
   appDashboardIndexRoute: typeof appDashboardIndexRoute
   appHabitsIndexRoute: typeof appHabitsIndexRoute
   appInboxIndexRoute: typeof appInboxIndexRoute
@@ -236,6 +256,7 @@ interface appRouteRouteChildren {
 }
 
 const appRouteRouteChildren: appRouteRouteChildren = {
+  appCalendarIndexRoute: appCalendarIndexRoute,
   appDashboardIndexRoute: appDashboardIndexRoute,
   appHabitsIndexRoute: appHabitsIndexRoute,
   appInboxIndexRoute: appInboxIndexRoute,

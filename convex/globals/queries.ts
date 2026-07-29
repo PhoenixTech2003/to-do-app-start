@@ -129,3 +129,26 @@ export const getTodosByDate = query({
     }
   },
 })
+
+export const getTodosForDateRange = query({
+  args: {
+    startDate: v.string(),
+    endDate: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const loggedInUser = await authComponent.getAuthUser(ctx)
+    const todos = await ctx.db
+      .query('todos')
+      .withIndex('by_createdBy_dueDate', (q) =>
+        q
+          .eq('createdBy', loggedInUser._id)
+          .gte('dueDate', args.startDate)
+          .lte('dueDate', args.endDate),
+      )
+      .collect()
+
+    return {
+      todos: await attachTodoLocations({ ctx, todos }),
+    }
+  },
+})

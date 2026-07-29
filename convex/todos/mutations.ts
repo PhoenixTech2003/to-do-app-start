@@ -368,6 +368,36 @@ export const moveTodoToList = mutation({
   },
 })
 
+export const removeTodoFromDate = mutation({
+  args: {
+    todoId: v.id('todos'),
+  },
+  handler: async (ctx, args) => {
+    const loggedInUser = await authComponent.getAuthUser(ctx)
+    await ensureTodoOwnership({
+      ctx,
+      userId: loggedInUser._id,
+      todoId: args.todoId,
+    })
+
+    const todo = await ctx.db.get('todos', args.todoId)
+    if (!todo) {
+      throw new Error('Todo does not exist')
+    }
+
+    if (todo.markAsOverdueScheudledFunctionId) {
+      await ctx.scheduler.cancel(todo.markAsOverdueScheudledFunctionId)
+    }
+
+    await ctx.db.patch('todos', args.todoId, {
+      dueDate: undefined,
+      dueTime: undefined,
+      markAsOverdueScheudledFunctionId: undefined,
+      status: todo.status === 'overdue' ? 'pending' : todo.status,
+    })
+  },
+})
+
 export const deleteTodo = mutation({
   args: {
     todoId: v.id('todos'),

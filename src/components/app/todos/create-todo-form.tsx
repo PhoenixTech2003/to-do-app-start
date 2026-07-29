@@ -24,77 +24,11 @@ interface CreateTodoFormProps {
   setCreateDialogIsOpen: (value: boolean) => void
 }
 
-function matchesInboxPendingQuery(args: { searchTerm?: string; priority?: string }, todo: {
-  title: string
-  priority: 'high' | 'medium' | 'low' | 'none'
-}) {
-  const normalizedSearchTerm = args.searchTerm?.trim().toLowerCase()
-  const matchesSearch =
-    !normalizedSearchTerm ||
-    todo.title.toLowerCase().includes(normalizedSearchTerm)
-  const matchesPriority = !args.priority || todo.priority === args.priority
-
-  return matchesSearch && matchesPriority
-}
-
 export function CreateTodoForm({
   listId,
   setCreateDialogIsOpen,
 }: CreateTodoFormProps) {
-  const addTodo = useConvexMutation(
-    api.todos.mutations.createTodo,
-  ).withOptimisticUpdate((localStore, args) => {
-    const { listId: argsListId, title, description, dueDate, priority } = args
-    const dueDateStr = dueDate ? dueDate.split('T')[0] : undefined
-    const dueTimeStr = dueDate ? dueDate.split('T')[1] : undefined
-
-    const optimisticTodo = {
-      _id: 'optimistic' + Math.random(),
-      _creationTime: Date.now(),
-      listId: argsListId,
-      title,
-      description,
-      status: 'pending',
-      dueDate: dueDateStr,
-      dueTime: dueTimeStr,
-      priority,
-    } as any
-
-    if (argsListId) {
-      const pendingQueries = localStore.getAllQueries(
-        api.todos.queries.GetPendingTodos,
-      )
-      for (const { args: qArgs, value } of pendingQueries) {
-        if (qArgs.listId !== argsListId) continue
-        if (!value) continue
-
-        const isFirstPage =
-          (qArgs.paginationOpts as { cursor?: string | null }).cursor == null
-        if (!isFirstPage) continue
-
-        localStore.setQuery(api.todos.queries.GetPendingTodos, qArgs, {
-          ...value,
-          page: [optimisticTodo, ...value.page],
-        })
-      }
-      return
-    }
-
-    const inboxQueries = localStore.getAllQueries(api.todos.queries.GetInboxPendingTodos)
-    for (const { args: qArgs, value } of inboxQueries) {
-      if (!value) continue
-
-      const isFirstPage =
-        (qArgs.paginationOpts as { cursor?: string | null }).cursor == null
-      if (!isFirstPage) continue
-      if (!matchesInboxPendingQuery(qArgs, optimisticTodo)) continue
-
-      localStore.setQuery(api.todos.queries.GetInboxPendingTodos, qArgs, {
-        ...value,
-        page: [optimisticTodo, ...value.page],
-      })
-    }
-  })
+  const addTodo = useConvexMutation(api.todos.mutations.createTodo)
 
   const defaultValues: z.input<typeof createTodoFormSchema> = {
     title: '',
