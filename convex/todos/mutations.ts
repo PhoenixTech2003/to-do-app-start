@@ -1,11 +1,13 @@
 import { format } from 'date-fns'
+import { fromZonedTime } from 'date-fns-tz'
 import { v } from 'convex/values'
 import { authComponent } from '../auth'
 import { internal } from '../_generated/api'
 import { internalMutation, mutation } from '../_generated/server'
 import { verifyListOnwership, verifyTodoOnwership } from '../globals/helpers'
+import { nextOccurrenceDate, recurrenceValidator } from './recurrence'
 import type { MutationCtx } from '../_generated/server'
-import type { Id } from '../_generated/dataModel'
+import type { Doc, Id } from '../_generated/dataModel'
 
 const LIST_TODO_DELETE_BATCH_SIZE = 25
 
@@ -56,6 +58,56 @@ function getDueDateFields(dueDate?: string) {
   }
 }
 
+/**
+ * The moment the overdue job should fire: one minute past the due time, read in
+ * the user's own zone. Dates are stored as wall-clock strings, so without the
+ * zone the same string means different instants for different people.
+ */
+function overdueRunTime(dueDate: string, dueTime: string, timeZone: string) {
+  return fromZonedTime(`${dueDate}T${dueTime}`, timeZone).getTime() + 60000
+}
+
+/**
+ * Completing a recurring entry prints the next one. The finished row stays put
+ * as the record that it was done; the successor carries the same rule forward.
+ * Subtasks are not copied — a fresh occurrence starts with a clean list.
+ */
+async function printNextOccurrence(
+  ctx: MutationCtx,
+  todo: Doc<'todos'>,
+  timeZone?: string,
+) {
+  if (!todo.recurrence || !todo.dueDate) return
+
+  const index = todo.recurrenceIndex ?? 0
+  const nextDate = nextOccurrenceDate(todo.recurrence, todo.dueDate, index)
+  if (!nextDate) return
+
+  const nextTodoId = await ctx.db.insert('todos', {
+    title: todo.title,
+    listId: todo.listId,
+    description: todo.description,
+    status: 'pending',
+    dueDate: nextDate,
+    dueTime: todo.dueTime,
+    recurrence: todo.recurrence,
+    recurrenceIndex: index + 1,
+    priority: todo.priority,
+    createdBy: todo.createdBy,
+  })
+
+  if (todo.dueTime && timeZone) {
+    const scheduledFunctionId = await ctx.scheduler.runAt(
+      overdueRunTime(nextDate, todo.dueTime, timeZone),
+      internal.todos.mutations.ToggleTodoStatusOverdue,
+      { todoId: nextTodoId },
+    )
+    await ctx.db.patch('todos', nextTodoId, {
+      markAsOverdueScheudledFunctionId: scheduledFunctionId,
+    })
+  }
+}
+
 async function deleteTodoCascade(ctx: MutationCtx, todoId: Id<'todos'>) {
   const todo = await ctx.db.get('todos', todoId)
   if (!todo) {
@@ -85,6 +137,7 @@ export const createTodo = mutation({
     description: v.optional(v.string()),
     dueDate: v.optional(v.string()),
     scheduledFuntionRunTime: v.optional(v.number()),
+    recurrence: v.optional(recurrenceValidator),
     priority: v.union(
       v.literal('high'),
       v.literal('medium'),
@@ -105,6 +158,8 @@ export const createTodo = mutation({
     }
 
     const { dueDate, dueTime } = getDueDateFields(args.dueDate)
+    // A rule needs a date to repeat from, so recurrence rides with the due date.
+    const recurrence = dueDate ? args.recurrence : undefined
     const todoId = await ctx.db.insert('todos', {
       title: args.title,
       listId: args.listId,
@@ -112,6 +167,8 @@ export const createTodo = mutation({
       status: 'pending',
       dueDate: dueDate,
       dueTime: dueTime,
+      recurrence: recurrence,
+      recurrenceIndex: recurrence ? 0 : undefined,
       priority: args.priority,
       createdBy: loggedInUserId,
     })
@@ -187,6 +244,8 @@ export const toggleTodoStatus = mutation({
       v.literal('completed'),
       v.literal('overdue'),
     ),
+    /** The caller's zone, so a printed successor is due at their local time. */
+    timeZone: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const loggedInUser = await authComponent.getAuthUser(ctx)
@@ -196,9 +255,17 @@ export const toggleTodoStatus = mutation({
       todoId: args.todoId,
     })
 
+    const todo = await ctx.db.get('todos', args.todoId)
+
     await ctx.db.patch('todos', args.todoId, {
       status: args.status,
     })
+
+    // Only the crossing into completed prints the next entry, so ticking a row
+    // off and on again does not fill the list with duplicates.
+    if (todo && args.status === 'completed' && todo.status !== 'completed') {
+      await printNextOccurrence(ctx, todo, args.timeZone)
+    }
   },
 })
 
@@ -281,6 +348,7 @@ export const updateTodo = mutation({
     description: v.optional(v.string()),
     dueDate: v.optional(v.string()),
     scheduledFunctionRunTime: v.optional(v.number()),
+    recurrence: v.optional(recurrenceValidator),
     priority: v.union(
       v.literal('high'),
       v.literal('medium'),
@@ -302,11 +370,16 @@ export const updateTodo = mutation({
 
     const { dueDate, dueTime } = getDueDateFields(args.dueDate)
 
+    const recurrence = dueDate ? args.recurrence : undefined
+
     const updateData: Record<string, unknown> = {
       title: args.title,
       description: args.description,
       dueDate: dueDate,
       dueTime: dueTime,
+      recurrence: recurrence,
+      // An entry edited mid-series keeps its place in the count.
+      recurrenceIndex: recurrence ? (currentTodo?.recurrenceIndex ?? 0) : undefined,
       status: 'pending',
       priority: args.priority,
     }
@@ -392,6 +465,9 @@ export const removeTodoFromDate = mutation({
     await ctx.db.patch('todos', args.todoId, {
       dueDate: undefined,
       dueTime: undefined,
+      // Nothing left to repeat from.
+      recurrence: undefined,
+      recurrenceIndex: undefined,
       markAsOverdueScheudledFunctionId: undefined,
       status: todo.status === 'overdue' ? 'pending' : todo.status,
     })

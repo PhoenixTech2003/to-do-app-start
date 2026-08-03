@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
+import { recurrenceValidator } from './todos/recurrence'
 
 export default defineSchema({
   workspace: defineTable({
@@ -35,6 +36,10 @@ export default defineSchema({
     ),
     dueDate: v.optional(v.string()),
     dueTime: v.optional(v.string()),
+    /** How this entry repeats. Carried by every occurrence in the series. */
+    recurrence: v.optional(recurrenceValidator),
+    /** 0-based position of this entry in its series. */
+    recurrenceIndex: v.optional(v.number()),
     priority: v.union(
       v.literal('high'),
       v.literal('medium'),

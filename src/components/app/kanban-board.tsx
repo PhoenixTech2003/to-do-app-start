@@ -195,6 +195,9 @@ export function KanbanBoard({
         const todoPromise = updateTodoStatus({
           todoId: todo._id,
           status,
+          // Dropping a recurring card into Done prints the next one, due in the
+          // user's own zone.
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         })
 
         toast.promise(todoPromise, {

@@ -268,6 +268,9 @@ export function TodoCheckInput({ todo }: TodoCheckInputProps) {
     toggleTodo({
       todoId: todo._id,
       status: newStatus,
+      // Completing a recurring entry prints the next one, which has to be due
+      // at the user's local time, not the server's.
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     }).catch(() => setOptimisticStatus(null))
   }
 

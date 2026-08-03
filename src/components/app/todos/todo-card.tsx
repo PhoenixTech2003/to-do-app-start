@@ -7,17 +7,20 @@ import {
   FolderOpen,
   Inbox,
   Pencil,
+  Repeat,
   Trash2,
 } from 'lucide-react'
+import { describeRecurrence } from 'convex/todos/recurrence'
 import { forwardRef, useMemo, useState } from 'react'
 import { motion } from 'motion/react'
 import { toast } from 'sonner'
 import { api } from 'convex/_generated/api'
 import { DeleteDialog } from '../delete-dialog'
-import { UpdateDialog } from '../update-dialog'
 import { TodoSheet } from './todo-sheet'
 import { TodoCheckInput } from './todo-check-input'
 import { UpdateTodoForm } from './update-todo-form'
+import { PRIORITY_SPINE } from './entry-fields'
+import { EntrySlip } from './entry-slip'
 import type { Id } from 'convex/_generated/dataModel'
 import type { Todo, TodoLocation } from '@/types/global'
 import { cn, truncateText } from '@/lib/utils'
@@ -166,21 +169,20 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
       : todo.description
 
     // The spine colour encodes priority. `none` falls back to a plain rule so
-    // an unprioritised task still reads as part of the same system.
-    const spineColor: Record<string, string> = {
-      high: 'var(--destructive)',
-      medium: 'var(--chart-4)',
-      low: 'var(--chart-2)',
-      none: 'var(--border)',
-    }
+    // an unprioritised task still reads as part of the same system. Shared with
+    // the create form, where you pick the stroke this row will print.
+    const spineColor = PRIORITY_SPINE
 
     // The gutter. Distance, not a date — the absolute date rides along in the
     // row's title so nothing is actually lost.
     const due = gutterTime(todo.dueDate, todo.dueTime, todo.status)
+    const repeats = todo.recurrence
+      ? `, ${describeRecurrence(todo.recurrence).toLowerCase()}`
+      : ''
     const rowTitle =
       todo.priority === 'none'
-        ? `${todo.title} — ${due.long}`
-        : `${todo.title} — ${todo.priority} priority, ${due.long}`
+        ? `${todo.title} — ${due.long}${repeats}`
+        : `${todo.title} — ${todo.priority} priority, ${due.long}${repeats}`
     const listsForMove = useMemo(
       () => availableLists.filter((list) => list._id !== todo.listId),
       [availableLists, todo.listId],
@@ -253,17 +255,18 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
 
     return (
       <>
-        <UpdateDialog
-          showTrigger={false}
-          isOpen={updateTodoDialogOpen}
-          updateDialogTitle="Update Todo"
-          setDialogIsOpen={updateTodoDialogHandler}
+        <EntrySlip
+          open={updateTodoDialogOpen}
+          onOpenChange={updateTodoDialogHandler}
+          label="Edit entry"
+          destination={todo.recurrence ? describeRecurrence(todo.recurrence) : undefined}
+          description="Change this twodo's title, note, due date, repetition or priority."
         >
           <UpdateTodoForm
             todo={todo}
             setUpdateDialogIsOpen={updateTodoDialogHandler}
           />
-        </UpdateDialog>
+        </EntrySlip>
         <DeleteDialog
           showTrigger={false}
           handleDelete={handleTodoDelete}
@@ -335,7 +338,7 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
                 title={rowTitle}
                 style={
                   {
-                    '--spine': spineColor[todo.priority] ?? spineColor.none,
+                    '--spine': spineColor[todo.priority],
                   } as React.CSSProperties
                 }
                 className={cn(
@@ -362,6 +365,13 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
                     )}
                   >
                     {title}
+                    {/* A series mark, not a badge: the row says it comes back. */}
+                    {todo.recurrence && (
+                      <Repeat
+                        aria-hidden
+                        className="ml-1.5 inline size-3 shrink-0 align-[-1px] text-muted-foreground/60"
+                      />
+                    )}
                   </h3>
                   {description && (
                     <p className="line-clamp-1 text-xs leading-relaxed text-muted-foreground">
@@ -434,6 +444,14 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
                   />
                   <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
                     {todo.priority} priority
+                  </span>
+                </div>
+              )}
+              {todo.recurrence && (
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <Repeat className="size-3 text-muted-foreground" />
+                  <span className="font-mono text-[10px] text-muted-foreground">
+                    {describeRecurrence(todo.recurrence)}
                   </span>
                 </div>
               )}

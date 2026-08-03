@@ -1,18 +1,14 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { CreateTodoForm } from './create-todo-form'
+import { EntrySlip } from './entry-slip'
 import type { Id } from 'convex/_generated/dataModel'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 
 interface CreateTodoDialogProps {
   listId?: Id<'lists'>
+  /** Where the entry lands. Printed in the slip's header band. */
+  destination?: string
   title?: string
   description?: string
   buttonLabel?: string
@@ -20,8 +16,9 @@ interface CreateTodoDialogProps {
 
 export function CreateTodoDialog({
   listId,
-  title = 'Create Todo',
-  description = 'Add a new todo to your list to stay organized',
+  destination = 'Inbox',
+  title = 'New entry',
+  description = 'Write a twodo, choose when it is due and how it repeats.',
   buttonLabel = 'Create Todo',
 }: CreateTodoDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -29,8 +26,9 @@ export function CreateTodoDialog({
   function setCreateDialogIsOpen(value: boolean) {
     setIsOpen(value)
   }
+
   return (
-    <Dialog open={isOpen} onOpenChange={setCreateDialogIsOpen}>
+    <>
       <Button
         onClick={() => setIsOpen(true)}
         size="icon"
@@ -41,16 +39,18 @@ export function CreateTodoDialog({
         <span className="hidden sm:inline">{buttonLabel}</span>
       </Button>
 
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
+      <EntrySlip
+        open={isOpen}
+        onOpenChange={setCreateDialogIsOpen}
+        label={title}
+        destination={destination}
+        description={description}
+      >
         <CreateTodoForm
           setCreateDialogIsOpen={setCreateDialogIsOpen}
           listId={listId}
         />
-      </DialogContent>
-    </Dialog>
+      </EntrySlip>
+    </>
   )
 }

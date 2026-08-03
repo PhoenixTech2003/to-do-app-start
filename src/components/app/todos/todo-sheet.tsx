@@ -2,6 +2,7 @@ import React from 'react'
 import { convexQuery, useConvexMutation } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
 import { useSuspenseQuery } from '@tanstack/react-query'
+import { describeRecurrence } from 'convex/todos/recurrence'
 import { StateHandler } from '../state-handler'
 import { CreateSubtaskDialog } from './add-subtask-dialog'
 import { TodoCheckInput } from './todo-check-input'
@@ -135,6 +136,13 @@ export function TodoSheet({
               <time dateTime={todo.dueDate}>{due.long}</time>
             ) : (
               <span className="text-muted-foreground">No due date</span>
+            )}
+          </Particular>
+          <Particular label="Repeats">
+            {todo.recurrence ? (
+              describeRecurrence(todo.recurrence)
+            ) : (
+              <span className="text-muted-foreground">Never</span>
             )}
           </Particular>
           <Particular label="Priority">

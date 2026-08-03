@@ -284,8 +284,8 @@ function InboxPage() {
             </span>
           </Button>
           <CreateTodoDialog
-            title="Capture Inbox Todo"
-            description="Add a todo to your inbox now and assign it to a list later."
+            title="Capture"
+            description="Write a twodo now and file it to a list later."
             buttonLabel="Capture Todo"
           />
         </div>

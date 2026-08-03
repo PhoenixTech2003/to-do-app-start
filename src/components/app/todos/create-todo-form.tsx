@@ -3,21 +3,19 @@ import { useConvexMutation } from '@convex-dev/react-query'
 import { toast } from 'sonner'
 import { api } from 'convex/_generated/api'
 import { formatInTimeZone } from 'date-fns-tz'
+import {
+  Band,
+  EntryMark,
+  PRIORITY_SPINE,
+  PriorityMargin,
+  WhenBands,
+} from './entry-fields'
 import type z from 'zod'
 import type { Id } from 'convex/_generated/dataModel'
-import { Field, FieldError, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import type { Priority } from './entry-fields'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Kbd } from '@/components/ui/kbd'
 import { createTodoFormSchema } from '@/validation/create-todo-form-schema'
-import { DateTimePicker } from '@/components/ui/date-time-picker'
 
 interface CreateTodoFormProps {
   listId?: Id<'lists'>
@@ -58,15 +56,16 @@ export function CreateTodoForm({
             )
           : undefined,
         priority: formData.value.priority,
+        recurrence: formData.value.recurrence,
         scheduledFuntionRunTime: scheduledFunctionRunTime,
       })
       toast.promise(addTodoPromise, {
-        loading: 'Please wait while we add your twodo',
+        loading: 'Adding your twodo…',
         success: () => {
           setCreateDialogIsOpen(false)
-          return `"${formData.value.title}" has been added successfully`
+          return `"${formData.value.title}" added`
         },
-        error: 'Failed to create todo please try again',
+        error: 'The twodo could not be added. Try again.',
       })
     },
   })
@@ -77,118 +76,146 @@ export function CreateTodoForm({
         e.preventDefault()
         form.handleSubmit()
       }}
+      onKeyDown={(e) => {
+        // Enter files the entry from the title line; from the note, where a
+        // plain Enter is a new paragraph, it takes the modifier.
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault()
+          form.handleSubmit()
+        }
+      }}
     >
-      <form.Field
-        name="title"
-        children={(field) => {
-          const isInvalid =
-            field.state.meta.isTouched && !field.state.meta.isValid
-          return (
-            <Field data-invalid={isInvalid}>
-              <FieldLabel htmlFor={field.name}>Title</FieldLabel>
-              <Input
-                id={field.name}
-                name={field.name}
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-                aria-invalid={isInvalid}
-                placeholder="Buy groceries"
-                autoComplete="off"
-              />
-              {isInvalid && <FieldError errors={field.state.meta.errors} />}
-            </Field>
-          )
-        }}
-      />
-
-      <form.Field
-        name="description"
-        children={(field) => {
-          const isInvalid =
-            field.state.meta.isTouched && !field.state.meta.isValid
-          return (
-            <Field data-invalid={isInvalid}>
-              <FieldLabel htmlFor={field.name}>Description</FieldLabel>
-              <Textarea
-                id={field.name}
-                name={field.name}
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-                aria-invalid={isInvalid}
-                placeholder="Add details about this todo..."
-              />
-              {isInvalid && <FieldError errors={field.state.meta.errors} />}
-            </Field>
-          )
-        }}
-      />
-
-      <form.Field
-        name="dueDate"
-        children={(field) => {
-          const isInvalid =
-            field.state.meta.isTouched && !field.state.meta.isValid
-          return (
-            <Field data-invalid={isInvalid}>
-              <FieldLabel htmlFor={field.name}>Due Date (Optional)</FieldLabel>
-              <DateTimePicker
-                value={field.state.value}
-                setValue={field.handleChange}
-              />
-              {isInvalid && <FieldError errors={field.state.meta.errors} />}
-            </Field>
-          )
-        }}
-      />
-
-      <form.Field
-        name="priority"
-        children={(field) => {
-          const isInvalid =
-            field.state.meta.isTouched && !field.state.meta.isValid
-          return (
-            <Field data-invalid={isInvalid}>
-              <FieldLabel htmlFor={field.name}>Priority (Optional)</FieldLabel>
-              <Select
-                defaultValue={field.state.value}
-                value={field.state.value}
-                onValueChange={(value) =>
-                  field.handleChange(
-                    value as 'high' | 'medium' | 'low' | 'none',
-                  )
-                }
-              >
-                <SelectTrigger id={field.name}>
-                  <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">none</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-              {isInvalid && <FieldError errors={field.state.meta.errors} />}
-            </Field>
-          )
-        }}
-      />
-
-      <form.Subscribe
-        selector={(state) => [state.isSubmitting, state.isSubmitSuccessful]}
-        children={([isSubmitting, isSubmitSuccessful]) => (
-          <Field className="py-4">
-            <Button
-              disabled={isSubmitting && !isSubmitSuccessful}
-              type="submit"
+      {/* A leaf can make the slip taller than the screen; the bands scroll and
+          the actions stay put. */}
+      <div className="max-h-[60vh] overflow-y-auto">
+        {/* ── The line being written ──
+          The margin takes the priority you choose and the gutter shows the
+          mark this entry will carry, so the form reads as the row it becomes. */}
+        <form.Subscribe
+          selector={(state) => ({
+            priority: state.values.priority,
+            dueDate: state.values.dueDate,
+          })}
+          children={({ priority, dueDate }) => (
+            <div
+              className="spine flex items-start gap-3 py-3.5 pr-3 pl-4"
+              style={
+                {
+                  '--spine': PRIORITY_SPINE[priority as Priority],
+                } as React.CSSProperties
+              }
             >
-              Add Todo
-            </Button>
-          </Field>
-        )}
-      />
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <form.Field
+                  name="title"
+                  children={(field) => {
+                    const isInvalid =
+                      field.state.meta.isTouched && !field.state.meta.isValid
+                    return (
+                      <>
+                        <input
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          aria-invalid={isInvalid}
+                          aria-label="Title"
+                          placeholder="Write the next line"
+                          autoComplete="off"
+                          autoFocus
+                          className="w-full bg-transparent text-[15px] leading-snug font-medium placeholder:text-muted-foreground/50 focus-visible:outline-none"
+                        />
+                        {isInvalid && (
+                          <p className="font-mono text-[11px] text-destructive">
+                            A twodo needs a title.
+                          </p>
+                        )}
+                      </>
+                    )
+                  }}
+                />
+
+                <form.Field
+                  name="description"
+                  children={(field) => (
+                    <textarea
+                      id={field.name}
+                      name={field.name}
+                      value={field.state.value ?? ''}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-label="Note"
+                      placeholder="Add a note"
+                      rows={2}
+                      className="w-full resize-none bg-transparent text-xs leading-relaxed text-muted-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none"
+                    />
+                  )}
+                />
+              </div>
+
+              <EntryMark date={dueDate} />
+            </div>
+          )}
+        />
+
+        <form.Subscribe
+          selector={(state) => ({
+            dueDate: state.values.dueDate,
+            recurrence: state.values.recurrence,
+          })}
+          children={({ dueDate, recurrence }) => (
+            <WhenBands
+              due={dueDate}
+              onDueChange={(date) => form.setFieldValue('dueDate', date)}
+              recurrence={recurrence}
+              onRecurrenceChange={(rule) =>
+                form.setFieldValue('recurrence', rule)
+              }
+            />
+          )}
+        />
+
+        <form.Field
+          name="priority"
+          children={(field) => (
+            <Band label="Priority">
+              <PriorityMargin
+                value={field.state.value}
+                onChange={(priority) => field.handleChange(priority)}
+              />
+            </Band>
+          )}
+        />
+      </div>
+
+      <div className="flex items-center justify-between gap-3 border-t border-hairline bg-surface-sunken px-4 py-3">
+        <span className="hidden items-center gap-1.5 text-[11px] text-muted-foreground sm:flex">
+          <Kbd>⏎</Kbd> to add
+        </span>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setCreateDialogIsOpen(false)}
+          >
+            Cancel
+          </Button>
+          <form.Subscribe
+            selector={(state) => [state.isSubmitting, state.isSubmitSuccessful]}
+            children={([isSubmitting, isSubmitSuccessful]) => (
+              <Button
+                size="sm"
+                disabled={isSubmitting && !isSubmitSuccessful}
+                type="submit"
+              >
+                Add twodo
+              </Button>
+            )}
+          />
+        </div>
+      </div>
     </form>
   )
 }

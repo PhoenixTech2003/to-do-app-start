@@ -6,6 +6,7 @@ import { api } from 'convex/_generated/api'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import type { Id } from 'convex/_generated/dataModel'
+import { TimeRail } from '@/components/app/todos/date-leaf'
 import { dateKey } from '@/lib/calendar-month'
 import { Button } from '@/components/ui/button'
 import {
@@ -144,62 +145,55 @@ export function CreateCalendarTaskDialog({
             }}
           />
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <form.Field
-              name="time"
-              children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name}>Due time</FieldLabel>
-                    <Input
-                      id={field.name}
-                      name={field.name}
-                      type="time"
+          {/* The day is already chosen — only the hour is in question, and it
+              is picked from the same rail as everywhere else. */}
+          <form.Field
+            name="time"
+            children={(field) => {
+              const isInvalid =
+                field.state.meta.isTouched && !field.state.meta.isValid
+              return (
+                <Field data-invalid={isInvalid}>
+                  <FieldLabel htmlFor={field.name}>Due time</FieldLabel>
+                  <div className="overflow-hidden rounded-md border border-hairline bg-surface-sunken/60">
+                    <TimeRail
                       value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) =>
-                        field.handleChange(event.target.value)
-                      }
-                      aria-invalid={isInvalid}
-                      className="font-mono"
+                      onChange={field.handleChange}
+                      label="At"
                     />
-                    {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
-                    )}
-                  </Field>
-                )
-              }}
-            />
-
-            <form.Field
-              name="priority"
-              children={(field) => (
-                <Field>
-                  <FieldLabel htmlFor={field.name}>Priority</FieldLabel>
-                  <Select
-                    value={field.state.value}
-                    onValueChange={(value) =>
-                      field.handleChange(
-                        value as 'high' | 'medium' | 'low' | 'none',
-                      )
-                    }
-                  >
-                    <SelectTrigger id={field.name} className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No priority</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="low">Low</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  </div>
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
-              )}
-            />
-          </div>
+              )
+            }}
+          />
+
+          <form.Field
+            name="priority"
+            children={(field) => (
+              <Field>
+                <FieldLabel htmlFor={field.name}>Priority</FieldLabel>
+                <Select
+                  value={field.state.value}
+                  onValueChange={(value) =>
+                    field.handleChange(
+                      value as 'high' | 'medium' | 'low' | 'none',
+                    )
+                  }
+                >
+                  <SelectTrigger id={field.name} className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No priority</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            )}
+          />
 
           <form.Field
             name="destination"

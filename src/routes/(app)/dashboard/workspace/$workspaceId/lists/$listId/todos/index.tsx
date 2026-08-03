@@ -151,7 +151,10 @@ function RouteComponent() {
             listId={listId}
             workspaceId={workspaceId}
           />
-          <CreateTodoDialog listId={listId as Id<'lists'>} />
+          <CreateTodoDialog
+            listId={listId as Id<'lists'>}
+            destination={data.title}
+          />
         </div>
       </header>
 
