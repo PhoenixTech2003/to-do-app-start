@@ -116,11 +116,14 @@ export function WhenBands({
   onDueChange,
   recurrence,
   onRecurrenceChange,
+  /** Subtasks are due once; repetition belongs to the entry above them. */
+  withRepeat = true,
 }: {
   due?: Date
   onDueChange: (date?: Date) => void
   recurrence?: RecurrenceRule
   onRecurrenceChange: (rule?: RecurrenceRule) => void
+  withRepeat?: boolean
 }) {
   const [openLeaf, setOpenLeaf] = useState<'due' | 'repeat' | null>(null)
 
@@ -228,179 +231,191 @@ export function WhenBands({
         <DateLeaf value={due} onChange={onDueChange} />
       </Leaf>
 
-      <Band label="Repeat">
-        {due ? (
-          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => {
-                onRecurrenceChange(undefined)
-                setOpenLeaf(null)
-              }}
-              className={chipClasses(!recurrence)}
-            >
-              Never
-            </button>
+      {withRepeat && (
+        <>
+          <Band label="Repeat">
+            {due ? (
+              <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onRecurrenceChange(undefined)
+                    setOpenLeaf(null)
+                  }}
+                  className={chipClasses(!recurrence)}
+                >
+                  Never
+                </button>
 
-            {RECURRENCE_PRESETS.map((preset) => (
-              <button
-                key={preset.label}
-                type="button"
-                onClick={() => {
-                  onRecurrenceChange(preset.rule)
-                  setOpenLeaf(null)
-                }}
-                className={chipClasses(matchedPreset?.label === preset.label)}
-              >
-                {preset.label}
-              </button>
-            ))}
-
-            <button
-              type="button"
-              aria-expanded={openLeaf === 'repeat'}
-              onClick={() => {
-                if (!recurrence) onRecurrenceChange(rule)
-                setOpenLeaf((current) =>
-                  current === 'repeat' ? null : 'repeat',
-                )
-              }}
-              className={chipClasses(openLeaf === 'repeat' || isCustomRule)}
-            >
-              {isCustomRule ? describeRecurrence(rule) : 'Custom'}
-            </button>
-          </div>
-        ) : (
-          <span className="font-mono text-[11px] text-muted-foreground/60">
-            Give it a due date to repeat from
-          </span>
-        )}
-      </Band>
-
-      <Leaf open={openLeaf === 'repeat' && Boolean(due)}>
-        <div className="flex flex-wrap items-center gap-2 px-3 py-2.5">
-          <span className="label-meta w-12 shrink-0 text-muted-foreground">
-            Every
-          </span>
-          <input
-            type="number"
-            min={1}
-            max={365}
-            value={rule.interval}
-            onChange={(e) =>
-              patchRule({ interval: Math.max(1, Number(e.target.value) || 1) })
-            }
-            aria-label="Interval"
-            className="h-7 w-12 rounded-sm border border-hairline bg-card px-1.5 text-center font-mono text-sm tabular-nums"
-          />
-          <div className="flex flex-wrap gap-1">
-            {FREQ_UNITS.map((unit) => (
-              <button
-                key={unit.freq}
-                type="button"
-                onClick={() =>
-                  patchRule({
-                    freq: unit.freq,
-                    weekdays:
-                      unit.freq === 'weekly' ? rule.weekdays : undefined,
-                  })
-                }
-                className={chipClasses(rule.freq === unit.freq)}
-              >
-                {unit.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {rule.freq === 'weekly' && (
-          <div className="flex items-center gap-2 border-t border-hairline px-3 py-2.5">
-            <span className="label-meta w-12 shrink-0 text-muted-foreground">
-              On
-            </span>
-            <div className="flex gap-1">
-              {WEEK_ORDER.map((day) => {
-                const selected = (rule.weekdays ?? []).includes(day)
-                return (
+                {RECURRENCE_PRESETS.map((preset) => (
                   <button
-                    key={day}
+                    key={preset.label}
                     type="button"
-                    onClick={() => toggleWeekday(day)}
-                    aria-pressed={selected}
-                    aria-label={WEEKDAY_LABEL[day]}
-                    className={cn(
-                      'size-6 rounded-sm border font-mono text-[10px] font-semibold transition-colors',
-                      selected
-                        ? 'border-foreground bg-foreground text-background'
-                        : 'border-hairline text-muted-foreground hover:border-hairline-strong hover:text-foreground',
+                    onClick={() => {
+                      onRecurrenceChange(preset.rule)
+                      setOpenLeaf(null)
+                    }}
+                    className={chipClasses(
+                      matchedPreset?.label === preset.label,
                     )}
                   >
-                    {WEEKDAY_LABEL[day].charAt(0)}
+                    {preset.label}
                   </button>
-                )
-              })}
-            </div>
-          </div>
-        )}
+                ))}
 
-        <div className="flex flex-wrap items-center gap-2 border-t border-hairline px-3 py-2.5">
-          <span className="label-meta w-12 shrink-0 text-muted-foreground">
-            Ends
-          </span>
-          <button
-            type="button"
-            onClick={() => setEnds('never')}
-            className={chipClasses(endsOn === 'never')}
-          >
-            Never
-          </button>
-          <button
-            type="button"
-            onClick={() => setEnds('on')}
-            className={chipClasses(endsOn === 'on')}
-          >
-            On date
-          </button>
-          <button
-            type="button"
-            onClick={() => setEnds('after')}
-            className={chipClasses(endsOn === 'after')}
-          >
-            After
-          </button>
+                <button
+                  type="button"
+                  aria-expanded={openLeaf === 'repeat'}
+                  onClick={() => {
+                    if (!recurrence) onRecurrenceChange(rule)
+                    setOpenLeaf((current) =>
+                      current === 'repeat' ? null : 'repeat',
+                    )
+                  }}
+                  className={chipClasses(openLeaf === 'repeat' || isCustomRule)}
+                >
+                  {isCustomRule ? describeRecurrence(rule) : 'Custom'}
+                </button>
+              </div>
+            ) : (
+              <span className="font-mono text-[11px] text-muted-foreground/60">
+                Give it a due date to repeat from
+              </span>
+            )}
+          </Band>
 
-          {endsOn === 'after' && (
-            <div className="flex items-center gap-1.5">
+          <Leaf open={openLeaf === 'repeat' && Boolean(due)}>
+            <div className="flex flex-wrap items-center gap-2 px-3 py-2.5">
+              <span className="label-meta w-12 shrink-0 text-muted-foreground">
+                Every
+              </span>
               <input
                 type="number"
                 min={1}
-                max={999}
-                value={rule.count ?? 10}
+                max={365}
+                value={rule.interval}
                 onChange={(e) =>
-                  patchRule({ count: Math.max(1, Number(e.target.value) || 1) })
+                  patchRule({
+                    interval: Math.max(1, Number(e.target.value) || 1),
+                  })
                 }
-                aria-label="Number of times"
-                className="h-7 w-14 rounded-sm border border-hairline bg-card px-1.5 text-center font-mono text-sm tabular-nums"
+                aria-label="Interval"
+                className="h-7 w-12 rounded-sm border border-hairline bg-card px-1.5 text-center font-mono text-sm tabular-nums"
               />
-              <span className="label-meta text-muted-foreground">times</span>
+              <div className="flex flex-wrap gap-1">
+                {FREQ_UNITS.map((unit) => (
+                  <button
+                    key={unit.freq}
+                    type="button"
+                    onClick={() =>
+                      patchRule({
+                        freq: unit.freq,
+                        weekdays:
+                          unit.freq === 'weekly' ? rule.weekdays : undefined,
+                      })
+                    }
+                    className={chipClasses(rule.freq === unit.freq)}
+                  >
+                    {unit.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          )}
-        </div>
 
-        {/* The same month sheet, so "until" is chosen the way every date is. */}
-        {endsOn === 'on' && (
-          <div className="border-t border-hairline">
-            <MonthSheet
-              selected={
-                rule.until
-                  ? parse(rule.until, 'yyyy-MM-dd', new Date())
-                  : undefined
-              }
-              onSelect={(day) => patchRule({ until: dateKey(day) })}
-            />
-          </div>
-        )}
-      </Leaf>
+            {rule.freq === 'weekly' && (
+              <div className="flex items-center gap-2 border-t border-hairline px-3 py-2.5">
+                <span className="label-meta w-12 shrink-0 text-muted-foreground">
+                  On
+                </span>
+                <div className="flex gap-1">
+                  {WEEK_ORDER.map((day) => {
+                    const selected = (rule.weekdays ?? []).includes(day)
+                    return (
+                      <button
+                        key={day}
+                        type="button"
+                        onClick={() => toggleWeekday(day)}
+                        aria-pressed={selected}
+                        aria-label={WEEKDAY_LABEL[day]}
+                        className={cn(
+                          'size-6 rounded-sm border font-mono text-[10px] font-semibold transition-colors',
+                          selected
+                            ? 'border-foreground bg-foreground text-background'
+                            : 'border-hairline text-muted-foreground hover:border-hairline-strong hover:text-foreground',
+                        )}
+                      >
+                        {WEEKDAY_LABEL[day].charAt(0)}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2 border-t border-hairline px-3 py-2.5">
+              <span className="label-meta w-12 shrink-0 text-muted-foreground">
+                Ends
+              </span>
+              <button
+                type="button"
+                onClick={() => setEnds('never')}
+                className={chipClasses(endsOn === 'never')}
+              >
+                Never
+              </button>
+              <button
+                type="button"
+                onClick={() => setEnds('on')}
+                className={chipClasses(endsOn === 'on')}
+              >
+                On date
+              </button>
+              <button
+                type="button"
+                onClick={() => setEnds('after')}
+                className={chipClasses(endsOn === 'after')}
+              >
+                After
+              </button>
+
+              {endsOn === 'after' && (
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    min={1}
+                    max={999}
+                    value={rule.count ?? 10}
+                    onChange={(e) =>
+                      patchRule({
+                        count: Math.max(1, Number(e.target.value) || 1),
+                      })
+                    }
+                    aria-label="Number of times"
+                    className="h-7 w-14 rounded-sm border border-hairline bg-card px-1.5 text-center font-mono text-sm tabular-nums"
+                  />
+                  <span className="label-meta text-muted-foreground">
+                    times
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* The same month sheet, so "until" is chosen the way every date is. */}
+            {endsOn === 'on' && (
+              <div className="border-t border-hairline">
+                <MonthSheet
+                  selected={
+                    rule.until
+                      ? parse(rule.until, 'yyyy-MM-dd', new Date())
+                      : undefined
+                  }
+                  onSelect={(day) => patchRule({ until: dateKey(day) })}
+                />
+              </div>
+            )}
+          </Leaf>
+        </>
+      )}
     </>
   )
 }

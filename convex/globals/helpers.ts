@@ -144,3 +144,55 @@ export const verifyTodoOnwership = async function VerifiesIfAPersonOwnsATodo({
     throw error
   }
 }
+
+/** What a parent row needs to print its progress: how much is left, and of what. */
+export type SubTaskProgress = {
+  total: number
+  done: number
+  remaining: number
+}
+
+export const subTaskProgress = async function CountsASingleTodosSubTasks({
+  ctx,
+  todoId,
+}: {
+  ctx: QueryCtx
+  todoId: Id<'todos'>
+}): Promise<SubTaskProgress> {
+  const subTasks = await ctx.db
+    .query('subTasks')
+    .withIndex('by_todo_id', (q) => q.eq('todoId', todoId))
+    .collect()
+
+  const done = subTasks.filter((subTask) => subTask.completed).length
+
+  return {
+    total: subTasks.length,
+    done,
+    remaining: subTasks.length - done,
+  }
+}
+
+/**
+ * Counts are read from the subtasks themselves rather than kept on the todo,
+ * so a row can never disagree with the list underneath it. Every query that
+ * returns todos passes through here, which is what lets a printed row show
+ * its progress without opening the entry.
+ */
+export const attachSubTaskProgress =
+  async function AttachesSubTaskProgressToTodos<
+    T extends { _id: Id<'todos'> },
+  >({
+    ctx,
+    todos,
+  }: {
+    ctx: QueryCtx
+    todos: Array<T>
+  }): Promise<Array<T & { subTasks: SubTaskProgress }>> {
+    return await Promise.all(
+      todos.map(async (todo) => ({
+        ...todo,
+        subTasks: await subTaskProgress({ ctx, todoId: todo._id }),
+      })),
+    )
+  }

@@ -3,10 +3,12 @@ import { convexQuery, useConvexMutation } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { describeRecurrence } from 'convex/todos/recurrence'
+import { toast } from 'sonner'
 import { StateHandler } from '../state-handler'
 import { CreateSubtaskDialog } from './add-subtask-dialog'
 import { TodoCheckInput } from './todo-check-input'
 import { SubtaskItem } from './subtask-item'
+import { SubtaskMeter } from './subtask-meter'
 import type { Id } from 'convex/_generated/dataModel'
 import type { Todo } from '@/types/global'
 import { Button } from '@/components/ui/button'
@@ -69,22 +71,58 @@ export function TodoSheet({
     }),
   )
 
-  const updateSubtask = useConvexMutation(api.todos.mutations.updateSubTask)
+  // The tally has to move the instant the box is ticked; waiting for the
+  // round trip would make the meter lag the checkbox it belongs to.
+  const toggleSubtask = useConvexMutation(
+    api.todos.mutations.toggleSubTask,
+  ).withOptimisticUpdate((localStore, args) => {
+    const current = localStore.getQuery(api.todos.queries.GetAllSubtasks, {
+      todoId: todo._id,
+    })
+    if (!current) return
+
+    const subtasks = current.subtasks.map((subtask) =>
+      subtask._id === args.subTaskId
+        ? { ...subtask, completed: args.completed }
+        : subtask,
+    )
+    const doneCount = subtasks.filter((subtask) => subtask.completed).length
+
+    localStore.setQuery(
+      api.todos.queries.GetAllSubtasks,
+      { todoId: todo._id },
+      {
+        subtasks,
+        progress: {
+          total: subtasks.length,
+          done: doneCount,
+          remaining: subtasks.length - doneCount,
+        },
+      },
+    )
+  })
   const deleteSubtask = useConvexMutation(api.todos.mutations.deleteSubTask)
 
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+
   const handleToggle = (id: Id<'subTasks'>, checked: boolean) => {
-    updateSubtask({ subTaskId: id, completed: checked })
+    // Ticking the last part files the entry itself, so say so.
+    const finishesTodo = checked && data.progress.remaining === 1
+
+    toggleSubtask({ subTaskId: id, completed: checked, timeZone }).then(() => {
+      if (finishesTodo) {
+        toast.success('Every subtask is done — this twodo is complete.')
+      }
+    })
   }
 
   const handleDelete = async (id: Id<'subTasks'>) => {
-    const p = deleteSubtask({ subTaskId: id })
-    await p
+    await deleteSubtask({ subTaskId: id, timeZone })
   }
 
   // The detail view is the entry enlarged: same margin, same gutter, only the
   // date is spelled out in full here because there is room for it.
   const due = gutterTime(todo.dueDate, todo.dueTime, todo.status)
-  const done = data.subtasks.filter((s) => s.completed).length
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -168,17 +206,28 @@ export function TodoSheet({
           <div className="flex items-center justify-between gap-2 border-b border-hairline pb-2">
             <h2 className="label-meta text-muted-foreground">Subtasks</h2>
             <div className="flex items-center gap-3">
-              {data.subtasks.length > 0 && (
+              {data.progress.total > 0 && (
                 <span
                   data-numeric
                   className="font-mono text-[11px] font-semibold text-muted-foreground"
                 >
-                  {done}/{data.subtasks.length}
+                  {data.progress.done}/{data.progress.total}
                 </span>
               )}
-              <CreateSubtaskDialog todoId={todo._id} />
+              <CreateSubtaskDialog todoId={todo._id} destination={todo.title} />
             </div>
           </div>
+
+          {/* The tally, spelled out: this is the panel where you strike the
+              marks, so it gets the full width of the sheet. */}
+          {data.progress.total > 0 && (
+            <SubtaskMeter
+              variant="bar"
+              total={data.progress.total}
+              done={data.progress.done}
+              className="border-b border-hairline py-2.5"
+            />
+          )}
 
           <StateHandler
             isFetching={isFetching}
@@ -197,7 +246,9 @@ export function TodoSheet({
                   <SubtaskItem
                     key={subtask._id}
                     st={subtask}
-                    onToggle={() => handleToggle(subtask._id, !subtask.completed)}
+                    onToggle={() =>
+                      handleToggle(subtask._id, !subtask.completed)
+                    }
                     onDelete={() => handleDelete(subtask._id)}
                   />
                 ))}

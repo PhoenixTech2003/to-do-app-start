@@ -130,6 +130,72 @@ async function deleteTodoCascade(ctx: MutationCtx, todoId: Id<'todos'>) {
   await ctx.db.delete(todoId)
 }
 
+/**
+ * A parent is only ever as done as its parts. After a tick, an untick or a
+ * deletion the parent is re-read from its subtasks: the last one ticked closes
+ * it, and reopening any one of them reopens it.
+ *
+ * Adding a subtask deliberately does not run through here — gaining fresh work
+ * should not un-file an entry you already closed by hand.
+ */
+async function syncTodoWithSubTasks({
+  ctx,
+  todoId,
+  timeZone,
+}: {
+  ctx: MutationCtx
+  todoId: Id<'todos'>
+  timeZone?: string
+}) {
+  const todo = await ctx.db.get('todos', todoId)
+  if (!todo) return
+
+  const subTasks = await ctx.db
+    .query('subTasks')
+    .withIndex('by_todo_id', (q) => q.eq('todoId', todoId))
+    .collect()
+
+  // An entry with no parts stands on its own; nothing to infer.
+  if (subTasks.length === 0) return
+
+  const allDone = subTasks.every((subTask) => subTask.completed)
+
+  if (allDone && todo.status !== 'completed') {
+    await ctx.db.patch('todos', todoId, { status: 'completed' })
+    await printNextOccurrence(ctx, todo, timeZone)
+    return
+  }
+
+  if (!allDone && todo.status === 'completed') {
+    await ctx.db.patch('todos', todoId, {
+      status: reopenedStatus(todo, timeZone),
+    })
+  }
+}
+
+/** Filing an entry by hand strikes whatever is left of its list. */
+async function completeSubTasksOf(ctx: MutationCtx, todoId: Id<'todos'>) {
+  const subTasks = await ctx.db
+    .query('subTasks')
+    .withIndex('by_todo_id', (q) => q.eq('todoId', todoId))
+    .collect()
+
+  for (const subTask of subTasks) {
+    if (!subTask.completed) {
+      await ctx.db.patch('subTasks', subTask._id, { completed: true })
+    }
+  }
+}
+
+/** Reopening restores the truth about the date: a past due entry is late again. */
+function reopenedStatus(todo: Doc<'todos'>, timeZone?: string) {
+  if (!todo.dueDate || !todo.dueTime || !timeZone) return 'pending' as const
+
+  return overdueRunTime(todo.dueDate, todo.dueTime, timeZone) < Date.now()
+    ? ('overdue' as const)
+    : ('pending' as const)
+}
+
 export const createTodo = mutation({
   args: {
     listId: v.optional(v.id('lists')),
@@ -229,9 +295,13 @@ export const deleteTodosForList = internalMutation({
     }
 
     if (todos.length === LIST_TODO_DELETE_BATCH_SIZE) {
-      await ctx.scheduler.runAfter(0, internal.todos.mutations.deleteTodosForList, {
-        listId: args.listId,
-      })
+      await ctx.scheduler.runAfter(
+        0,
+        internal.todos.mutations.deleteTodosForList,
+        {
+          listId: args.listId,
+        },
+      )
     }
   },
 })
@@ -264,6 +334,9 @@ export const toggleTodoStatus = mutation({
     // Only the crossing into completed prints the next entry, so ticking a row
     // off and on again does not fill the list with duplicates.
     if (todo && args.status === 'completed' && todo.status !== 'completed') {
+      // A finished entry cannot still owe work, so its parts are struck with
+      // it. Reopening does not undo them: ticks are not thrown away.
+      await completeSubTasksOf(ctx, args.todoId)
       await printNextOccurrence(ctx, todo, args.timeZone)
     }
   },
@@ -273,6 +346,8 @@ export const addSubTask = mutation({
   args: {
     todoId: v.id('todos'),
     title: v.string(),
+    description: v.optional(v.string()),
+    dueDate: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const loggedInUser = await authComponent.getAuthUser(ctx)
@@ -283,8 +358,13 @@ export const addSubTask = mutation({
       todoId: args.todoId,
     })
 
+    const { dueDate, dueTime } = getDueDateFields(args.dueDate)
+
     await ctx.db.insert('subTasks', {
       title: args.title,
+      description: args.description,
+      dueDate,
+      dueTime,
       todoId: args.todoId,
       completed: false,
       createdBy: loggedInUserId,
@@ -295,8 +375,9 @@ export const addSubTask = mutation({
 export const updateSubTask = mutation({
   args: {
     subTaskId: v.id('subTasks'),
-    title: v.optional(v.string()),
-    completed: v.optional(v.boolean()),
+    title: v.string(),
+    description: v.optional(v.string()),
+    dueDate: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const loggedInUser = await authComponent.getAuthUser(ctx)
@@ -312,16 +393,54 @@ export const updateSubTask = mutation({
       todoId: subTask.todoId,
     })
 
-    const patch: Record<string, unknown> = {}
-    if (typeof args.title === 'string') patch.title = args.title
-    if (typeof args.completed === 'boolean') patch.completed = args.completed
-    await ctx.db.patch('subTasks', args.subTaskId, patch)
+    // The form always submits the whole slip, so an omitted note or date is a
+    // cleared one.
+    const { dueDate, dueTime } = getDueDateFields(args.dueDate)
+    await ctx.db.patch('subTasks', args.subTaskId, {
+      title: args.title,
+      description: args.description,
+      dueDate,
+      dueTime,
+    })
+  },
+})
+
+export const toggleSubTask = mutation({
+  args: {
+    subTaskId: v.id('subTasks'),
+    completed: v.boolean(),
+    /** The caller's zone, so a printed successor is due at their local time. */
+    timeZone: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const loggedInUser = await authComponent.getAuthUser(ctx)
+    const subTask = await ctx.db.get('subTasks', args.subTaskId)
+    if (!subTask) {
+      throw new Error('Subtask does not exist')
+    }
+
+    await ensureTodoOwnership({
+      ctx,
+      userId: loggedInUser._id,
+      todoId: subTask.todoId,
+    })
+
+    await ctx.db.patch('subTasks', args.subTaskId, {
+      completed: args.completed,
+    })
+
+    await syncTodoWithSubTasks({
+      ctx,
+      todoId: subTask.todoId,
+      timeZone: args.timeZone,
+    })
   },
 })
 
 export const deleteSubTask = mutation({
   args: {
     subTaskId: v.id('subTasks'),
+    timeZone: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const loggedInUser = await authComponent.getAuthUser(ctx)
@@ -338,6 +457,13 @@ export const deleteSubTask = mutation({
     })
 
     await ctx.db.delete('subTasks', args.subTaskId)
+
+    // Removing the last thing standing in the way finishes the parent too.
+    await syncTodoWithSubTasks({
+      ctx,
+      todoId: subTask.todoId,
+      timeZone: args.timeZone,
+    })
   },
 })
 
@@ -379,7 +505,9 @@ export const updateTodo = mutation({
       dueTime: dueTime,
       recurrence: recurrence,
       // An entry edited mid-series keeps its place in the count.
-      recurrenceIndex: recurrence ? (currentTodo?.recurrenceIndex ?? 0) : undefined,
+      recurrenceIndex: recurrence
+        ? (currentTodo?.recurrenceIndex ?? 0)
+        : undefined,
       status: 'pending',
       priority: args.priority,
     }

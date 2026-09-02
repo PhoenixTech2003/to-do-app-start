@@ -2,7 +2,7 @@ import { paginationOptsValidator } from 'convex/server'
 import { v } from 'convex/values'
 import { query } from '../_generated/server'
 import { authComponent } from '../auth'
-import { attachTodoLocations } from './helpers'
+import { attachSubTaskProgress, attachTodoLocations } from './helpers'
 
 export const GetAllUpcomingTodos = query({
   args: {
@@ -48,7 +48,10 @@ export const GetAllUpcomingTodos = query({
 
     return {
       ...results,
-      page: await attachTodoLocations({ ctx, todos: results.page }),
+      page: await attachSubTaskProgress({
+        ctx,
+        todos: await attachTodoLocations({ ctx, todos: results.page }),
+      }),
     }
   },
 })
@@ -84,7 +87,10 @@ export const GetAllOverdueTodos = query({
 
     return {
       ...results,
-      page: await attachTodoLocations({ ctx, todos: results.page }),
+      page: await attachSubTaskProgress({
+        ctx,
+        todos: await attachTodoLocations({ ctx, todos: results.page }),
+      }),
     }
   },
 })
@@ -125,7 +131,10 @@ export const getTodosByDate = query({
     const todos = await todosQuery.collect()
 
     return {
-      todos: await attachTodoLocations({ ctx, todos }),
+      todos: await attachSubTaskProgress({
+        ctx,
+        todos: await attachTodoLocations({ ctx, todos }),
+      }),
     }
   },
 })
@@ -148,7 +157,10 @@ export const getTodosForDateRange = query({
       .collect()
 
     return {
-      todos: await attachTodoLocations({ ctx, todos }),
+      todos: await attachSubTaskProgress({
+        ctx,
+        todos: await attachTodoLocations({ ctx, todos }),
+      }),
     }
   },
 })

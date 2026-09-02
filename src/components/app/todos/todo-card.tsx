@@ -6,6 +6,7 @@ import {
   FolderInput,
   FolderOpen,
   Inbox,
+  ListChecks,
   Pencil,
   Repeat,
   Trash2,
@@ -17,6 +18,7 @@ import { toast } from 'sonner'
 import { api } from 'convex/_generated/api'
 import { DeleteDialog } from '../delete-dialog'
 import { TodoSheet } from './todo-sheet'
+import { SubtaskMeter } from './subtask-meter'
 import { TodoCheckInput } from './todo-check-input'
 import { UpdateTodoForm } from './update-todo-form'
 import { PRIORITY_SPINE } from './entry-fields'
@@ -115,10 +117,7 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
         return todo.listId === undefined
       }
 
-      const removeTodoFromQueries = (
-        queryRef: any,
-        global = false,
-      ) => {
+      const removeTodoFromQueries = (queryRef: any, global = false) => {
         const queries = localStore.getAllQueries(queryRef)
         for (const { args: qArgs, value } of queries) {
           if (!global && !matchesQueryList(qArgs)) continue
@@ -259,7 +258,9 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
           open={updateTodoDialogOpen}
           onOpenChange={updateTodoDialogHandler}
           label="Edit entry"
-          destination={todo.recurrence ? describeRecurrence(todo.recurrence) : undefined}
+          destination={
+            todo.recurrence ? describeRecurrence(todo.recurrence) : undefined
+          }
           description="Change this twodo's title, note, due date, repetition or priority."
         >
           <UpdateTodoForm
@@ -378,6 +379,14 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
                       {description}
                     </p>
                   )}
+                  {/* What is left of this entry, without opening it. */}
+                  {todo.subTasks.total > 0 && (
+                    <SubtaskMeter
+                      className="mt-0.5"
+                      total={todo.subTasks.total}
+                      done={todo.subTasks.done}
+                    />
+                  )}
                   {todo.location && (
                     <div className="mt-0.5 flex flex-wrap items-center gap-2">
                       <TodoLocationChip location={todo.location} />
@@ -452,6 +461,14 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
                   <Repeat className="size-3 text-muted-foreground" />
                   <span className="font-mono text-[10px] text-muted-foreground">
                     {describeRecurrence(todo.recurrence)}
+                  </span>
+                </div>
+              )}
+              {todo.subTasks.total > 0 && (
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <ListChecks className="size-3 text-muted-foreground" />
+                  <span className="font-mono text-[10px] text-muted-foreground">
+                    {todo.subTasks.done} of {todo.subTasks.total} subtasks done
                   </span>
                 </div>
               )}

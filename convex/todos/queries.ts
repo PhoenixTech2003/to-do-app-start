@@ -2,9 +2,10 @@ import { paginationOptsValidator } from 'convex/server'
 import { v } from 'convex/values'
 import { authComponent } from '../auth'
 import { query } from '../_generated/server'
-import { verifyListOnwership } from '../globals/helpers'
+import { attachSubTaskProgress, verifyListOnwership } from '../globals/helpers'
+import type { PaginationOptions, PaginationResult } from 'convex/server'
 import type { QueryCtx } from '../_generated/server'
-import type { Id } from '../_generated/dataModel'
+import type { Doc, Id } from '../_generated/dataModel'
 
 async function getLoggedInUserId(ctx: QueryCtx) {
   const loggedInUser = await authComponent.getAuthUser(ctx)
@@ -28,6 +29,34 @@ async function ensureListOwnership({
 
   if (!isOwnerOfList) {
     throw new Error('You are not the owner of this list')
+  }
+}
+
+/** Any todo query that can be paged, however it was built. */
+type PaginatableTodos = {
+  paginate: (
+    paginationOpts: PaginationOptions,
+  ) => Promise<PaginationResult<Doc<'todos'>>>
+}
+
+/**
+ * Every page of todos leaves here carrying its subtask progress, so a printed
+ * row can show what is left without the reader opening it.
+ */
+async function paginateTodos({
+  ctx,
+  todosQuery,
+  paginationOpts,
+}: {
+  ctx: QueryCtx
+  todosQuery: PaginatableTodos
+  paginationOpts: PaginationOptions
+}) {
+  const results = await todosQuery.paginate(paginationOpts)
+
+  return {
+    ...results,
+    page: await attachSubTaskProgress({ ctx, todos: results.page }),
   }
 }
 
@@ -160,7 +189,7 @@ export const GetAllTodos = query({
 
     return {
       listDetails,
-      todos,
+      todos: await attachSubTaskProgress({ ctx, todos }),
     }
   },
 })
@@ -192,7 +221,11 @@ export const GetPendingTodos = query({
       args.priority,
     )
 
-    return await todosQuery.paginate(args.paginationOpts)
+    return await paginateTodos({
+      ctx,
+      todosQuery,
+      paginationOpts: args.paginationOpts,
+    })
   },
 })
 
@@ -223,7 +256,11 @@ export const GetCompletedTodos = query({
       args.priority,
     )
 
-    return await todosQuery.paginate(args.paginationOpts)
+    return await paginateTodos({
+      ctx,
+      todosQuery,
+      paginationOpts: args.paginationOpts,
+    })
   },
 })
 
@@ -254,7 +291,11 @@ export const GetOverDueTodos = query({
       args.priority,
     )
 
-    return await todosQuery.paginate(args.paginationOpts)
+    return await paginateTodos({
+      ctx,
+      todosQuery,
+      paginationOpts: args.paginationOpts,
+    })
   },
 })
 
@@ -277,7 +318,11 @@ export const GetInboxPendingTodos = query({
       args.priority,
     )
 
-    return await todosQuery.paginate(args.paginationOpts)
+    return await paginateTodos({
+      ctx,
+      todosQuery,
+      paginationOpts: args.paginationOpts,
+    })
   },
 })
 
@@ -300,7 +345,11 @@ export const GetInboxCompletedTodos = query({
       args.priority,
     )
 
-    return await todosQuery.paginate(args.paginationOpts)
+    return await paginateTodos({
+      ctx,
+      todosQuery,
+      paginationOpts: args.paginationOpts,
+    })
   },
 })
 
@@ -323,7 +372,11 @@ export const GetInboxOverdueTodos = query({
       args.priority,
     )
 
-    return await todosQuery.paginate(args.paginationOpts)
+    return await paginateTodos({
+      ctx,
+      todosQuery,
+      paginationOpts: args.paginationOpts,
+    })
   },
 })
 
@@ -332,13 +385,33 @@ export const GetAllSubtasks = query({
     todoId: v.id('todos'),
   },
   handler: async (ctx, args) => {
+    const loggedInUserId = await getLoggedInUserId(ctx)
+    const todo = await ctx.db.get('todos', args.todoId)
+
+    // A sheet can outlive its entry for a beat — a deleted todo has no parts
+    // rather than being an error.
+    if (!todo) {
+      return { subtasks: [], progress: { total: 0, done: 0, remaining: 0 } }
+    }
+
+    if (todo.createdBy !== loggedInUserId) {
+      throw new Error('You are not the owner of this todo')
+    }
+
     const subtasks = await ctx.db
       .query('subTasks')
       .withIndex('by_todo_id', (q) => q.eq('todoId', args.todoId))
       .collect()
 
+    const done = subtasks.filter((subtask) => subtask.completed).length
+
     return {
       subtasks,
+      progress: {
+        total: subtasks.length,
+        done,
+        remaining: subtasks.length - done,
+      },
     }
   },
 })

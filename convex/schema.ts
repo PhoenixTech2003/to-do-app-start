@@ -63,9 +63,17 @@ export default defineSchema({
     .index('by_createdBy_dueDate', ['createdBy', 'dueDate'])
     .index('by_due_date', ['dueDate'])
     .index('by_status_createdBy_listId', ['status', 'createdBy', 'listId']),
+  /**
+   * A subtask is a task in its own right: it carries the same particulars a
+   * todo does — a title, a note and a due date — but it belongs to a parent
+   * and settles that parent's status when the last one is ticked off.
+   */
   subTasks: defineTable({
     todoId: v.id('todos'),
     title: v.string(),
+    description: v.optional(v.string()),
+    dueDate: v.optional(v.string()),
+    dueTime: v.optional(v.string()),
     completed: v.boolean(),
     createdBy: v.string(),
   }).index('by_todo_id', ['todoId']),

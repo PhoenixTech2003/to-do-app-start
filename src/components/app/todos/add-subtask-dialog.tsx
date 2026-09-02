@@ -1,45 +1,42 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 
-import { CreateSubtaskForm } from './create-subtask-form'
+import { CreateSubtaskForm } from './subtask-form'
+import { EntrySlip } from './entry-slip'
 import type { Id } from 'convex/_generated/dataModel'
-
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
 
 interface CreateSubtaskDialogProps {
   todoId: Id<'todos'>
+  /** The entry this part is filed under, printed in the slip's header band. */
+  destination?: string
 }
 
-export function CreateSubtaskDialog({ todoId }: CreateSubtaskDialogProps) {
+export function CreateSubtaskDialog({
+  todoId,
+  destination,
+}: CreateSubtaskDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
 
-  function setCreateDialogIsOpen(value: boolean) {
-    setIsOpen(value)
-  }
   return (
-    <Dialog open={isOpen} onOpenChange={setCreateDialogIsOpen}>
-      <DialogTrigger>
-        <Plus />
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create Subtask</DialogTitle>
-          <DialogDescription>
-            This will create a new subtask for your Twodo
-          </DialogDescription>
-        </DialogHeader>
-        <CreateSubtaskForm
-          todoId={todoId}
-          setCreateDialogIsOpen={setCreateDialogIsOpen}
-        />
-      </DialogContent>
-    </Dialog>
+    <>
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        aria-label="Add subtask"
+        className="rounded-sm p-1 text-muted-foreground transition-colors duration-[var(--dur-2)] hover:bg-accent/60 hover:text-foreground"
+      >
+        <Plus className="size-4" />
+      </button>
+
+      <EntrySlip
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        label="New part"
+        destination={destination}
+        description="Write a subtask, give it a note and choose when it is due."
+      >
+        <CreateSubtaskForm todoId={todoId} setCreateDialogIsOpen={setIsOpen} />
+      </EntrySlip>
+    </>
   )
 }
