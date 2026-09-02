@@ -66,3 +66,23 @@ export function splitTitleAtNaturalDate(
     after: title.slice(end),
   }
 }
+
+/** Removes a detected expression while keeping the remaining title tidy. */
+export function titleWithoutNaturalDate(
+  title: string,
+  match: NaturalDateMatch | undefined = parseNaturalDate(title),
+) {
+  if (!match) return title.trim()
+
+  const parts = splitTitleAtNaturalDate(title, match)
+  const before = parts.before.replace(/[\s,;:–—-]+$/u, '')
+  const after = parts.after.replace(/^[\s,;:–—-]+/u, '')
+  const separator = before && after && !/^[.!?]/u.test(after) ? ' ' : ''
+  const cleaned = `${before}${separator}${after}`
+    .replace(/\s+([,.!?])/gu, '$1')
+    .trim()
+
+  // A date expression by itself is still a valid task title. Never save an
+  // empty or punctuation-only title after removing it.
+  return /[\p{L}\p{N}]/u.test(cleaned) ? cleaned : title.trim()
+}

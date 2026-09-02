@@ -3,6 +3,7 @@ import {
   naturalDateExpressionKey,
   parseNaturalDate,
   splitTitleAtNaturalDate,
+  titleWithoutNaturalDate,
 } from './natural-date'
 
 const REFERENCE_DATE = new Date(2026, 8, 2, 10, 30)
@@ -82,5 +83,23 @@ describe('parseNaturalDate', () => {
       highlighted: 'tomorrow at 9am',
       after: ' please',
     })
+  })
+
+  it.each([
+    ['Pay rent tomorrow at 9am', 'Pay rent'],
+    ['Tomorrow at 9am, pay rent', 'pay rent'],
+    ['Pay rent, tomorrow at 9am.', 'Pay rent.'],
+    ['Pay rent tomorrow at 9am please', 'Pay rent please'],
+  ])('removes the parsed expression from "%s"', (title, expected) => {
+    const match = parseNaturalDate(title, REFERENCE_DATE)
+
+    expect(titleWithoutNaturalDate(title, match)).toBe(expected)
+  })
+
+  it('keeps a date-only title rather than saving an empty task', () => {
+    const title = 'Tomorrow at 9am'
+    const match = parseNaturalDate(title, REFERENCE_DATE)
+
+    expect(titleWithoutNaturalDate(title, match)).toBe(title)
   })
 })

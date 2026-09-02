@@ -11,12 +11,15 @@ import {
   PriorityMargin,
   WhenBands,
 } from './entry-fields'
+import { DateAwareTitleInput } from './date-aware-title-input'
 import type z from 'zod'
 import type { Priority } from './entry-fields'
 import type { Todo } from '@/types/global'
 import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
 import { createTodoFormSchema } from '@/validation/create-todo-form-schema'
+import { useNaturalDueDate } from '@/hooks/use-natural-due-date'
+import { titleWithoutNaturalDate } from '@/lib/natural-date'
 
 interface UpdateTodoFormProps {
   todo: Todo
@@ -52,13 +55,14 @@ export function UpdateTodoForm({
       onSubmit: createTodoFormSchema,
     },
     onSubmit: (formData) => {
+      const title = titleWithoutNaturalDate(formData.value.title)
       const usersTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
       const scheduledFunctionRunTime = formData.value.dueDate
         ? formData.value.dueDate.getTime() + 60000
         : undefined
       const updateTodoPromise = updateTodo({
         todoId: todo._id,
-        title: formData.value.title,
+        title,
         description: formData.value.description,
         dueDate: formData.value.dueDate
           ? formatInTimeZone(
@@ -75,12 +79,25 @@ export function UpdateTodoForm({
         loading: 'Saving your changes…',
         success: () => {
           setUpdateDialogIsOpen(false)
-          return `"${formData.value.title}" updated`
+          return `"${title}" updated`
         },
         error: 'The twodo could not be updated. Try again.',
       })
     },
   })
+
+  const {
+    match: naturalDateMatch,
+    readTitle,
+    markManual,
+  } = useNaturalDueDate(
+    (date) => {
+      form.setFieldValue('dueDate', date)
+      // A rule with nothing to repeat from is no rule at all.
+      if (!date) form.setFieldValue('recurrence', undefined)
+    },
+    { title: todo.title, dueDate: parsedDate },
+  )
 
   return (
     <form
@@ -120,18 +137,21 @@ export function UpdateTodoForm({
                       field.state.meta.isTouched && !field.state.meta.isValid
                     return (
                       <>
-                        <input
+                        <DateAwareTitleInput
                           id={field.name}
                           name={field.name}
                           value={field.state.value}
                           onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
+                          onValueChange={(value) => {
+                            field.handleChange(value)
+                            readTitle(value)
+                          }}
+                          match={naturalDateMatch}
                           aria-invalid={isInvalid}
                           aria-label="Title"
                           placeholder="Write the next line"
                           autoComplete="off"
                           autoFocus
-                          className="w-full bg-transparent text-[15px] leading-snug font-medium placeholder:text-muted-foreground/50 focus-visible:outline-none"
                         />
                         {isInvalid && (
                           <p className="font-mono text-[11px] text-destructive">
@@ -174,7 +194,10 @@ export function UpdateTodoForm({
           children={({ dueDate, recurrence }) => (
             <WhenBands
               due={dueDate}
-              onDueChange={(date) => form.setFieldValue('dueDate', date)}
+              onDueChange={(date) => {
+                markManual()
+                form.setFieldValue('dueDate', date)
+              }}
               recurrence={recurrence}
               onRecurrenceChange={(rule) =>
                 form.setFieldValue('recurrence', rule)

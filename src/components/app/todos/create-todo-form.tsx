@@ -14,10 +14,12 @@ import { DateAwareTitleInput } from './date-aware-title-input'
 import type z from 'zod'
 import type { Id } from 'convex/_generated/dataModel'
 import type { Priority } from './entry-fields'
+import type { Todo } from '@/types/global'
 import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
 import { createTodoFormSchema } from '@/validation/create-todo-form-schema'
 import { useNaturalDueDate } from '@/hooks/use-natural-due-date'
+import { titleWithoutNaturalDate } from '@/lib/natural-date'
 
 interface CreateTodoFormProps {
   listId?: Id<'lists'>
@@ -28,7 +30,50 @@ export function CreateTodoForm({
   listId,
   setCreateDialogIsOpen,
 }: CreateTodoFormProps) {
-  const addTodo = useConvexMutation(api.todos.mutations.createTodo)
+  const addTodo = useConvexMutation(
+    api.todos.mutations.createTodo,
+  ).withOptimisticUpdate((localStore, args) => {
+    if (!args.listId) return
+
+    const [dueDate, dueTime] = args.dueDate?.split('T') ?? []
+    const optimisticTodo: Todo = {
+      _id: `optimistic:${crypto.randomUUID()}` as Id<'todos'>,
+      _creationTime: Date.now(),
+      listId: args.listId,
+      title: args.title,
+      description: args.description,
+      status: 'pending',
+      dueDate,
+      dueTime,
+      recurrence: dueDate ? args.recurrence : undefined,
+      recurrenceIndex: dueDate && args.recurrence ? 0 : undefined,
+      priority: args.priority,
+      createdBy: 'optimistic',
+      subTasks: { total: 0, done: 0, remaining: 0 },
+    }
+
+    const pendingQueries = localStore.getAllQueries(
+      api.todos.queries.GetPendingTodos,
+    )
+
+    for (const { args: queryArgs, value } of pendingQueries) {
+      if (queryArgs.listId !== args.listId || !value) continue
+
+      const isFirstPage = queryArgs.paginationOpts.cursor == null
+      const searchTerm = queryArgs.searchTerm?.trim().toLowerCase()
+      const matchesSearch =
+        !searchTerm || args.title.toLowerCase().includes(searchTerm)
+      const matchesPriority =
+        !queryArgs.priority || queryArgs.priority === args.priority
+
+      if (!isFirstPage || !matchesSearch || !matchesPriority) continue
+
+      localStore.setQuery(api.todos.queries.GetPendingTodos, queryArgs, {
+        ...value,
+        page: [optimisticTodo, ...value.page],
+      })
+    }
+  })
 
   const defaultValues: z.input<typeof createTodoFormSchema> = {
     title: '',
@@ -42,13 +87,14 @@ export function CreateTodoForm({
       onSubmit: createTodoFormSchema,
     },
     onSubmit: (formData) => {
+      const title = titleWithoutNaturalDate(formData.value.title)
       const usersTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
       const scheduledFunctionRunTime = formData.value.dueDate
         ? formData.value.dueDate.getTime() + 60000
         : undefined
       const addTodoPromise = addTodo({
         listId,
-        title: formData.value.title,
+        title,
         description: formData.value.description,
         dueDate: formData.value.dueDate
           ? formatInTimeZone(
@@ -65,7 +111,7 @@ export function CreateTodoForm({
         loading: 'Adding your twodo…',
         success: () => {
           setCreateDialogIsOpen(false)
-          return `"${formData.value.title}" added`
+          return `"${title}" added`
         },
         error: 'The twodo could not be added. Try again.',
       })
