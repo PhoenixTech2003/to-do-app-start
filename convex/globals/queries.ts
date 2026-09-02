@@ -42,6 +42,7 @@ export const GetAllUpcomingTodos = query({
             q.gte(q.field('dueDate'), args.today),
           ),
         )
+        .order('desc')
     }
 
     const results = await todosQuery.paginate(args.paginationOpts)
@@ -81,6 +82,7 @@ export const GetAllOverdueTodos = query({
         .withIndex('by_createdBy_status', (q) =>
           q.eq('createdBy', loggedInUserId).eq('status', 'overdue'),
         )
+        .order('desc')
     }
 
     const results = await todosQuery.paginate(args.paginationOpts)

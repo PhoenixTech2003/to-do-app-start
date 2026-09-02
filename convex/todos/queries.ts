@@ -109,6 +109,7 @@ function buildListTodosQuery({
         .eq('createdBy', loggedInUserId)
         .eq('listId', listId),
     )
+    .order('desc')
 }
 
 function buildInboxTodosQuery({
@@ -140,6 +141,7 @@ function buildInboxTodosQuery({
       q.eq('createdBy', loggedInUserId).eq('status', status),
     )
     .filter((q) => q.eq(q.field('listId'), undefined))
+    .order('desc')
 }
 
 export const GetListDetails = query({
