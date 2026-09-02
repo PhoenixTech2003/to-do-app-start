@@ -14,7 +14,6 @@ import { DateAwareTitleInput } from './date-aware-title-input'
 import type z from 'zod'
 import type { Id } from 'convex/_generated/dataModel'
 import type { Priority } from './entry-fields'
-import type { Todo } from '@/types/global'
 import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
 import { createTodoFormSchema } from '@/validation/create-todo-form-schema'
@@ -30,50 +29,7 @@ export function CreateTodoForm({
   listId,
   setCreateDialogIsOpen,
 }: CreateTodoFormProps) {
-  const addTodo = useConvexMutation(
-    api.todos.mutations.createTodo,
-  ).withOptimisticUpdate((localStore, args) => {
-    if (!args.listId) return
-
-    const [dueDate, dueTime] = args.dueDate?.split('T') ?? []
-    const optimisticTodo: Todo = {
-      _id: `optimistic:${crypto.randomUUID()}` as Id<'todos'>,
-      _creationTime: Date.now(),
-      listId: args.listId,
-      title: args.title,
-      description: args.description,
-      status: 'pending',
-      dueDate,
-      dueTime,
-      recurrence: dueDate ? args.recurrence : undefined,
-      recurrenceIndex: dueDate && args.recurrence ? 0 : undefined,
-      priority: args.priority,
-      createdBy: 'optimistic',
-      subTasks: { total: 0, done: 0, remaining: 0 },
-    }
-
-    const pendingQueries = localStore.getAllQueries(
-      api.todos.queries.GetPendingTodos,
-    )
-
-    for (const { args: queryArgs, value } of pendingQueries) {
-      if (queryArgs.listId !== args.listId || !value) continue
-
-      const isFirstPage = queryArgs.paginationOpts.cursor == null
-      const searchTerm = queryArgs.searchTerm?.trim().toLowerCase()
-      const matchesSearch =
-        !searchTerm || args.title.toLowerCase().includes(searchTerm)
-      const matchesPriority =
-        !queryArgs.priority || queryArgs.priority === args.priority
-
-      if (!isFirstPage || !matchesSearch || !matchesPriority) continue
-
-      localStore.setQuery(api.todos.queries.GetPendingTodos, queryArgs, {
-        ...value,
-        page: [optimisticTodo, ...value.page],
-      })
-    }
-  })
+  const addTodo = useConvexMutation(api.todos.mutations.createTodo)
 
   const defaultValues: z.input<typeof createTodoFormSchema> = {
     title: '',
