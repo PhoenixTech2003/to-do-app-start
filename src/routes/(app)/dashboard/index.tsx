@@ -1,12 +1,11 @@
 import { Search } from 'lucide-react'
-import { api } from 'convex/_generated/api'
-import { usePaginatedQuery } from 'convex/react'
 import { useEffect, useRef, useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useDebouncer } from '@tanstack/react-pacer'
 import { formatForDisplay } from '@tanstack/react-hotkeys'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { z } from 'zod'
+import { useLocalPage } from '@/state/hooks'
 import { CreateWorkspaceDialog } from '@/components/app/dashboard/create-workspace-dialog'
 import { DashboardLoadingSkeleton } from '@/components/app/dashboard/dashboard-loading-skeleton'
 import { DashboardPageSkeleton } from '@/components/app/dashboard/dashboard-page-skeleton'
@@ -52,8 +51,8 @@ function DashboardPage() {
     results: data,
     status: paginationStatus,
     loadMore,
-  } = usePaginatedQuery(
-    api.dashboard.queries.getUserWorkspaces,
+  } = useLocalPage(
+    'getUserWorkspaces',
     { searchTerm: searchTerm },
     { initialNumItems: 6 },
   )

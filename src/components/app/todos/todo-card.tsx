@@ -1,5 +1,3 @@
-import { convexQuery, useConvexMutation } from '@convex-dev/react-query'
-import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import {
   ExternalLink,
@@ -15,7 +13,6 @@ import { describeRecurrence } from 'convex/todos/recurrence'
 import { forwardRef, useMemo, useState } from 'react'
 import { motion } from 'motion/react'
 import { toast } from 'sonner'
-import { api } from 'convex/_generated/api'
 import { DeleteDialog } from '../delete-dialog'
 import { TodoSheet } from './todo-sheet'
 import { SubtaskMeter } from './subtask-meter'
@@ -25,6 +22,7 @@ import { PRIORITY_SPINE } from './entry-fields'
 import { EntrySlip } from './entry-slip'
 import type { Id } from 'convex/_generated/dataModel'
 import type { Todo, TodoLocation } from '@/types/global'
+import { useLocalMutation, useLocalQuery } from '@/state/hooks'
 import { cn, truncateText } from '@/lib/utils'
 import { GUTTER } from '@/components/app/docket'
 import { gutterInk, gutterTime } from '@/lib/todo-time'
@@ -99,68 +97,12 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
     const [deleteTodoDialogOpen, setDeleteTodoDialogOpen] = useState(false)
     const [moveToListOpen, setMoveToListOpen] = useState(false)
     const isMobile = useIsMobile()
-    const { data: availableLists = [] } = useQuery(
-      convexQuery(api.workspace.queries.GetUserListsForMove, {
-        searchTerm: undefined,
-      }),
-    )
-    const deleteTodo = useConvexMutation(
-      api.todos.mutations.deleteTodo,
-    ).withOptimisticUpdate((localStore, mutationArgs) => {
-      const { todoId: mutationTodoId } = mutationArgs
-
-      const matchesQueryList = (queryArgs: Record<string, unknown>) => {
-        if ('listId' in queryArgs) {
-          return queryArgs.listId === todo.listId
-        }
-
-        return todo.listId === undefined
-      }
-
-      const removeTodoFromQueries = (queryRef: any, global = false) => {
-        const queries = localStore.getAllQueries(queryRef)
-        for (const { args: qArgs, value } of queries) {
-          if (!global && !matchesQueryList(qArgs)) continue
-          if (!value) continue
-
-          const pageContainsTodo = value.page.some(
-            (t: Todo) => t._id === mutationTodoId,
-          )
-          if (!pageContainsTodo) continue
-
-          localStore.setQuery(queryRef, qArgs, {
-            ...value,
-            page: value.page.filter((t: Todo) => t._id !== mutationTodoId),
-          })
-        }
-      }
-
-      removeTodoFromQueries(api.todos.queries.GetPendingTodos)
-      removeTodoFromQueries(api.todos.queries.GetCompletedTodos)
-      removeTodoFromQueries(api.todos.queries.GetOverDueTodos)
-      removeTodoFromQueries(api.todos.queries.GetInboxPendingTodos)
-      removeTodoFromQueries(api.todos.queries.GetInboxCompletedTodos)
-      removeTodoFromQueries(api.todos.queries.GetInboxOverdueTodos)
-      removeTodoFromQueries(api.globals.queries.GetAllUpcomingTodos, true)
-      removeTodoFromQueries(api.globals.queries.GetAllOverdueTodos, true)
-
-      const byDateQueries = localStore.getAllQueries(
-        api.globals.queries.getTodosByDate,
-      )
-      for (const { args: qArgs, value: byDateData } of byDateQueries) {
-        if (!byDateData) continue
-
-        const hasTodo = byDateData.todos.some(
-          (t: Todo) => t._id === mutationTodoId,
-        )
-        if (!hasTodo) continue
-
-        localStore.setQuery(api.globals.queries.getTodosByDate, qArgs, {
-          todos: byDateData.todos.filter((t: Todo) => t._id !== mutationTodoId),
-        })
-      }
+    const availableLists = useLocalQuery('GetUserListsForMove', {
+      searchTerm: undefined,
     })
-    const moveTodoToList = useConvexMutation(api.todos.mutations.moveTodoToList)
+    const deleteTodo = useLocalMutation('deleteTodo')
+    const status = todo.status
+    const moveTodoToList = useLocalMutation('moveTodoToList')
 
     const title = isMobile ? truncateText(todo.title) : todo.title
     const description = isMobile
@@ -174,7 +116,7 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
 
     // The gutter. Distance, not a date — the absolute date rides along in the
     // row's title so nothing is actually lost.
-    const due = gutterTime(todo.dueDate, todo.dueTime, todo.status)
+    const due = gutterTime(todo.dueDate, todo.dueTime, status)
     const repeats = todo.recurrence
       ? `, ${describeRecurrence(todo.recurrence).toLowerCase()}`
       : ''
@@ -206,18 +148,10 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
     }
 
     function handleTodoDelete() {
-      const deleteTodoPromise = deleteTodo({
-        todoId: todo._id,
-      })
-      toast.promise(deleteTodoPromise, {
-        loading: 'Deleting todo please wait',
-        success: () => {
-          deleteTodoDialogHandler(false)
-          setSheetIsOpen(false)
-          return 'Twodo has been deleted successfully'
-        },
-        error: 'Failed to delete the Twodo',
-      })
+      void deleteTodo({ todoId: todo._id })
+      deleteTodoDialogHandler(false)
+      setSheetIsOpen(false)
+      toast.success('Twodo deleted on this device')
     }
 
     function handleMoveToList(listId?: Id<'lists'>) {
@@ -350,7 +284,7 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
                       'bg-card transition-colors duration-[var(--dur-2)] ease-[var(--ease-standard)] hover:bg-accent/45'
                     : // A discrete object, for lanes you drag between.
                       'rounded-md border border-hairline bg-card shadow-[inset_0_1px_0_0_var(--edge-highlight),var(--elev-1)] transition-[box-shadow,border-color] duration-[var(--dur-2)] ease-[var(--ease-out)] hover:border-hairline-strong hover:shadow-[inset_0_1px_0_0_var(--edge-highlight),var(--elev-3)]',
-                  todo.status === 'completed' && 'spine-drained',
+                  status === 'completed' && 'spine-drained',
                 )}
               >
                 <div onClick={(e) => e.stopPropagation()} className="mt-px">
@@ -361,7 +295,7 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
                   <h3
                     className={cn(
                       'text-sm leading-snug font-medium',
-                      todo.status === 'completed' &&
+                      status === 'completed' &&
                         'text-muted-foreground line-through decoration-muted-foreground/50',
                     )}
                   >
@@ -401,7 +335,7 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
                   className={cn(
                     'mt-0.5 font-mono text-[11px] leading-5 font-semibold',
                     GUTTER,
-                    todo.status === 'completed'
+                    status === 'completed'
                       ? 'text-muted-foreground/40'
                       : gutterInk[due.tone],
                   )}
@@ -432,13 +366,13 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
                 <span
                   className={cn(
                     'shrink-0 font-mono text-[9px] font-bold uppercase tracking-[0.15em] rounded-full px-1.5 py-0.5',
-                    todo.status === 'completed' && 'bg-chart-3/15 text-chart-3',
-                    todo.status === 'pending' && 'bg-chart-4/15 text-chart-4',
-                    todo.status === 'overdue' &&
+                    status === 'completed' && 'bg-chart-3/15 text-chart-3',
+                    status === 'pending' && 'bg-chart-4/15 text-chart-4',
+                    status === 'overdue' &&
                       'bg-destructive/15 text-destructive',
                   )}
                 >
-                  {todo.status}
+                  {status}
                 </span>
               </div>
               {todo.priority !== 'none' && (

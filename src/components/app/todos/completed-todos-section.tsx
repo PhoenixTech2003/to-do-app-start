@@ -1,11 +1,10 @@
-import { usePaginatedQuery } from 'convex/react'
-import { api } from 'convex/_generated/api'
 import { PaginationController } from '../pagination-controller'
 import { StateHandler } from '../state-handler'
 import { Docket, DocketEmpty, DocketRowsSkeleton } from '../docket'
 import { TodoCard } from './todo-card'
 import { TodoSectionHeading } from './section-heading'
 import type { Id } from 'convex/_generated/dataModel'
+import { useLocalPage } from '@/state/hooks'
 
 interface CompletedTodosSectionProps {
   listId: Id<'lists'>
@@ -26,7 +25,9 @@ function CompletedTodosEmptyState() {
   return (
     <Docket className="mb-4">
       <TodoSectionHeading tone="completed" title="Completed" />
-      <DocketEmpty>Nothing completed yet. Check a task off to see it here.</DocketEmpty>
+      <DocketEmpty>
+        Nothing completed yet. Check a task off to see it here.
+      </DocketEmpty>
     </Docket>
   )
 }
@@ -41,8 +42,8 @@ export function CompletedTodosSection({
     status: paginationStatus,
     isLoading: isPaginatedLoading,
     loadMore,
-  } = usePaginatedQuery(
-    api.todos.queries.GetCompletedTodos,
+  } = useLocalPage(
+    'GetCompletedTodos',
     {
       listId,
       searchTerm: searchTerm || undefined,

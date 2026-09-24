@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { useMutation } from 'convex/react'
-import { api } from 'convex/_generated/api'
 import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
-import { CATEGORIES, CATEGORY_META  } from './habit-helpers'
-import type {Category} from './habit-helpers';
+import { CATEGORIES, CATEGORY_META } from './habit-helpers'
+import type { Category } from './habit-helpers'
+import { useLocalMutation } from '@/state/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -32,7 +31,7 @@ export function CreateHabitDialog() {
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState<Category>('productivity')
   const [frequency, setFrequency] = useState<'daily' | 'weekly'>('daily')
-  const createHabit = useMutation(api.habits.mutations.createHabit)
+  const createHabit = useLocalMutation('createHabit')
 
   function reset() {
     setTitle('')
@@ -148,9 +147,7 @@ export function CreateHabitDialog() {
               </label>
               <Select
                 value={frequency}
-                onValueChange={(v) =>
-                  setFrequency(v as 'daily' | 'weekly')
-                }
+                onValueChange={(v) => setFrequency(v as 'daily' | 'weekly')}
               >
                 <SelectTrigger>
                   <SelectValue />

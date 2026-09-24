@@ -1,11 +1,10 @@
-import { usePaginatedQuery } from 'convex/react'
-import { api } from 'convex/_generated/api'
 import { PaginationController } from '../pagination-controller'
 import { StateHandler } from '../state-handler'
 import { Docket, DocketEmpty, DocketRowsSkeleton } from '../docket'
 import { TodoCard } from './todo-card'
 import { TodoSectionHeading } from './section-heading'
 import type { Id } from 'convex/_generated/dataModel'
+import { useLocalPage } from '@/state/hooks'
 
 interface OverdueTodosSectionProps {
   listId: Id<'lists'>
@@ -41,8 +40,8 @@ export function OverdueTodosSection({
     status: paginationStatus,
     isLoading: isPaginatedLoading,
     loadMore,
-  } = usePaginatedQuery(
-    api.todos.queries.GetOverDueTodos,
+  } = useLocalPage(
+    'GetOverDueTodos',
     {
       listId,
       searchTerm: searchTerm || undefined,

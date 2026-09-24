@@ -1,8 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { ScrollArea } from '@radix-ui/react-scroll-area'
 import { AnimatePresence } from 'motion/react'
-import { useQuery } from 'convex/react'
-import { api } from 'convex/_generated/api'
 import { format } from 'date-fns'
 import { formatForDisplay } from '@tanstack/react-hotkeys'
 import { useDebouncer } from '@tanstack/react-pacer'
@@ -10,6 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Search } from 'lucide-react'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { z } from 'zod'
+import { useLocalQuery } from '@/state/hooks'
 import { BackButton } from '@/components/app/back-button'
 import { TodoCard } from '@/components/app/todos/todo-card'
 import { TodosPageSkeleton } from '@/components/app/todos/todos-page-skeleton'
@@ -38,7 +37,7 @@ export const Route = createFileRoute('/(app)/today/')({
     status,
   }),
   loader: async () => {
-    // Data fetched via Convex useQuery for optimistic update support
+    // Keep today's server query live as changes synchronize from local state.
   },
   pendingComponent: TodosPageSkeleton,
   component: TodayPage,
@@ -48,7 +47,7 @@ function TodayPage() {
   const deps = Route.useLoaderDeps()
   const { searchTerm, priority, status } = Route.useSearch()
   const navigate = Route.useNavigate()
-  const data = useQuery(api.globals.queries.getTodosByDate, {
+  const data = useLocalQuery('getTodosByDate', {
     date: deps.today,
     searchTerm: deps.searchTerm,
     priority: deps.priority === 'all' ? undefined : deps.priority,
@@ -88,7 +87,7 @@ function TodayPage() {
     debouncer.maybeExecute(q)
   }
 
-  const todos = data?.todos ?? []
+  const todos = data.todos
   const pendingTodos = todos.filter((t: any) => t.status === 'pending')
   const completedTodos = todos.filter((t: any) => t.status === 'completed')
   const lateTodos = todos.filter((t: any) => t.status === 'overdue')
@@ -177,14 +176,12 @@ function TodayPage() {
                 count={pendingTodos.length}
               />
               <StateHandler
-                isLoading={data === undefined}
+                isLoading={false}
                 isError={false}
                 error={null}
                 isEmpty={pendingTodos.length === 0}
                 loadingSkeleton={<DocketRowsSkeleton />}
-                emptyState={
-                  <DocketEmpty>Nothing left for today.</DocketEmpty>
-                }
+                emptyState={<DocketEmpty>Nothing left for today.</DocketEmpty>}
                 errorTitle="Failed to load pending tasks"
                 errorDescription="An error occurred. Please try again."
               >
@@ -205,7 +202,7 @@ function TodayPage() {
                 count={completedTodos.length}
               />
               <StateHandler
-                isLoading={data === undefined}
+                isLoading={false}
                 isError={false}
                 error={null}
                 isEmpty={completedTodos.length === 0}

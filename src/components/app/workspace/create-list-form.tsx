@@ -1,8 +1,7 @@
 import { useForm } from '@tanstack/react-form'
-import { useConvexMutation } from '@convex-dev/react-query'
 import { toast } from 'sonner'
-import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
+import { useLocalMutation } from '@/state/hooks'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -17,7 +16,7 @@ export function CreateListForm({
   workspaceId,
   setCreateDialogIsOpen,
 }: CreateListFormProps) {
-  const addList = useConvexMutation(api.workspace.mutations.createList)
+  const addList = useLocalMutation('createList')
   const form = useForm({
     defaultValues: {
       title: '',

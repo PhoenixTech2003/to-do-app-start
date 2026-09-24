@@ -1,16 +1,13 @@
-import { convexQuery } from '@convex-dev/react-query'
-import { usePaginatedQuery } from 'convex/react'
-import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { useDebouncer } from '@tanstack/react-pacer'
 import { formatForDisplay } from '@tanstack/react-hotkeys'
 import { Search } from 'lucide-react'
-import { api } from 'convex/_generated/api'
 import { z } from 'zod'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { AnimatePresence, motion } from 'motion/react'
 import type { Id } from 'convex/_generated/dataModel'
+import { useLocalPage, useLocalQuery } from '@/state/hooks'
 import { ListCard } from '@/components/app/workspace/list-card'
 import { StateHandler } from '@/components/app/state-handler'
 import { WorkspaceLoadingSkeleton } from '@/components/app/workspace/workspace-loading-skeleton'
@@ -57,23 +54,14 @@ function WorkspaceListsPage() {
     setLocalSearch(urlValue)
   }, [searchTerm])
 
-  const {
-    data: workspaceDetails,
-    isLoading: isLoadingWorkspace,
-    isError: isErrorWorkspace,
-    error: errorWorkspace,
-  } = useQuery(
-    convexQuery(api.workspace.queries.GetWorkspaceDetails, {
-      workspaceId: workspaceId as Id<'workspace'>,
-    }),
-  )
+  const workspaceDetails = useLocalQuery('GetWorkspaceDetails', { workspaceId })
 
   const {
     results: lists,
     status: paginationStatus,
     loadMore,
-  } = usePaginatedQuery(
-    api.workspace.queries.GetWorkspaceLists,
+  } = useLocalPage(
+    'GetWorkspaceLists',
     {
       workspaceId: workspaceId as Id<'workspace'>,
       searchTerm: searchTerm,
@@ -81,11 +69,7 @@ function WorkspaceListsPage() {
     { initialNumItems: 6 },
   )
 
-  const isLoading =
-    isLoadingWorkspace || paginationStatus === 'LoadingFirstPage'
-  const isError = isErrorWorkspace
-  const error = errorWorkspace
-  const isFetching = paginationStatus === 'LoadingMore'
+  const isLoading = paginationStatus === 'LoadingFirstPage'
   const displayedLists = lists
 
   const handleSearch = (q: string) => {
@@ -157,9 +141,9 @@ function WorkspaceListsPage() {
 
         <StateHandler
           isLoading={isLoading}
-          isFetching={isFetching}
-          isError={isError}
-          error={error}
+          isFetching={false}
+          isError={false}
+          error={null}
           isEmpty={lists.length === 0}
           loadingSkeleton={<WorkspaceLoadingSkeleton />}
           emptyState={

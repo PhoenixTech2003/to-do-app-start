@@ -1,9 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery } from 'convex/react'
-import { api } from 'convex/_generated/api'
 import { endOfWeek, format, startOfWeek, subDays } from 'date-fns'
 import { AnimatePresence, motion } from 'motion/react'
 import { isDecaying } from 'convex/habits/xp'
+import { HabitsPageSkeleton } from '@/components/app/habits/habits-page-skeleton'
+import { useLocalQuery } from '@/state/hooks'
 import { BackButton } from '@/components/app/back-button'
 import { computeRun } from '@/components/app/habits/habit-helpers'
 import { RunWall } from '@/components/app/habits/run-wall'
@@ -12,7 +12,6 @@ import { StandingLedger } from '@/components/app/habits/standing-ledger'
 import { YearSheet } from '@/components/app/habits/year-sheet'
 import { CreateHabitDialog } from '@/components/app/habits/create-habit-dialog'
 import { HabitsEmptyState } from '@/components/app/habits/habits-empty-state'
-import { HabitsPageSkeleton } from '@/components/app/habits/habits-page-skeleton'
 
 export const Route = createFileRoute('/(app)/habits/')({
   loader: async () => {},
@@ -29,22 +28,17 @@ function HabitsPage() {
   const weekEnd = format(endOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd')
   const yearStart = format(subDays(now, 364), 'yyyy-MM-dd')
 
-  const habits = useQuery(api.habits.queries.getHabitsWithStatus, { today })
-  const activityData = useQuery(api.habits.queries.getActivityData, {
+  const habits = useLocalQuery('getHabitsWithStatus', {
+    today,
+  })
+  const activityData = useLocalQuery('getActivityData', {
     startDate: yearStart,
     endDate: today,
   })
-  const weekCompletions = useQuery(api.habits.queries.getWeekCompletions, {
+  const weekCompletions = useLocalQuery('getWeekCompletions', {
     startDate: weekStart,
     endDate: weekEnd,
   })
-
-  const isLoading =
-    habits === undefined ||
-    activityData === undefined ||
-    weekCompletions === undefined
-
-  if (isLoading) return <HabitsPageSkeleton />
 
   const doneToday = habits.filter((h) => h.completedToday).length
   const totalHabits = habits.length

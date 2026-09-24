@@ -1,7 +1,5 @@
 import { useForm } from '@tanstack/react-form'
-import { useConvexMutation } from '@convex-dev/react-query'
 import { toast } from 'sonner'
-import { api } from 'convex/_generated/api'
 import { format, parse } from 'date-fns'
 import { formatInTimeZone } from 'date-fns-tz'
 import {
@@ -15,6 +13,7 @@ import { DateAwareTitleInput } from './date-aware-title-input'
 import type z from 'zod'
 import type { Priority } from './entry-fields'
 import type { Todo } from '@/types/global'
+import { useLocalMutation } from '@/state/hooks'
 import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
 import { createTodoFormSchema } from '@/validation/create-todo-form-schema'
@@ -30,7 +29,7 @@ export function UpdateTodoForm({
   todo,
   setUpdateDialogIsOpen,
 }: UpdateTodoFormProps) {
-  const updateTodo = useConvexMutation(api.todos.mutations.updateTodo)
+  const updateTodo = useLocalMutation('updateTodo')
   // A todo with no due date stays without one — the picker opens empty rather
   // than silently proposing today.
   const parsedDate = todo.dueDate
@@ -57,9 +56,7 @@ export function UpdateTodoForm({
     onSubmit: (formData) => {
       const title = titleWithoutNaturalDate(formData.value.title)
       const usersTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
-      const scheduledFunctionRunTime = formData.value.dueDate
-        ? formData.value.dueDate.getTime() + 60000
-        : undefined
+
       const updateTodoPromise = updateTodo({
         todoId: todo._id,
         title,
@@ -73,7 +70,6 @@ export function UpdateTodoForm({
           : undefined,
         priority: formData.value.priority,
         recurrence: formData.value.recurrence,
-        scheduledFunctionRunTime,
       })
       toast.promise(updateTodoPromise, {
         loading: 'Saving your changes…',

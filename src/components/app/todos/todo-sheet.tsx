@@ -1,7 +1,4 @@
 import React from 'react'
-import { convexQuery, useConvexMutation } from '@convex-dev/react-query'
-import { api } from 'convex/_generated/api'
-import { useSuspenseQuery } from '@tanstack/react-query'
 import { describeRecurrence } from 'convex/todos/recurrence'
 import { toast } from 'sonner'
 import { StateHandler } from '../state-handler'
@@ -11,6 +8,7 @@ import { SubtaskItem } from './subtask-item'
 import { SubtaskMeter } from './subtask-meter'
 import type { Id } from 'convex/_generated/dataModel'
 import type { Todo } from '@/types/global'
+import { useLocalMutation, useLocalQuery } from '@/state/hooks'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -65,64 +63,29 @@ export function TodoSheet({
   onEdit,
   onDelete,
 }: TodoSheetProps) {
-  const { data, isFetching, isError, error } = useSuspenseQuery(
-    convexQuery(api.todos.queries.GetAllSubtasks, {
-      todoId: todo._id,
-    }),
-  )
-
-  // The tally has to move the instant the box is ticked; waiting for the
-  // round trip would make the meter lag the checkbox it belongs to.
-  const toggleSubtask = useConvexMutation(
-    api.todos.mutations.toggleSubTask,
-  ).withOptimisticUpdate((localStore, args) => {
-    const current = localStore.getQuery(api.todos.queries.GetAllSubtasks, {
-      todoId: todo._id,
-    })
-    if (!current) return
-
-    const subtasks = current.subtasks.map((subtask) =>
-      subtask._id === args.subTaskId
-        ? { ...subtask, completed: args.completed }
-        : subtask,
-    )
-    const doneCount = subtasks.filter((subtask) => subtask.completed).length
-
-    localStore.setQuery(
-      api.todos.queries.GetAllSubtasks,
-      { todoId: todo._id },
-      {
-        subtasks,
-        progress: {
-          total: subtasks.length,
-          done: doneCount,
-          remaining: subtasks.length - doneCount,
-        },
-      },
-    )
+  const data = useLocalQuery('GetAllSubtasks', {
+    todoId: todo._id,
   })
-  const deleteSubtask = useConvexMutation(api.todos.mutations.deleteSubTask)
 
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  const toggleSubtask = useLocalMutation('toggleSubTask')
+  const status = todo.status
+  const { subtasks, progress } = data
+  const deleteSubtask = useLocalMutation('deleteSubTask')
 
   const handleToggle = (id: Id<'subTasks'>, checked: boolean) => {
-    // Ticking the last part files the entry itself, so say so.
-    const finishesTodo = checked && data.progress.remaining === 1
-
-    toggleSubtask({ subTaskId: id, completed: checked, timeZone }).then(() => {
-      if (finishesTodo) {
-        toast.success('Every subtask is done — this twodo is complete.')
-      }
-    })
+    const finishesTodo = checked && progress.remaining === 1
+    void toggleSubtask({ subTaskId: id, completed: checked })
+    if (finishesTodo)
+      toast.success('Every subtask is done — this twodo is complete.')
   }
 
   const handleDelete = async (id: Id<'subTasks'>) => {
-    await deleteSubtask({ subTaskId: id, timeZone })
+    await deleteSubtask({ subTaskId: id })
   }
 
   // The detail view is the entry enlarged: same margin, same gutter, only the
   // date is spelled out in full here because there is room for it.
-  const due = gutterTime(todo.dueDate, todo.dueTime, todo.status)
+  const due = gutterTime(todo.dueDate, todo.dueTime, status)
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -145,7 +108,7 @@ export function TodoSheet({
             <SheetTitle
               className={cn(
                 'min-w-0 flex-1 text-base leading-snug',
-                todo.status === 'completed' &&
+                status === 'completed' &&
                   'text-muted-foreground line-through decoration-muted-foreground/50',
               )}
             >
@@ -198,7 +161,7 @@ export function TodoSheet({
             )}
           </Particular>
           <Particular label="Status">
-            <span className="capitalize">{todo.status}</span>
+            <span className="capitalize">{status}</span>
           </Particular>
         </dl>
 
@@ -206,12 +169,12 @@ export function TodoSheet({
           <div className="flex items-center justify-between gap-2 border-b border-hairline pb-2">
             <h2 className="label-meta text-muted-foreground">Subtasks</h2>
             <div className="flex items-center gap-3">
-              {data.progress.total > 0 && (
+              {progress.total > 0 && (
                 <span
                   data-numeric
                   className="font-mono text-[11px] font-semibold text-muted-foreground"
                 >
-                  {data.progress.done}/{data.progress.total}
+                  {progress.done}/{progress.total}
                 </span>
               )}
               <CreateSubtaskDialog todoId={todo._id} destination={todo.title} />
@@ -220,20 +183,20 @@ export function TodoSheet({
 
           {/* The tally, spelled out: this is the panel where you strike the
               marks, so it gets the full width of the sheet. */}
-          {data.progress.total > 0 && (
+          {progress.total > 0 && (
             <SubtaskMeter
               variant="bar"
-              total={data.progress.total}
-              done={data.progress.done}
+              total={progress.total}
+              done={progress.done}
               className="border-b border-hairline py-2.5"
             />
           )}
 
           <StateHandler
-            isFetching={isFetching}
-            isError={isError}
-            error={error}
-            isEmpty={data.subtasks.length === 0}
+            isFetching={false}
+            isError={false}
+            error={null}
+            isEmpty={subtasks.length === 0}
             emptyState={
               <p className="py-6 text-center text-sm text-muted-foreground">
                 No subtasks yet. Break this down if it helps.
@@ -242,7 +205,7 @@ export function TodoSheet({
           >
             <ScrollArea className="h-72 w-full">
               <div className="divide-y divide-hairline">
-                {data.subtasks.map((subtask) => (
+                {subtasks.map((subtask) => (
                   <SubtaskItem
                     key={subtask._id}
                     st={subtask}

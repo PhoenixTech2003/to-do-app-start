@@ -1,6 +1,4 @@
 import { useMemo } from 'react'
-import { useMutation, useQuery } from 'convex/react'
-import { api } from 'convex/_generated/api'
 import { toast } from 'sonner'
 import { motion } from 'motion/react'
 import {
@@ -15,6 +13,7 @@ import { DECAY_GRACE_UNITS, isDecaying } from 'convex/habits/xp'
 import { CATEGORY_META } from './habit-helpers'
 import { TallyWall, tallySizeFor } from './tally'
 import type { HabitWithStatus } from '@/types/global'
+import { useLocalMutation, useLocalQuery } from '@/state/hooks'
 import {
   Sheet,
   SheetContent,
@@ -65,14 +64,14 @@ export function HabitDetailSheet({
 
   const stripStart = format(subDays(new Date(), 83), 'yyyy-MM-dd')
 
-  const completions = useQuery(
-    api.habits.queries.getHabitCompletions,
+  const completions = useLocalQuery(
+    'getHabitCompletions',
     open
       ? { habitId: habit._id, startDate: stripStart, endDate: today }
       : 'skip',
   )
 
-  const deleteHabit = useMutation(api.habits.mutations.deleteHabit)
+  const deleteHabit = useLocalMutation('deleteHabit')
 
   const daysActive = Math.max(
     1,
@@ -92,15 +91,9 @@ export function HabitDetailSheet({
     habit.currentStreak > 0 && habit.currentStreak >= habit.longestStreak
 
   function handleDelete() {
-    const promise = deleteHabit({ habitId: habit._id })
-    toast.promise(promise, {
-      loading: 'Removing habit…',
-      success: () => {
-        onOpenChange(false)
-        return 'Habit removed'
-      },
-      error: 'Could not remove that habit. Try again.',
-    })
+    void deleteHabit({ habitId: habit._id })
+    onOpenChange(false)
+    toast.success('Habit removed on this device')
   }
 
   return (

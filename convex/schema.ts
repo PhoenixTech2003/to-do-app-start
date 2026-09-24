@@ -2,21 +2,45 @@ import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 import { recurrenceValidator } from './todos/recurrence'
 
+const syncFields = {
+  clientId: v.optional(v.string()),
+  updatedAt: v.optional(v.number()),
+  deleted: v.optional(v.boolean()),
+  lastWriteId: v.optional(v.string()),
+  localCreatedAt: v.optional(v.number()),
+}
+
 export default defineSchema({
+  syncHeads: defineTable({ createdBy: v.string(), version: v.number() }).index(
+    'by_owner',
+    ['createdBy'],
+  ),
+  syncReceipts: defineTable({
+    createdBy: v.string(),
+    writeId: v.string(),
+  }).index('by_owner_write', ['createdBy', 'writeId']),
   workspace: defineTable({
+    ...syncFields,
     title: v.string(),
     createdBy: v.string(),
   })
+    .index('sync_owner', ['createdBy'])
+    .index('sync_client', ['createdBy', 'clientId'])
+    .index('sync_updated', ['createdBy', 'updatedAt'])
     .index('createdBy', ['createdBy'])
     .searchIndex('title', {
       searchField: 'title',
       filterFields: ['createdBy'],
     }),
   lists: defineTable({
+    ...syncFields,
     title: v.string(),
     workspaceId: v.id('workspace'),
     createdBy: v.string(),
   })
+    .index('sync_owner', ['createdBy'])
+    .index('sync_client', ['createdBy', 'clientId'])
+    .index('sync_updated', ['createdBy', 'updatedAt'])
     .searchIndex('title', {
       searchField: 'title',
       filterFields: ['createdBy', 'workspaceId'],
@@ -25,6 +49,7 @@ export default defineSchema({
     .index('workspaceId', ['workspaceId'])
     .index('createdBy_workspaceId', ['createdBy', 'workspaceId']),
   todos: defineTable({
+    ...syncFields,
     listId: v.optional(v.id('lists')),
     markAsOverdueScheudledFunctionId: v.optional(v.id('_scheduled_functions')),
     title: v.string(),
@@ -40,6 +65,8 @@ export default defineSchema({
     recurrence: v.optional(recurrenceValidator),
     /** 0-based position of this entry in its series. */
     recurrenceIndex: v.optional(v.number()),
+    seriesId: v.optional(v.string()),
+    timeZone: v.optional(v.string()),
     priority: v.union(
       v.literal('high'),
       v.literal('medium'),
@@ -48,6 +75,9 @@ export default defineSchema({
     ),
     createdBy: v.string(),
   })
+    .index('sync_owner', ['createdBy'])
+    .index('sync_client', ['createdBy', 'clientId'])
+    .index('sync_updated', ['createdBy', 'updatedAt'])
     .searchIndex('title', {
       searchField: 'title',
       filterFields: ['listId', 'createdBy', 'status', 'priority', 'dueDate'],
@@ -69,6 +99,7 @@ export default defineSchema({
    * and settles that parent's status when the last one is ticked off.
    */
   subTasks: defineTable({
+    ...syncFields,
     todoId: v.id('todos'),
     title: v.string(),
     description: v.optional(v.string()),
@@ -76,12 +107,17 @@ export default defineSchema({
     dueTime: v.optional(v.string()),
     completed: v.boolean(),
     createdBy: v.string(),
-  }).index('by_todo_id', ['todoId']),
+  })
+    .index('sync_owner', ['createdBy'])
+    .index('sync_client', ['createdBy', 'clientId'])
+    .index('sync_updated', ['createdBy', 'updatedAt'])
+    .index('by_todo_id', ['todoId']),
   pushNotificationTokens: defineTable({
     token: v.string(),
     createdBy: v.string(),
   }).index('by_createdBy', ['createdBy']),
   habits: defineTable({
+    ...syncFields,
     title: v.string(),
     description: v.optional(v.string()),
     frequency: v.union(v.literal('daily'), v.literal('weekly')),
@@ -99,12 +135,20 @@ export default defineSchema({
     longestStreak: v.number(),
     totalCompletions: v.number(),
     createdBy: v.string(),
-  }).index('by_createdBy', ['createdBy']),
+  })
+    .index('sync_owner', ['createdBy'])
+    .index('sync_client', ['createdBy', 'clientId'])
+    .index('sync_updated', ['createdBy', 'updatedAt'])
+    .index('by_createdBy', ['createdBy']),
   habitCompletions: defineTable({
+    ...syncFields,
     habitId: v.id('habits'),
     completedDate: v.string(),
     createdBy: v.string(),
   })
+    .index('sync_owner', ['createdBy'])
+    .index('sync_client', ['createdBy', 'clientId'])
+    .index('sync_updated', ['createdBy', 'updatedAt'])
     .index('by_habitId', ['habitId'])
     .index('by_createdBy_date', ['createdBy', 'completedDate'])
     .index('by_habitId_date', ['habitId', 'completedDate']),

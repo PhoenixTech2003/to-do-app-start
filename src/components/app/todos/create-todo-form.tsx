@@ -1,7 +1,5 @@
 import { useForm } from '@tanstack/react-form'
-import { useConvexMutation } from '@convex-dev/react-query'
 import { toast } from 'sonner'
-import { api } from 'convex/_generated/api'
 import { formatInTimeZone } from 'date-fns-tz'
 import {
   Band,
@@ -14,6 +12,7 @@ import { DateAwareTitleInput } from './date-aware-title-input'
 import type z from 'zod'
 import type { Id } from 'convex/_generated/dataModel'
 import type { Priority } from './entry-fields'
+import { useLocalMutation } from '@/state/hooks'
 import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
 import { createTodoFormSchema } from '@/validation/create-todo-form-schema'
@@ -29,7 +28,7 @@ export function CreateTodoForm({
   listId,
   setCreateDialogIsOpen,
 }: CreateTodoFormProps) {
-  const addTodo = useConvexMutation(api.todos.mutations.createTodo)
+  const addTodo = useLocalMutation('createTodo')
 
   const defaultValues: z.input<typeof createTodoFormSchema> = {
     title: '',
@@ -45,9 +44,7 @@ export function CreateTodoForm({
     onSubmit: (formData) => {
       const title = titleWithoutNaturalDate(formData.value.title)
       const usersTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
-      const scheduledFunctionRunTime = formData.value.dueDate
-        ? formData.value.dueDate.getTime() + 60000
-        : undefined
+
       const addTodoPromise = addTodo({
         listId,
         title,
@@ -61,7 +58,6 @@ export function CreateTodoForm({
           : undefined,
         priority: formData.value.priority,
         recurrence: formData.value.recurrence,
-        scheduledFuntionRunTime: scheduledFunctionRunTime,
       })
       toast.promise(addTodoPromise, {
         loading: 'Adding your twodo…',

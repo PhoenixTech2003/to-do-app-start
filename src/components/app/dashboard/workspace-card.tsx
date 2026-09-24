@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import { useConvexMutation } from '@convex-dev/react-query'
 import { toast } from 'sonner'
-import { api } from 'convex/_generated/api'
 import { UpdateDialog } from '../update-dialog'
 import { DeleteDialog } from '../delete-dialog'
 import { IndexRow } from '../index-row'
 import { UpdateWorkspaceDetailsForm } from './update-workspace-form'
 import type { WorkspaceItem } from '@/types/global'
+import { useLocalMutation } from '@/state/hooks'
 import { truncateText } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/use-mobile'
 
@@ -19,9 +18,7 @@ export function WorkspaceCard({ workspaceData }: WorkspaceCardProps) {
   const [isOpenDeleteDialog, setIsOpenDeleteDialog] = useState(false)
   const isMobile = useIsMobile()
 
-  const deleteWorkspace = useConvexMutation(
-    api.dashboard.mutations.deleteWorkspace,
-  )
+  const deleteWorkspace = useLocalMutation('deleteWorkspace')
 
   function handleDelete() {
     const deleteWorkspacePromise = deleteWorkspace({
@@ -39,9 +36,7 @@ export function WorkspaceCard({ workspaceData }: WorkspaceCardProps) {
 
   return (
     <IndexRow
-      title={
-        isMobile ? truncateText(workspaceData.title) : workspaceData.title
-      }
+      title={isMobile ? truncateText(workspaceData.title) : workspaceData.title}
       kind="Workspace"
       createdAt={workspaceData._creationTime}
       linkProps={{

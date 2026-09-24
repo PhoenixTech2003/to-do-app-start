@@ -1,11 +1,9 @@
-import { convexQuery, useConvexMutation } from '@convex-dev/react-query'
 import { useForm } from '@tanstack/react-form'
-import { useQuery } from '@tanstack/react-query'
 import { format, parse } from 'date-fns'
-import { api } from 'convex/_generated/api'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import type { Id } from 'convex/_generated/dataModel'
+import { useLocalMutation, useLocalQuery } from '@/state/hooks'
 import { TimeRail } from '@/components/app/todos/date-leaf'
 import { dateKey } from '@/lib/calendar-month'
 import { Button } from '@/components/ui/button'
@@ -47,12 +45,10 @@ export function CreateCalendarTaskDialog({
   open,
   onOpenChange,
 }: CreateCalendarTaskDialogProps) {
-  const addTodo = useConvexMutation(api.todos.mutations.createTodo)
-  const { data: lists = [] } = useQuery(
-    convexQuery(api.workspace.queries.GetUserListsForMove, {
-      searchTerm: undefined,
-    }),
-  )
+  const addTodo = useLocalMutation('createTodo')
+  const lists = useLocalQuery('GetUserListsForMove', {
+    searchTerm: undefined,
+  })
 
   const workspaces = new Map<string, typeof lists>()
   for (const list of lists) {
@@ -85,7 +81,6 @@ export function CreateCalendarTaskDialog({
         title: value.title.trim(),
         priority: value.priority,
         dueDate: format(dueDate, "yyyy-MM-dd'T'HH:mm"),
-        scheduledFuntionRunTime: dueDate.getTime() + 60_000,
       })
 
       toast.promise(createPromise, {

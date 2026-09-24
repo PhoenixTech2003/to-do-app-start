@@ -1,7 +1,6 @@
 import { useForm } from '@tanstack/react-form'
-import { useConvexMutation } from '@convex-dev/react-query'
 import { toast } from 'sonner'
-import { api } from 'convex/_generated/api'
+import { useLocalMutation } from '@/state/hooks'
 import { createWorkspaceFormSchema } from '@/validation/create-workspace-form-schema'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 
@@ -15,9 +14,7 @@ interface CreateWorkspaceDialogProps {
 export function CreateWorkspaceForm({
   setCreateDialogIsOpen,
 }: CreateWorkspaceDialogProps) {
-  const addWorkspace = useConvexMutation(
-    api.dashboard.mutations.createWorkspace,
-  )
+  const addWorkspace = useLocalMutation('createWorkspace')
   const form = useForm({
     defaultValues: {
       title: '',

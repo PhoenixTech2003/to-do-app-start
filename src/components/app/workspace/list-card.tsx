@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import { useConvexMutation } from '@convex-dev/react-query'
 import { toast } from 'sonner'
-import { api } from 'convex/_generated/api'
 import { UpdateDialog } from '../update-dialog'
 import { DeleteDialog } from '../delete-dialog'
 import { IndexRow } from '../index-row'
 import { UpdateListDetailsForm } from './update-list-details-form'
 import type { ListItem } from '@/types/global'
+import { useLocalMutation } from '@/state/hooks'
 import { truncateText } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/use-mobile'
 
@@ -20,7 +19,7 @@ export function ListCard({ listTitle, listItem }: ListCardProps) {
   const [isOpenDeleteDialog, setIsOpenDeleteDialog] = useState(false)
   const isMobile = useIsMobile()
 
-  const deleteList = useConvexMutation(api.workspace.mutations.deleteList)
+  const deleteList = useLocalMutation('deleteList')
 
   function handleDelete() {
     const deleteListPromise = deleteList({ listId: listItem._id })

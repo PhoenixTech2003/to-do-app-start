@@ -1,8 +1,7 @@
 import { useForm } from '@tanstack/react-form'
 import { toast } from 'sonner'
-import { useConvexMutation } from '@convex-dev/react-query'
-import { api } from 'convex/_generated/api'
 import type { WorkspaceItem } from '@/types/global'
+import { useLocalMutation } from '@/state/hooks'
 import { updateWorkspaceFormSchema } from '@/validation/update-workspace-form-schema'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -17,9 +16,7 @@ export function UpdateWorkspaceDetailsForm({
   workspaceData,
   setUpdateWorkspaceDialogIsOpen,
 }: UpdateWorkspaceFormProps) {
-  const updateWorkSpaceDetails = useConvexMutation(
-    api.dashboard.mutations.updateWorkspaceDetails,
-  )
+  const updateWorkSpaceDetails = useLocalMutation('updateWorkspaceDetails')
   const form = useForm({
     defaultValues: {
       title: workspaceData.title,

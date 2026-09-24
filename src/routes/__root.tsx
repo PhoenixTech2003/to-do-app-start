@@ -20,6 +20,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import { ThemeToaster } from '@/components/ui/theme-toaster'
 import { authClient } from '@/lib/auth-client'
 import { getToken } from '@/lib/auth-server'
+import { getLocalUserId } from '@/state/session'
 
 const getAuth = createServerFn({ method: 'GET' }).handler(async () => {
   return await getToken()
@@ -29,6 +30,8 @@ export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
   convexQueryClient: ConvexQueryClient
 }>()({
+  ssr: false,
+  shellComponent: RootDocument,
   head: () => ({
     scripts: [
       {
@@ -48,6 +51,7 @@ export const Route = createRootRouteWithContext<{
       },
     ],
     links: [
+      { rel: 'manifest', href: '/manifest.json' },
       {
         rel: 'stylesheet',
         href: appCss,
@@ -60,21 +64,28 @@ export const Route = createRootRouteWithContext<{
     ],
   }),
   beforeLoad: async (ctx) => {
-    const token = await ctx.context.queryClient.ensureQueryData({
-      queryKey: ['auth', 'token'],
-      queryFn: async () => (await getAuth()) ?? null,
-      staleTime: 60_000,
-      revalidateIfStale: true,
-    })
-    // all queries, mutations and actions through TanStack Query will be
-    // authenticated during SSR if we have a valid token
-    if (token) {
-      // During SSR only (the only time serverHttpClient exists),
-      // set the auth token to make HTTP queries with.
-      ctx.context.convexQueryClient.serverHttpClient?.setAuth(token)
+    if (typeof window === 'undefined')
+      return { token: null, isAuthenticated: false }
+    if (!navigator.onLine)
+      return { token: null, isAuthenticated: !!(await getLocalUserId()) }
+    let token: string | null
+    let localSession = false
+    try {
+      token = await ctx.context.queryClient.ensureQueryData({
+        queryKey: ['auth', 'token'],
+        queryFn: async () => (await getAuth()) ?? null,
+        staleTime: 60_000,
+        revalidateIfStale: true,
+      })
+    } catch (error) {
+      if (!(await getLocalUserId())) {
+        throw error
+      }
+      token = null
+      localSession = true
     }
     return {
-      isAuthenticated: !!token,
+      isAuthenticated: !!token || localSession,
       token,
     }
   },
@@ -85,6 +96,9 @@ function RootComponent() {
   const context = useRouteContext({ from: Route.id })
 
   useEffect(() => {
+    if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+      void navigator.serviceWorker.register('/sw.js').catch(console.error)
+    }
     try {
       initTabSafeTimers()
     } catch {
@@ -99,9 +113,8 @@ function RootComponent() {
       initialToken={context.token}
     >
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <RootDocument>
-          <Outlet />
-        </RootDocument>
+        <Outlet />
+        <ThemeToaster />
       </ThemeProvider>
     </ConvexBetterAuthProvider>
   )
@@ -127,7 +140,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             },
           ]}
         />
-        <ThemeToaster />
         <Scripts />
       </body>
     </html>

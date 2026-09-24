@@ -1,14 +1,13 @@
 import { useForm } from '@tanstack/react-form'
-import { useConvexMutation } from '@convex-dev/react-query'
 import { formatInTimeZone } from 'date-fns-tz'
 import { isValid, parse } from 'date-fns'
 import { toast } from 'sonner'
-import { api } from 'convex/_generated/api'
 import { EntryMark, WhenBands } from './entry-fields'
 import { DateAwareTitleInput } from './date-aware-title-input'
 import type z from 'zod'
 import type { Id } from 'convex/_generated/dataModel'
 import type { SubTask } from '@/types/global'
+import { useLocalMutation } from '@/state/hooks'
 import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
 import { createSubtaskFormSchema } from '@/validation/create-subtask-form-schema'
@@ -205,7 +204,7 @@ export function CreateSubtaskForm({
   todoId: Id<'todos'>
   setCreateDialogIsOpen: (value: boolean) => void
 }) {
-  const addSubtask = useConvexMutation(api.todos.mutations.addSubTask)
+  const addSubtask = useLocalMutation('addSubTask')
 
   return (
     <SubtaskSlip
@@ -244,7 +243,7 @@ export function UpdateSubtaskForm({
   subtask: SubTask
   setUpdateDialogIsOpen: (value: boolean) => void
 }) {
-  const updateSubtask = useConvexMutation(api.todos.mutations.updateSubTask)
+  const updateSubtask = useLocalMutation('updateSubTask')
 
   return (
     <SubtaskSlip

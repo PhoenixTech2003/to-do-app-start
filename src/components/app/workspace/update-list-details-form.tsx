@@ -1,8 +1,7 @@
 import { useForm } from '@tanstack/react-form'
 import { toast } from 'sonner'
-import { useConvexMutation } from '@convex-dev/react-query'
-import { api } from 'convex/_generated/api'
 import type { ListItem } from '@/types/global'
+import { useLocalMutation } from '@/state/hooks'
 import { updateListFormSchema } from '@/validation/update-list-form-schema'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -17,9 +16,7 @@ export function UpdateListDetailsForm({
   listData,
   setUpdateListDialogIsOpen,
 }: UpdateListFormProps) {
-  const updateListDetails = useConvexMutation(
-    api.workspace.mutations.updatelistDetails,
-  )
+  const updateListDetails = useLocalMutation('updatelistDetails')
   const form = useForm({
     defaultValues: {
       title: listData.title,

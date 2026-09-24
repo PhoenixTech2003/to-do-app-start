@@ -1,8 +1,7 @@
-import { useConvexMutation } from '@convex-dev/react-query'
-import { api } from 'convex/_generated/api'
 import { toast } from 'sonner'
 import { useState } from 'react'
 import type { Id } from 'convex/_generated/dataModel'
+import { useLocalMutation } from '@/state/hooks'
 import {
   Dialog,
   DialogContent,
@@ -23,9 +22,7 @@ export function DeleteWorkspaceDialog({
   workspaceId,
 }: DeleteWorkspaceDialogProps) {
   const [isOpen, setIsopen] = useState(false)
-  const deleteWorkspace = useConvexMutation(
-    api.dashboard.mutations.deleteWorkspace,
-  )
+  const deleteWorkspace = useLocalMutation('deleteWorkspace')
   function handleDelete() {
     const deleteworkspacePromise = deleteWorkspace({
       workspaceId: workspaceId as Id<'workspace'>,

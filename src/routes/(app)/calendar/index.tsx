@@ -1,7 +1,5 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { zodValidator } from '@tanstack/zod-adapter'
-import { useConvexMutation } from '@convex-dev/react-query'
-import { useQuery } from 'convex/react'
 import {
   addMonths,
   format,
@@ -21,15 +19,14 @@ import {
 import { Fragment, useState } from 'react'
 import { toast } from 'sonner'
 import { z } from 'zod'
-import { api } from 'convex/_generated/api'
-import type { TodoLocation } from '@/types/global'
+import type { Todo, TodoLocation } from '@/types/global'
+import { useLocalMutation, useLocalQuery } from '@/state/hooks'
 import { CreateCalendarTaskDialog } from '@/components/app/calendar/create-calendar-task-dialog'
 import { BackButton } from '@/components/app/back-button'
 import { Docket, DocketEmpty } from '@/components/app/docket'
 import { TodoCheckInput } from '@/components/app/todos/todo-check-input'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { Spinner } from '@/components/ui/spinner'
 import {
   Tooltip,
   TooltipContent,
@@ -56,8 +53,7 @@ const calendarSearchSchema = z.object({
     .optional(),
 })
 
-type CalendarTodo =
-  (typeof api.globals.queries.getTodosForDateRange._returnType)['todos'][number]
+type CalendarTodo = Todo & { location: TodoLocation }
 
 const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -256,9 +252,7 @@ function CalendarTaskRow({
   todo: CalendarTodo
   selectedDate: Date
 }) {
-  const removeFromDate = useConvexMutation(
-    api.todos.mutations.removeTodoFromDate,
-  )
+  const removeFromDate = useLocalMutation('removeTodoFromDate')
 
   const spineColor = {
     high: 'var(--destructive)',
@@ -416,11 +410,11 @@ function CalendarPage() {
         : monthStart
   const [mobileAgendaOpen, setMobileAgendaOpen] = useState(false)
 
-  const data = useQuery(api.globals.queries.getTodosForDateRange, {
+  const data = useLocalQuery('getTodosForDateRange', {
     startDate: dateKey(monthStart),
     endDate: dateKey(monthEnd),
   })
-  const todos = data?.todos ?? []
+  const todos = data.todos
   const todosByDate = new Map<string, Array<CalendarTodo>>()
   for (const todo of todos) {
     if (!todo.dueDate) continue
@@ -485,11 +479,7 @@ function CalendarPage() {
               </span>
             </h1>
             <p className="mt-1 flex flex-wrap gap-x-2 font-mono text-[10px] text-muted-foreground">
-              {data === undefined ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <Spinner className="size-3" /> Reading the month
-                </span>
-              ) : (
+              {
                 <>
                   <span data-numeric>{todos.length} scheduled</span>
                   <span className="text-muted-foreground/30">/</span>
@@ -503,7 +493,7 @@ function CalendarPage() {
                     </>
                   )}
                 </>
-              )}
+              }
             </p>
           </div>
         </div>

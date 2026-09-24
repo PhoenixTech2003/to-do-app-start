@@ -3,12 +3,11 @@ import { zodValidator } from '@tanstack/zod-adapter'
 import { useDebouncer } from '@tanstack/react-pacer'
 import { formatForDisplay } from '@tanstack/react-hotkeys'
 import { useEffect, useRef, useState } from 'react'
-import { usePaginatedQuery } from 'convex/react'
-import { api } from 'convex/_generated/api'
 import { Inbox, Search } from 'lucide-react'
 import { format } from 'date-fns'
 import { motion } from 'motion/react'
 import { z } from 'zod'
+import { useLocalPage } from '@/state/hooks'
 import { BackButton } from '@/components/app/back-button'
 import { PaginationController } from '@/components/app/pagination-controller'
 import { SearchInput } from '@/components/app/search-box'
@@ -86,9 +85,7 @@ function InboxEmptyState({ searchActive }: { searchActive: boolean }) {
           <Inbox className="size-5 text-muted-foreground" />
         </EmptyMedia>
         <EmptyTitle>
-          {searchActive
-            ? 'No matches for your search'
-            : 'Your inbox is clear'}
+          {searchActive ? 'No matches for your search' : 'Your inbox is clear'}
         </EmptyTitle>
         <EmptyDescription>
           {searchActive
@@ -173,8 +170,8 @@ function InboxPage() {
     results: upcomingTodos,
     status: upcomingStatus,
     loadMore: loadMoreUpcoming,
-  } = usePaginatedQuery(
-    api.globals.queries.GetAllUpcomingTodos,
+  } = useLocalPage(
+    'GetAllUpcomingTodos',
     {
       today,
       searchTerm: searchTerm || undefined,
@@ -186,8 +183,8 @@ function InboxPage() {
     results: allOverdueTodos,
     status: allOverdueStatus,
     loadMore: loadMoreAllOverdue,
-  } = usePaginatedQuery(
-    api.globals.queries.GetAllOverdueTodos,
+  } = useLocalPage(
+    'GetAllOverdueTodos',
     {
       searchTerm: searchTerm || undefined,
     },
@@ -198,8 +195,8 @@ function InboxPage() {
     results: pendingTodos,
     status: pendingStatus,
     loadMore: loadMorePending,
-  } = usePaginatedQuery(
-    api.todos.queries.GetInboxPendingTodos,
+  } = useLocalPage(
+    'GetInboxPendingTodos',
     {
       searchTerm: searchTerm || undefined,
     },
@@ -210,8 +207,8 @@ function InboxPage() {
     results: completedTodos,
     status: completedStatus,
     loadMore: loadMoreCompleted,
-  } = usePaginatedQuery(
-    api.todos.queries.GetInboxCompletedTodos,
+  } = useLocalPage(
+    'GetInboxCompletedTodos',
     {
       searchTerm: searchTerm || undefined,
     },

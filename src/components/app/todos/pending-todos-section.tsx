@@ -1,11 +1,10 @@
-import { usePaginatedQuery } from 'convex/react'
-import { api } from 'convex/_generated/api'
 import { StateHandler } from '../state-handler'
 import { PaginationController } from '../pagination-controller'
 import { Docket, DocketEmpty, DocketRowsSkeleton } from '../docket'
 import { TodoCard } from './todo-card'
 import { TodoSectionHeading } from './section-heading'
 import type { Id } from 'convex/_generated/dataModel'
+import { useLocalPage } from '@/state/hooks'
 
 interface PendingTodosSectionProps {
   listId: Id<'lists'>
@@ -41,8 +40,8 @@ export function PendingTodosSection({
     status: paginationStatus,
     isLoading: isPaginatedLoading,
     loadMore,
-  } = usePaginatedQuery(
-    api.todos.queries.GetPendingTodos,
+  } = useLocalPage(
+    'GetPendingTodos',
     {
       listId,
       searchTerm: searchTerm || undefined,

@@ -11,6 +11,7 @@ import { BellIcon, LoaderCircle, LogOut } from 'lucide-react'
 import { useConvexMutation } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
 import { useQueryClient } from '@tanstack/react-query'
+import { ReplicaProvider } from '@/state/provider'
 import {
   SidebarInset,
   SidebarProvider,
@@ -27,14 +28,24 @@ import {
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
 import { env } from '@/env'
 import { getFirebaseMessaging } from '@/firebase/firebase-config'
+import { getLocalUserId, setLocalUserId } from '@/state/session'
 
 export const Route = createFileRoute('/(app)')({
-  beforeLoad: ({ context, location }) => {
-    if (!context.isAuthenticated) {
+  beforeLoad: async ({ context, location }) => {
+    const offlineSession =
+      typeof window !== 'undefined' &&
+      !navigator.onLine &&
+      !!(await getLocalUserId())
+    if (!context.isAuthenticated && !offlineSession) {
       throw redirect({ to: '/signup', search: { redirectUrl: location.href } })
     }
   },
-  component: DashboardLayout,
+  ssr: false,
+  component: () => (
+    <ReplicaProvider>
+      <DashboardLayout />
+    </ReplicaProvider>
+  ),
 })
 
 export function DashboardLayout() {
@@ -44,48 +55,49 @@ export function DashboardLayout() {
   const [isSigningOut, setIsSigningOut] = useState(false)
 
   const handleSignOut = useCallback(async () => {
+    if (!navigator.onLine) {
+      toast.error('Connect to the internet to sign out securely')
+      return
+    }
     setIsSigningOut(true)
+    const result = await authClient.signOut()
+    if (result.error) {
+      setIsSigningOut(false)
+      toast.error('Failed to sign out')
+      return
+    }
+    await setLocalUserId(null)
     queryClient.setQueryData(['auth', 'token'], null)
     void navigate({ to: '/', replace: true })
-
-    await authClient.signOut({
-      fetchOptions: {
-        onError: () => {
-          setIsSigningOut(false)
-          toast.error('Failed to sign out')
-        },
-        onSuccess: () => {
-          void queryClient.invalidateQueries({ queryKey: ['auth', 'token'] })
-        },
-      },
-    })
   }, [navigate, queryClient])
   const createPushNotificationToken = useConvexMutation(
     api.notifications.mutation.createPushNotificationToken,
   )
 
   useEffect(() => {
-    if (!isPending && !isRefetching && !data) {
-      void navigate({ to: '/', replace: true })
-    }
-  }, [data, isPending, isRefetching, navigate])
-
-  useEffect(() => {
-    if (isSigningOut) return
+    if (
+      isSigningOut ||
+      !navigator.onLine ||
+      !data ||
+      !('Notification' in window)
+    )
+      return
     const messaging = getFirebaseMessaging()
     if (!messaging) return
 
-    Notification.requestPermission().then((permission) => {
-      if (permission === 'granted') {
-        getToken(messaging, { vapidKey: env.VITE_APP_VAPID_KEY }).then(
-          async (token) => {
-            await createPushNotificationToken({ token })
-          },
-        )
-      } else if (permission === 'denied') {
-        console.warn('Notification permission denied')
-      }
-    })
+    Notification.requestPermission()
+      .then((permission) => {
+        if (permission === 'granted') {
+          getToken(messaging, { vapidKey: env.VITE_APP_VAPID_KEY })
+            .then(async (token) => {
+              await createPushNotificationToken({ token })
+            })
+            .catch(console.error)
+        } else if (permission === 'denied') {
+          console.warn('Notification permission denied')
+        }
+      })
+      .catch(console.error)
 
     const unsubscribe = onMessage(messaging, (payload) => {
       toast.info(payload.data?.title, {
@@ -97,7 +109,7 @@ export function DashboardLayout() {
     return () => {
       unsubscribe()
     }
-  }, [createPushNotificationToken, isSigningOut])
+  }, [createPushNotificationToken, isSigningOut, data])
 
   if (isSigningOut) {
     return (

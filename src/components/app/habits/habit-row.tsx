@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import { useMutation } from 'convex/react'
-import { api } from 'convex/_generated/api'
 import { toast } from 'sonner'
 import { motion } from 'motion/react'
 import { Trash2 } from 'lucide-react'
@@ -9,6 +7,7 @@ import { CATEGORY_META } from './habit-helpers'
 import { HabitDetailSheet } from './habit-detail-sheet'
 import { MarkSlot } from './tally'
 import type { HabitWithStatus } from '@/types/global'
+import { useLocalMutation } from '@/state/hooks'
 import { cn } from '@/lib/utils'
 
 /**
@@ -25,9 +24,9 @@ export function HabitRow({
   index: number
   today: string
 }) {
-  const toggle = useMutation(api.habits.mutations.toggleHabitCompletion)
-  const deleteHabit = useMutation(api.habits.mutations.deleteHabit)
-  const [isToggling, setIsToggling] = useState(false)
+  const toggle = useLocalMutation('toggleHabitCompletion')
+  const deleteHabit = useLocalMutation('deleteHabit')
+  const completedToday = habit.completedToday
   const [sheetOpen, setSheetOpen] = useState(false)
   const meta = CATEGORY_META[habit.category]
   const Icon = meta.icon
@@ -35,20 +34,12 @@ export function HabitRow({
   const missedUnit = habit.frequency === 'weekly' ? 'w' : 'd'
 
   function handleToggle() {
-    if (isToggling) return
-    setIsToggling(true)
-    toggle({ habitId: habit._id, date: today })
-      .catch(() => toast.error('Could not save that mark. Try again.'))
-      .finally(() => setIsToggling(false))
+    void toggle({ habitId: habit._id, date: today, completed: !completedToday })
   }
 
   function handleDelete() {
-    const promise = deleteHabit({ habitId: habit._id })
-    toast.promise(promise, {
-      loading: 'Removing habit…',
-      success: 'Habit removed',
-      error: 'Could not remove that habit. Try again.',
-    })
+    void deleteHabit({ habitId: habit._id })
+    toast.success('Habit removed on this device')
   }
 
   return (
@@ -67,16 +58,15 @@ export function HabitRow({
       >
         <button
           onClick={handleToggle}
-          disabled={isToggling}
-          aria-pressed={habit.completedToday}
+          aria-pressed={completedToday}
           className="-my-1 flex shrink-0 items-center justify-center rounded-sm px-2 py-1 transition-transform duration-100 active:translate-y-px disabled:opacity-60"
           aria-label={
-            habit.completedToday
+            completedToday
               ? `Unmark ${habit.title} for today`
               : `Mark ${habit.title} done today`
           }
         >
-          <MarkSlot marked={habit.completedToday} />
+          <MarkSlot marked={completedToday} />
         </button>
 
         <button
@@ -87,7 +77,7 @@ export function HabitRow({
           <span
             className={cn(
               'shrink-0 truncate text-[15px] leading-snug font-medium transition-colors duration-200',
-              habit.completedToday
+              completedToday
                 ? 'text-muted-foreground line-through decoration-primary/70 decoration-[1.5px]'
                 : 'text-foreground',
             )}
@@ -130,7 +120,7 @@ export function HabitRow({
       </motion.li>
 
       <HabitDetailSheet
-        habit={habit}
+        habit={{ ...habit, completedToday }}
         today={today}
         open={sheetOpen}
         onOpenChange={setSheetOpen}

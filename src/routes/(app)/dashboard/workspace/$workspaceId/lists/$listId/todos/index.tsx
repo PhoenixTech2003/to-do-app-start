@@ -1,7 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { convexQuery } from '@convex-dev/react-query'
-import { api } from 'convex/_generated/api'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { z } from 'zod'
 import { Search } from 'lucide-react'
@@ -9,14 +6,13 @@ import { formatForDisplay } from '@tanstack/react-hotkeys'
 import { useDebouncer } from '@tanstack/react-pacer'
 import { useEffect, useRef, useState } from 'react'
 import type { Id } from 'convex/_generated/dataModel'
+import { useLocalQuery } from '@/state/hooks'
 import { CreateTodoDialog } from '@/components/app/todos/create-todo-dialog'
 import { TodosPageSkeleton } from '@/components/app/todos/todos-page-skeleton'
 import { BackButton } from '@/components/app/back-button'
 import { PendingTodosSection } from '@/components/app/todos/pending-todos-section'
 import { OverdueTodosSection } from '@/components/app/todos/overdue-todos-section'
 import { CompletedTodosSection } from '@/components/app/todos/completed-todos-section'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Spinner } from '@/components/ui/spinner'
 import { KanbanBoard } from '@/components/app/kanban-board'
 import { ViewModeTrigger } from '@/components/app/todos/view-mode'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -34,13 +30,6 @@ export const Route = createFileRoute(
   '/(app)/dashboard/workspace/$workspaceId/lists/$listId/todos/',
 )({
   validateSearch: zodValidator(viewModeSchema),
-  loader: async (opts) => {
-    await opts.context.queryClient.ensureQueryData(
-      convexQuery(api.todos.queries.GetListDetails, {
-        listId: opts.params.listId as Id<'lists'>,
-      }),
-    )
-  },
   pendingComponent: TodosPageSkeleton,
   component: RouteComponent,
 })
@@ -51,11 +40,9 @@ function RouteComponent() {
   const navigate = Route.useNavigate()
   const isMobile = useIsMobile()
   const view = isMobile ? 'list' : searchView
-  const { data, isFetching, isError, error } = useSuspenseQuery(
-    convexQuery(api.todos.queries.GetListDetails, {
-      listId: listId as Id<'lists'>,
-    }),
-  )
+  const data = useLocalQuery('GetListDetails', {
+    listId: listId as Id<'lists'>,
+  })
 
   const [localSearch, setLocalSearch] = useState(searchTerm ?? '')
   const [localPriority, setLocalPriority] = useState(priority ?? 'all')
@@ -91,6 +78,16 @@ function RouteComponent() {
     debouncer.maybeExecute(q)
   }
 
+  if (!data)
+    return (
+      <div className="p-6">
+        <BackButton />
+        <p className="mt-4 text-sm text-muted-foreground">
+          This list is not available in your local workspace.
+        </p>
+      </div>
+    )
+
   return (
     <div className="p-4 sm:p-6 flex flex-col min-w-0">
       <SearchInput
@@ -124,9 +121,6 @@ function RouteComponent() {
           <div className="min-w-0">
             <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2 truncate tracking-tight">
               {data.title}
-              {isFetching && (
-                <Spinner className="text-muted-foreground h-4 w-4 shrink-0" />
-              )}
             </h2>
             <p className="text-xs font-mono text-muted-foreground mt-0.5">
               {data.title} list
@@ -157,17 +151,6 @@ function RouteComponent() {
           />
         </div>
       </header>
-
-      {isError ? (
-        <Alert variant="destructive" className="mb-4">
-          <AlertTitle>Failed to load list</AlertTitle>
-          <AlertDescription>
-            {error instanceof Error
-              ? error.message
-              : 'An unexpected error occurred.'}
-          </AlertDescription>
-        </Alert>
-      ) : null}
 
       <section className="min-w-0 overflow-hidden">
         {view === 'kanban' && (
