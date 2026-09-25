@@ -41,7 +41,7 @@ export const write = mutation({
     let inheritedDelete = false
     if (relation) {
       const current = row ? await record(ctx, args.kind, row) : null
-      const parentId = Object.hasOwn(args.fields, relation[0])
+      const parentId = relation[0] in args.fields
         ? (args.fields as Record<string, unknown>)[relation[0]]
         : (current as Record<string, unknown> | null)?.[relation[0]]
       if (parentId) {
