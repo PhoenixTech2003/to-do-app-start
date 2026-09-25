@@ -26,6 +26,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
+import { SyncIndicator } from '@/components/app/sync-indicator'
 import { env } from '@/env'
 import { getFirebaseMessaging } from '@/firebase/firebase-config'
 import { getLocalUserId, setLocalUserId } from '@/state/session'
@@ -144,6 +145,7 @@ export function DashboardLayout() {
                 </p>
               )}
             </div>
+            <SyncIndicator />
             <ThemeSwitcher />
             <Tooltip>
               <TooltipTrigger asChild>

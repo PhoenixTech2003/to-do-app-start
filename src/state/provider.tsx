@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useValue } from '@legendapp/state/react'
-import { Link } from '@tanstack/react-router'
 import { useConvex, useConvexAuth } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import { setLocalUserId, useLocalUserId } from './session'
@@ -9,7 +8,16 @@ import type { AppReplica } from './replica'
 import type { ReactNode } from 'react'
 import { authClient } from '@/lib/auth-client'
 
+export type SyncStatus =
+  | 'offline'
+  | 'signed-out'
+  | 'syncing'
+  | 'loading'
+  | 'synced'
+
 const Context = createContext<AppReplica | null>(null)
+const StatusContext = createContext<SyncStatus>('synced')
+export const useSyncStatus = () => useContext(StatusContext)
 export function useReplica() {
   const store = useContext(Context)
   if (!store) throw new Error('The local replica is not ready')
@@ -101,42 +109,30 @@ function UserReplica({
       (store.state$.numPendingSets.get() ?? 0) > 0 ||
       Object.keys(store.state$.getPendingChanges() ?? {}).length > 0,
   )
+  const status: SyncStatus = !online
+    ? 'offline'
+    : !isAuthenticated
+      ? 'signed-out'
+      : pending
+        ? 'syncing'
+        : !loaded
+          ? 'loading'
+          : 'synced'
   if (!persisted) return <Loading />
   return (
     <Context.Provider value={store}>
-      <div
-        className="border-b px-4 py-1 text-xs text-muted-foreground"
-        role="status"
-      >
-        {!online
-          ? 'Offline. Changes are saved on this device.'
-          : !isAuthenticated
-            ? 'Local workspace. Sign in to resume sync.'
-            : pending
-              ? 'Syncing changes'
-              : !loaded
-                ? 'Loading remote data…'
-                : 'Synced'}
-        {online && !isAuthenticated && (
-          <Link
-            className="ml-2 underline"
-            to="/signup"
-            search={{ redirectUrl: window.location.pathname }}
-          >
-            Sign in
-          </Link>
+      <StatusContext.Provider value={status}>
+        {Object.keys(errors).length > 0 && (
+          <div className="border-b p-3 text-sm text-destructive" role="alert">
+            Changes are saved locally. Sync needs attention:{' '}
+            {Object.values(errors)[0]}{' '}
+            <button className="underline" onClick={() => store.retry()}>
+              Retry sync
+            </button>
+          </div>
         )}
-      </div>
-      {Object.keys(errors).length > 0 && (
-        <div className="border-b p-3 text-sm text-destructive" role="alert">
-          Changes are saved locally. Sync needs attention:{' '}
-          {Object.values(errors)[0]}{' '}
-          <button className="underline" onClick={() => store.retry()}>
-            Retry sync
-          </button>
-        </div>
-      )}
-      {children}
+        {children}
+      </StatusContext.Provider>
     </Context.Provider>
   )
 }
