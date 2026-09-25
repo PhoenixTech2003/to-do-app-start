@@ -27,7 +27,6 @@ export default defineSchema({
     .index('sync_owner', ['createdBy'])
     .index('sync_client', ['createdBy', 'clientId'])
     .index('sync_updated', ['createdBy', 'updatedAt'])
-    .index('createdBy', ['createdBy'])
     .searchIndex('title', {
       searchField: 'title',
       filterFields: ['createdBy'],
@@ -45,7 +44,6 @@ export default defineSchema({
       searchField: 'title',
       filterFields: ['createdBy', 'workspaceId'],
     })
-    .index('createdBy', ['createdBy'])
     .index('workspaceId', ['workspaceId'])
     .index('createdBy_workspaceId', ['createdBy', 'workspaceId']),
   todos: defineTable({
@@ -88,7 +86,6 @@ export default defineSchema({
     })
     .index('by_listId', ['listId'])
     .index('by_list_id_createdBy', ['listId', 'createdBy'])
-    .index('by_createdBy', ['createdBy'])
     .index('by_createdBy_status', ['createdBy', 'status'])
     .index('by_createdBy_dueDate', ['createdBy', 'dueDate'])
     .index('by_due_date', ['dueDate'])
@@ -138,8 +135,7 @@ export default defineSchema({
   })
     .index('sync_owner', ['createdBy'])
     .index('sync_client', ['createdBy', 'clientId'])
-    .index('sync_updated', ['createdBy', 'updatedAt'])
-    .index('by_createdBy', ['createdBy']),
+    .index('sync_updated', ['createdBy', 'updatedAt']),
   habitCompletions: defineTable({
     ...syncFields,
     habitId: v.id('habits'),
