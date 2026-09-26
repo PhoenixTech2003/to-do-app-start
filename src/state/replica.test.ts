@@ -137,4 +137,38 @@ describe('durable local replica', () => {
     expect(store.records$[row.id].title.peek()).toBe('Newer')
     store.dispose()
   })
+  it('ignores a pull snapshot taken before a local write was acknowledged', async () => {
+    const remote = server()
+    const store = createReplica(remote.client, crypto.randomUUID())
+    await store.hydrated
+    await store.act('createTodo', { title: 'Task' })
+    store.ready$.set(true)
+    await eventually(() => expect(remote.rows.size).toBe(1))
+    await pause()
+    const row = [...remote.rows.values()][0]
+    const stale = { ...row }
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const query = remote.client.query as ReturnType<typeof vi.fn>
+    const live = query.getMockImplementation()!
+    query.mockImplementation(async (fn, args) => {
+      if (args.kind !== 'todos') return live(fn, args)
+      query.mockImplementation(live)
+      await gate
+      return { page: [stale], isDone: true, continueCursor: '' }
+    })
+    const pull = store.state$.sync()
+    await store.act('toggleTodoStatus', { todoId: row.id, status: 'completed' })
+    await eventually(() =>
+      expect(remote.rows.get(row.id)?.status).toBe('completed'),
+    )
+    await pause()
+    release()
+    await pull
+    await pause()
+    expect(store.records$[row.id].status.peek()).toBe('completed')
+    store.dispose()
+  })
 })

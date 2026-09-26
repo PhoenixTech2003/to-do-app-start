@@ -36,6 +36,9 @@ export function createReplica(client: ConvexReactClient, userId: string) {
   )
   const intentSync$ = syncState(intents$)
   const writes = new Map<string, Promise<unknown>>()
+  // Server time of each record's latest acknowledged write, so a pull that
+  // started before the write cannot roll the record back.
+  const acked = new Map<string, number>()
   async function save(
     input: Partial<RecordData>,
     params: SyncedSetParams<RecordData>,
@@ -73,6 +76,7 @@ export function createReplica(client: ConvexReactClient, userId: string) {
             }),
           ])
           remoteIds$[id].set(saved.remoteId)
+          acked.set(id, Math.max(acked.get(id) ?? 0, saved.updatedAt))
           const tokens = new Set(intents.map((intent) => intent.token))
           const remaining = (intents$[id].peek() ?? []).filter(
             (intent) => !tokens.has(intent.token),
@@ -153,6 +157,8 @@ export function createReplica(client: ConvexReactClient, userId: string) {
         errors$.remote.delete()
         const current = records$.peek()
         return rows.map((row) => {
+          const local = current[row.id]
+          if (local && (acked.get(row.id) ?? 0) > row.updatedAt) return local
           const pending = intents$[row.id].peek() ?? []
           if (
             row.kind !== 'habitCompletions' &&
