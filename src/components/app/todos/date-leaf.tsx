@@ -234,11 +234,7 @@ export function TimeRail({
           {stamp}
         </button>
       ))}
-      <TimePicker
-        value={value}
-        onChange={onChange}
-        className="ml-auto h-7 text-[11px]"
-      />
+      <TimePicker value={value} onChange={onChange} className="ml-auto" />
     </div>
   )
 }

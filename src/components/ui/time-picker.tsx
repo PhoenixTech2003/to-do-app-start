@@ -1,61 +1,23 @@
 import { useState } from 'react'
-import { Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { ScrollArea } from '@/components/ui/scroll-area'
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from '@/components/ui/input-otp'
 
-const HOURS = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0'))
-const MINUTES = Array.from({ length: 12 }, (_, i) =>
-  String(i * 5).padStart(2, '0'),
-)
+/**
+ * Every prefix of a valid `HHmm` (00:00–23:59), so impossible digits are
+ * refused as they are typed rather than corrected afterwards.
+ */
+const TIME_PATTERN = '^(?:[01]\\d?|2[0-3]?)$|^(?:[01]\\d|2[0-3])[0-5]\\d?$'
 
-function Column({
-  label,
-  values,
-  selected,
-  onSelect,
-}: {
-  label: string
-  values: Array<string>
-  selected: string
-  onSelect: (value: string) => void
-}) {
-  return (
-    <ScrollArea className="h-56 w-16">
-      <div
-        role="listbox"
-        aria-label={label}
-        className="flex flex-col gap-1 p-1"
-      >
-        {values.map((value) => (
-          <Button
-            key={value}
-            type="button"
-            role="option"
-            aria-selected={value === selected}
-            variant={value === selected ? 'default' : 'ghost'}
-            size="sm"
-            className="font-mono tabular-nums"
-            ref={(el) => {
-              if (el && value === selected)
-                el.scrollIntoView({ block: 'center' })
-            }}
-            onClick={() => onSelect(value)}
-          >
-            {value}
-          </Button>
-        ))}
-      </div>
-    </ScrollArea>
-  )
-}
+const SLOT = 'h-7 w-7 font-mono text-xs tabular-nums'
 
-/** Hour and minute columns in a popover. `value` and `onChange` use `HH:mm`. */
+/**
+ * Four one-digit boxes, `H H : M M`, typed like a verification code: each digit
+ * moves to the next box and backspace steps back. `value` is `HH:mm`.
+ */
 export function TimePicker({
   value,
   onChange,
@@ -65,40 +27,38 @@ export function TimePicker({
   onChange: (time: string) => void
   className?: string
 }) {
-  const [open, setOpen] = useState(false)
-  const [hour, minute] = value.split(':')
+  const digits = value.replace(':', '')
+  const [draft, setDraft] = useState(digits)
+  const [synced, setSynced] = useState(digits)
+  if (synced !== digits) {
+    setSynced(digits)
+    setDraft(digits)
+  }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          aria-label="Choose exact time"
-          className={cn('gap-1.5 font-mono tabular-nums', className)}
-        >
-          <Clock className="size-3.5 text-muted-foreground" />
-          {value}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="flex w-auto divide-x p-0" align="end">
-        <Column
-          label="Hour"
-          values={HOURS}
-          selected={hour}
-          onSelect={(h) => onChange(`${h}:${minute}`)}
-        />
-        <Column
-          label="Minute"
-          values={MINUTES}
-          selected={minute}
-          onSelect={(m) => {
-            onChange(`${hour}:${m}`)
-            setOpen(false)
-          }}
-        />
-      </PopoverContent>
-    </Popover>
+    <InputOTP
+      maxLength={4}
+      pattern={TIME_PATTERN}
+      value={draft}
+      onChange={(next: string) => {
+        setDraft(next)
+        if (next.length === 4) onChange(`${next.slice(0, 2)}:${next.slice(2)}`)
+      }}
+      // Leaving half a time behind falls back to the last complete one.
+      onBlur={() => draft.length < 4 && setDraft(digits)}
+      aria-label="Time"
+      autoComplete="off"
+      containerClassName={cn('gap-1', className)}
+    >
+      <InputOTPGroup>
+        <InputOTPSlot index={0} className={SLOT} />
+        <InputOTPSlot index={1} className={SLOT} />
+      </InputOTPGroup>
+      <span className="font-mono text-xs text-muted-foreground">:</span>
+      <InputOTPGroup>
+        <InputOTPSlot index={2} className={SLOT} />
+        <InputOTPSlot index={3} className={SLOT} />
+      </InputOTPGroup>
+    </InputOTP>
   )
 }
