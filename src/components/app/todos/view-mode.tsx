@@ -24,9 +24,8 @@ export function ViewModeTrigger({ mode, workspaceId, listId }: ViewModeProps) {
               workspaceId,
               listId,
             }}
-            search={{
-              view: 'list',
-            }}
+            search={(prev) => ({ ...prev, view: 'list' })}
+            replace
           >
             <Button variant={mode === 'list' ? 'secondary' : 'ghost'}>
               <List />
@@ -45,9 +44,8 @@ export function ViewModeTrigger({ mode, workspaceId, listId }: ViewModeProps) {
               workspaceId,
               listId,
             }}
-            search={{
-              view: 'kanban',
-            }}
+            search={(prev) => ({ ...prev, view: 'kanban' })}
+            replace
           >
             <Button variant={mode === 'kanban' ? 'secondary' : 'ghost'}>
               <KanbanSquare />
