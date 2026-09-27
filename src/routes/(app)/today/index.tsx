@@ -26,7 +26,7 @@ import { Button } from '@/components/ui/button'
 const todaySearchSchema = z.object({
   searchTerm: z.string().optional(),
   priority: z.enum(['all', 'high', 'medium', 'low', 'none']).optional(),
-  status: z.enum(['all', 'pending', 'completed']).optional(),
+  status: z.enum(['all', 'pending', 'completed', 'overdue']).optional(),
 })
 export const Route = createFileRoute('/(app)/today/')({
   validateSearch: zodValidator(todaySearchSchema),
@@ -49,6 +49,10 @@ function TodayPage() {
   const navigate = Route.useNavigate()
   const data = useLocalQuery('getTodosByDate', {
     date: deps.today,
+    searchTerm: deps.searchTerm,
+    priority: deps.priority === 'all' ? undefined : deps.priority,
+  })
+  const overdueTodos = useLocalQuery('GetAllOverdueTodos', {
     searchTerm: deps.searchTerm,
     priority: deps.priority === 'all' ? undefined : deps.priority,
   })
@@ -90,7 +94,6 @@ function TodayPage() {
   const todos = data.todos
   const pendingTodos = todos.filter((t: any) => t.status === 'pending')
   const completedTodos = todos.filter((t: any) => t.status === 'completed')
-  const lateTodos = todos.filter((t: any) => t.status === 'overdue')
 
   return (
     <div className="p-4 sm:p-6 flex flex-col h-full">
@@ -101,7 +104,7 @@ function TodayPage() {
         onOpenChange={setSearchOpen}
         alwaysVisible={false}
         showTodoFilters={true}
-        allowedStatuses={['pending', 'completed']}
+        allowedStatuses={['pending', 'completed', 'overdue']}
         priority={localPriority}
         onPriorityChange={(val) => {
           setLocalPriority(val as any)
@@ -141,11 +144,11 @@ function TodayPage() {
                   </span>
                 </>
               )}
-              {lateTodos.length > 0 && (
+              {overdueTodos.length > 0 && (
                 <>
                   <span className="text-muted-foreground/30">/</span>
                   <span data-numeric className="text-destructive">
-                    {lateTodos.length} late
+                    {overdueTodos.length} late
                   </span>
                 </>
               )}
@@ -168,6 +171,36 @@ function TodayPage() {
 
       <ScrollArea className="w-full flex-1">
         <div className="space-y-4 pb-8">
+          {(status === 'overdue' ||
+            ((!status || status === 'all') && overdueTodos.length > 0)) && (
+            <Docket>
+              <TodoSectionHeading
+                tone="overdue"
+                title="Overdue"
+                count={overdueTodos.length}
+              />
+              <StateHandler
+                isLoading={false}
+                isError={false}
+                error={null}
+                isEmpty={overdueTodos.length === 0}
+                emptyState={
+                  <DocketEmpty>
+                    Nothing overdue. You&apos;re on top of it.
+                  </DocketEmpty>
+                }
+                errorTitle="Failed to load overdue tasks"
+                errorDescription="An error occurred. Please try again."
+              >
+                <AnimatePresence mode="popLayout">
+                  {overdueTodos.map((todo) => (
+                    <TodoCard key={todo._id} todo={todo} />
+                  ))}
+                </AnimatePresence>
+              </StateHandler>
+            </Docket>
+          )}
+
           {(!status || status === 'all' || status === 'pending') && (
             <Docket>
               <TodoSectionHeading
