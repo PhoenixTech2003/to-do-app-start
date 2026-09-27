@@ -422,11 +422,6 @@ function CalendarPage() {
     dayTodos.push(todo)
     todosByDate.set(todo.dueDate, dayTodos)
   }
-  for (const dayTodos of todosByDate.values()) {
-    dayTodos.sort((a, b) =>
-      (a.dueTime ?? '99:99').localeCompare(b.dueTime ?? '99:99'),
-    )
-  }
 
   const selectedTodos = todosByDate.get(dateKey(selectedDate)) ?? []
   const monthCounts = getStatusCounts(todos)

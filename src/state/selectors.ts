@@ -31,10 +31,19 @@ function progress(parts: Array<SubTask>) {
   const done = parts.filter((p) => p.completed).length
   return { total: parts.length, done, remaining: parts.length - done }
 }
+const PRIORITY_RANK: Record<string, number> = { high: 0, medium: 1, low: 2 }
+/** Highest priority first; within a priority, earliest due first, undated last. */
+function byPriorityThenDue(a: RecordData, b: RecordData) {
+  const rank = (row: RecordData) => PRIORITY_RANK[row.priority ?? ''] ?? 3
+  const due = (row: RecordData) =>
+    row.dueDate ? `${row.dueDate} ${row.dueTime ?? '99:99'}` : '\uffff'
+  return rank(a) - rank(b) || due(a).localeCompare(due(b))
+}
 function todos(r: Replica, args: Search = {}) {
   const parts = rows(r, 'subTasks').map((row) => doc<'subTasks'>(row))
   return rows(r, 'todos')
     .filter((row) => match(row, args))
+    .sort(byPriorityThenDue)
     .map((row) => {
       const list = row.listId ? r[row.listId] : undefined
       const workspace = list?.workspaceId ? r[list.workspaceId] : undefined
