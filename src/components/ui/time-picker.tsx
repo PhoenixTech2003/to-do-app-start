@@ -46,6 +46,10 @@ export function TimePicker({
       }}
       // Leaving half a time behind falls back to the last complete one.
       onBlur={() => draft.length < 4 && setDraft(digits)}
+      // input-otp parks the cursor on the last box; start from the first.
+      onFocus={(event) =>
+        event.currentTarget.setSelectionRange(0, draft ? 1 : 0)
+      }
       aria-label="Time"
       autoComplete="off"
       containerClassName={cn('gap-1', className)}
