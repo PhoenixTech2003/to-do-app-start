@@ -5,7 +5,7 @@ import { format } from 'date-fns'
 import { formatForDisplay } from '@tanstack/react-hotkeys'
 import { useDebouncer } from '@tanstack/react-pacer'
 import { useEffect, useRef, useState } from 'react'
-import { Search } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { z } from 'zod'
 import { useLocalQuery } from '@/state/hooks'
@@ -19,6 +19,7 @@ import {
   DocketRowsSkeleton,
 } from '@/components/app/docket'
 import { TodoSectionHeading } from '@/components/app/todos/section-heading'
+import { CreateCalendarTaskDialog } from '@/components/app/calendar/create-calendar-task-dialog'
 
 import { SearchInput } from '@/components/app/search-box'
 import { Button } from '@/components/ui/button'
@@ -61,6 +62,7 @@ function TodayPage() {
   const [localPriority, setLocalPriority] = useState(priority ?? 'all')
   const [localStatus, setLocalStatus] = useState(status ?? 'all')
   const [searchOpen, setSearchOpen] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
   const pendingSearchRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -155,19 +157,32 @@ function TodayPage() {
             </p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="hidden h-8 gap-2 rounded-md px-3 text-xs sm:inline-flex"
-          onClick={() => setSearchOpen(true)}
-          aria-label="Open search"
-        >
-          <Search className="h-3.5 w-3.5" />
-          <span className="font-mono text-[10px] text-muted-foreground">
-            {formatForDisplay('Mod+K')}
-          </span>
-        </Button>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="hidden h-8 gap-2 rounded-md px-3 text-xs sm:inline-flex"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Open search"
+          >
+            <Search className="h-3.5 w-3.5" />
+            <span className="font-mono text-[10px] text-muted-foreground">
+              {formatForDisplay('Mod+K')}
+            </span>
+          </Button>
+          <Button size="sm" onClick={() => setCreateOpen(true)}>
+            <Plus className="size-4" />
+            Add task
+          </Button>
+        </div>
       </header>
+
+      <CreateCalendarTaskDialog
+        key={deps.today}
+        date={new Date(`${deps.today}T00:00`)}
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+      />
 
       <ScrollArea className="w-full flex-1">
         <div className="space-y-4 pb-8">

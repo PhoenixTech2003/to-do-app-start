@@ -13,6 +13,7 @@ import {
 } from 'date-fns'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
+import { TimePicker } from '@/components/ui/time-picker'
 import { dateKey, getMonthGrid } from '@/lib/calendar-month'
 import { cn } from '@/lib/utils'
 
@@ -233,13 +234,10 @@ export function TimeRail({
           {stamp}
         </button>
       ))}
-      <input
-        type="time"
-        step={300}
+      <TimePicker
         value={value}
-        onChange={(event) => event.target.value && onChange(event.target.value)}
-        aria-label="Exact time"
-        className="ml-auto h-7 rounded-sm border border-hairline bg-card px-1.5 font-mono text-[11px] tabular-nums"
+        onChange={onChange}
+        className="ml-auto h-7 text-[11px]"
       />
     </div>
   )
