@@ -18,7 +18,7 @@ export function CreateTodoDialog({
   listId,
   destination = 'Inbox',
   title = 'New entry',
-  description = 'Write a twodo, choose when it is due and how it repeats.',
+  description = 'Write a todo, choose when it is due and how it repeats.',
   buttonLabel = 'Create Todo',
 }: CreateTodoDialogProps) {
   const [isOpen, setIsOpen] = useState(false)

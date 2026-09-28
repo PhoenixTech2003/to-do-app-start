@@ -60,12 +60,12 @@ export function CreateTodoForm({
         recurrence: formData.value.recurrence,
       })
       toast.promise(addTodoPromise, {
-        loading: 'Adding your twodo…',
+        loading: 'Adding your todo…',
         success: () => {
           setCreateDialogIsOpen(false)
           return `"${title}" added`
         },
-        error: 'The twodo could not be added. Try again.',
+        error: 'The todo could not be added. Try again.',
       })
     },
   })
@@ -141,7 +141,7 @@ export function CreateTodoForm({
                         />
                         {isInvalid && (
                           <p className="font-mono text-[11px] text-destructive">
-                            A twodo needs a title.
+                            A todo needs a title.
                           </p>
                         )}
                       </>
@@ -226,7 +226,7 @@ export function CreateTodoForm({
                 disabled={isSubmitting && !isSubmitSuccessful}
                 type="submit"
               >
-                Add twodo
+                Add todo
               </Button>
             )}
           />

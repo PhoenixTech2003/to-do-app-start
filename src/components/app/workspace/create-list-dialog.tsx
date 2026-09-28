@@ -32,7 +32,7 @@ export function CreateListDialog({ workspaceId }: CreateListDialogProps) {
         <DialogHeader>
           <DialogTitle>Create List</DialogTitle>
           <DialogDescription>
-            This will create a new list for your Twodos
+            This will create a new list for your Todos
           </DialogDescription>
         </DialogHeader>
         <CreateListForm

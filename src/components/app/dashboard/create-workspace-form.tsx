@@ -25,7 +25,7 @@ export function CreateWorkspaceForm({
     onSubmit: (value) => {
       const addWorkspacePromise = addWorkspace({ title: value.value.title })
       toast.promise(addWorkspacePromise, {
-        loading: 'Please wait while we add your Twodo workspace',
+        loading: 'Please wait while we add your Todo workspace',
         success: () => {
           setCreateDialogIsOpen(false)
           return `${value.value.title} workspace has been created successfully`

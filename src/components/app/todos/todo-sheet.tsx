@@ -76,7 +76,7 @@ export function TodoSheet({
     const finishesTodo = checked && progress.remaining === 1
     void toggleSubtask({ subTaskId: id, completed: checked })
     if (finishesTodo)
-      toast.success('Every subtask is done — this twodo is complete.')
+      toast.success('Every subtask is done — this todo is complete.')
   }
 
   const handleDelete = async (id: Id<'subTasks'>) => {
@@ -227,7 +227,7 @@ export function TodoSheet({
             className="flex-1 py-2"
             onClick={onEdit}
           >
-            Edit twodo
+            Edit todo
           </Button>
           <Button
             variant="destructive"
@@ -235,7 +235,7 @@ export function TodoSheet({
             className="flex-1 py-2"
             onClick={onDelete}
           >
-            Delete twodo
+            Delete todo
           </Button>
         </SheetFooter>
       </SheetContent>

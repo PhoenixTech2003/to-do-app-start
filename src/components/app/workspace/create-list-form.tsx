@@ -30,7 +30,7 @@ export function CreateListForm({
         workspaceId,
       })
       toast.promise(addListPromise, {
-        loading: 'Please wait while we add your Twodo list',
+        loading: 'Please wait while we add your Todo list',
         success: () => {
           setCreateDialogIsOpen(false)
           return `${formData.value.title} list has been created successfully`

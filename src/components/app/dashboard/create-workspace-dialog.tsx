@@ -27,7 +27,7 @@ export function CreateWorkspaceDialog() {
         <DialogHeader>
           <DialogTitle>Create Workspace</DialogTitle>
           <DialogDescription>
-            This will create a new workspace for your twodo lists
+            This will create a new workspace for your todo lists
           </DialogDescription>
         </DialogHeader>
         <CreateWorkspaceForm setCreateDialogIsOpen={setCreateDialogIsOpen} />

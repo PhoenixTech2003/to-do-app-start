@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils'
 /**
  * ── Writing an entry ──
  *
- * The fields a twodo is composed from, printed in the docket's own language:
+ * The fields a todo is composed from, printed in the docket's own language:
  * the left margin carries priority, the right gutter carries time, and both are
  * live while you type. Composing a task and reading one use the same two
  * columns, so the form is a preview of the line it will print.

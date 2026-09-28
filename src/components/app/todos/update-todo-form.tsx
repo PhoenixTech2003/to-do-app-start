@@ -77,7 +77,7 @@ export function UpdateTodoForm({
           setUpdateDialogIsOpen(false)
           return `"${title}" updated`
         },
-        error: 'The twodo could not be updated. Try again.',
+        error: 'The todo could not be updated. Try again.',
       })
     },
   })
@@ -151,7 +151,7 @@ export function UpdateTodoForm({
                         />
                         {isInvalid && (
                           <p className="font-mono text-[11px] text-destructive">
-                            A twodo needs a title.
+                            A todo needs a title.
                           </p>
                         )}
                       </>

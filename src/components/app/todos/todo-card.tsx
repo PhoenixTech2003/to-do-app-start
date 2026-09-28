@@ -151,7 +151,7 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
       void deleteTodo({ todoId: todo._id })
       deleteTodoDialogHandler(false)
       setSheetIsOpen(false)
-      toast.success('Twodo deleted on this device')
+      toast.success('Todo deleted on this device')
     }
 
     function handleMoveToList(listId?: Id<'lists'>) {
@@ -195,7 +195,7 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
           destination={
             todo.recurrence ? describeRecurrence(todo.recurrence) : undefined
           }
-          description="Change this twodo's title, note, due date, repetition or priority."
+          description="Change this todo's title, note, due date, repetition or priority."
         >
           <UpdateTodoForm
             todo={todo}
@@ -207,7 +207,7 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
           handleDelete={handleTodoDelete}
           setIsOpen={deleteTodoDialogHandler}
           isOpen={deleteTodoDialogOpen}
-          dialogTitle="Are you sure you want to delete the Twodo"
+          dialogTitle="Are you sure you want to delete the Todo"
         />
         <CommandDialog
           open={moveToListOpen}
@@ -421,7 +421,7 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
                 </ContextMenuItem>
                 <ContextMenuItem onSelect={() => setUpdateTodoDialogOpen(true)}>
                   <Pencil className="size-4" />
-                  Edit twodo
+                  Edit todo
                   <ContextMenuShortcut>E</ContextMenuShortcut>
                 </ContextMenuItem>
               </ContextMenuGroup>
@@ -457,7 +457,7 @@ export const TodoCard = forwardRef<HTMLDivElement, TodoCardProps>(
                 onSelect={() => setDeleteTodoDialogOpen(true)}
               >
                 <Trash2 className="size-4" />
-                Delete twodo
+                Delete todo
                 <ContextMenuShortcut>Del</ContextMenuShortcut>
               </ContextMenuItem>
             </div>

@@ -14,7 +14,7 @@ import {
 /**
  * ── Repetition ──
  *
- * A recurring twodo is a series of ordinary entries: completing one prints the
+ * A recurring todo is a series of ordinary entries: completing one prints the
  * next. The rule travels with each occurrence, so the row you are looking at
  * always knows how to produce its successor and nothing depends on a template
  * living somewhere else.

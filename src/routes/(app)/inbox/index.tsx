@@ -282,7 +282,7 @@ function InboxPage() {
           </Button>
           <CreateTodoDialog
             title="Capture"
-            description="Write a twodo now and file it to a list later."
+            description="Write a todo now and file it to a list later."
             buttonLabel="Capture Todo"
           />
         </div>
