@@ -71,7 +71,7 @@ function SignUpPage() {
       <div className="hidden lg:flex lg:w-1/2 bg-foreground text-background flex-col justify-between p-12">
         <div>
           <Link to="/" className="text-base font-bold tracking-tight">
-            Two<span className="text-primary">Do</span>
+            To<span className="text-primary">do</span>
           </Link>
         </div>
 

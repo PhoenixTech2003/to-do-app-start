@@ -72,7 +72,7 @@ export function AppSidebar() {
       <SidebarHeader className="px-5 pt-8 pb-6 group-data-[collapsible=icon]:hidden group-data-[collapsible=icon]:py-4">
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-bold tracking-tight text-foreground">
-            Two<span className="text-primary">Do</span>
+            To<span className="text-primary">do</span>
           </h1>
           <BetaBadge className="translate-y-px" />
         </div>

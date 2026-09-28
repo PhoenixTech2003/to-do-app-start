@@ -291,7 +291,7 @@ function LandingPage() {
       <nav className="fixed inset-x-0 top-0 z-50 border-b border-hairline bg-background/75 backdrop-blur-xl backdrop-saturate-150">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
           <span className="flex items-center gap-2 text-base font-bold tracking-tight">
-            Two<span className="text-primary">Do</span>
+            To<span className="text-primary">do</span>
             <BetaBadge />
           </span>
           <div className="flex items-center gap-3">
