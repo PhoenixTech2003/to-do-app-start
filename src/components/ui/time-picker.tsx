@@ -74,10 +74,10 @@ export function TimePicker({
       // Boxes past the typed digits can't hold a caret yet; clamp to the next one.
       onMouseUp={(event) => {
         const input = event.currentTarget
-        const slots = input.parentElement?.querySelectorAll(
-          '[data-slot="input-otp-slot"]',
-        )
-        if (!slots) return
+        const slots = input
+          .closest('[data-input-otp-container]')
+          ?.querySelectorAll('[data-slot="input-otp-slot"]')
+        if (!slots?.length) return
         const clicked = [...slots].findIndex(
           (slot) => event.clientX < slot.getBoundingClientRect().right,
         )
