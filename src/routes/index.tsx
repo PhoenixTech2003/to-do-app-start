@@ -28,7 +28,7 @@ const fadeUp = {
 }
 
 /**
- * The hero is the product, not a picture of it: a real TwoDo sheet, built
+ * The hero is the product, not a picture of it: a real Todo sheet, built
  * from the same margin rule and time gutter every list in the app uses. It
  * works itself while you read, and stops with today still standing.
  */
@@ -69,7 +69,7 @@ function LiveSheet() {
 
   return (
     <div
-      aria-label="A TwoDo sheet, working itself"
+      aria-label="A Todo sheet, working itself"
       className="edge-lit overflow-hidden rounded-lg border border-hairline bg-card shadow-[var(--elev-4)] [&>*+*]:border-t [&>*+*]:border-hairline"
     >
       <div className="flex items-center gap-3 bg-surface-sunken py-2 pr-3 pl-4">
@@ -227,7 +227,7 @@ function HowItReads() {
         </dl>
 
         <p className="mt-10 max-w-xl leading-relaxed text-muted-foreground">
-          Every list in TwoDo is printed the same way, so scanning a workspace
+          Every list in Todo is printed the same way, so scanning a workspace
           works exactly like scanning your inbox. Dates are set as distance —
           <span className="font-mono text-foreground/80"> −2d</span>,
           <span className="font-mono text-foreground/80"> TODAY</span>,
@@ -337,7 +337,7 @@ function LandingPage() {
               variants={fadeUp}
               className="mb-8 max-w-md text-lg leading-relaxed text-muted-foreground"
             >
-              TwoDo prints every task on one sheet with a column of time down
+              Todo prints every task on one sheet with a column of time down
               the side. Everything sits in ink. Only what's overdue takes
               colour — so there is exactly one thing to look for.
             </motion.p>
@@ -397,7 +397,7 @@ function LandingPage() {
       <footer>
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-6 py-8 sm:flex-row">
           <span className="label-meta text-muted-foreground">
-            © {new Date().getFullYear()} TwoDo
+            © {new Date().getFullYear()} Todo
           </span>
           <span className="label-meta text-muted-foreground/60">
             Set in Satoshi &amp; JetBrains Mono

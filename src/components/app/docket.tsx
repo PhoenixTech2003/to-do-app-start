@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
  * ── The docket ──
  *
  * The app's structural surface, and the sibling to the habits tally sheet.
- * Things in TwoDo are not cards floating over a page; they are entries
+ * Things in Todo are not cards floating over a page; they are entries
  * printed on one sheet. Two columns never move:
  *
  *   left margin  — the spine. Which priority, and whether it is still live.

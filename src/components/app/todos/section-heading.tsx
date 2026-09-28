@@ -11,7 +11,7 @@ interface TodoSectionHeadingProps {
 
 /**
  * A section's header band. The status dot is gone: the label already says
- * which section this is, and colour in TwoDo is reserved for what needs you
+ * which section this is, and colour in Todo is reserved for what needs you
  * now — which is why only an overdue count is allowed to go terracotta.
  */
 export function TodoSectionHeading({

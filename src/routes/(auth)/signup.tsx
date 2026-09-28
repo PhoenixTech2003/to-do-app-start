@@ -88,7 +88,7 @@ function SignUpPage() {
         </div>
 
         <p className="font-mono text-[10px] uppercase tracking-wider text-background/40">
-          © {new Date().getFullYear()} TwoDo
+          © {new Date().getFullYear()} Todo
         </p>
       </div>
 

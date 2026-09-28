@@ -366,7 +366,7 @@
 
 }
 
-/* Sonner toast overrides – match TwoDo aesthetic */
+/* Sonner toast overrides – match Todo aesthetic */
 [data-sonner-toaster] {
   font-family: 'Satoshi', system-ui, sans-serif !important;
   --border-radius: var(--radius) !important;

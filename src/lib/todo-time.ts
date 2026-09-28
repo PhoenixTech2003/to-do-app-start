@@ -3,7 +3,7 @@ import { differenceInCalendarDays, format, isValid, parse } from 'date-fns'
 /**
  * The gutter's brain.
  *
- * Every listed thing in TwoDo carries a right-hand column of time. It is set
+ * Every listed thing in Todo carries a right-hand column of time. It is set
  * in tabular mono at a fixed width, so a stack of entries turns urgency into a
  * vertical stripe you can read without reading a single title.
  *
