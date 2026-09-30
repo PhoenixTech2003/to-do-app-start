@@ -4,6 +4,8 @@ const DEFAULT_DUE_HOUR = 17
 
 export interface NaturalDateMatch {
   date: Date
+  /** False for a bare time ("at 9am"), where the day is only assumed. */
+  hasDay: boolean
   index: number
   text: string
 }
@@ -42,6 +44,7 @@ export function parseNaturalDate(
 
   return {
     date,
+    hasDay: components.isCertain('day') || components.isCertain('weekday'),
     index: result.index,
     text: result.text,
   }

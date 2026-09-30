@@ -18,7 +18,7 @@ interface NaturalDueDateInitialValues {
  * itself changes. A changed phrase is a new intent, and takes the field back.
  */
 export function useNaturalDueDate(
-  setDueDate: (date?: Date) => void,
+  setDueDate: (date?: Date, match?: NaturalDateMatch) => void,
   initial?: NaturalDueDateInitialValues,
 ) {
   const [match, setMatch] = useState<NaturalDateMatch | undefined>(() =>
@@ -42,7 +42,7 @@ export function useNaturalDueDate(
     setMatch(nextMatch)
 
     if (nextMatch && (source.current === 'none' || expressionChanged)) {
-      setDueDate(nextMatch.date)
+      setDueDate(nextMatch.date, nextMatch)
       source.current = 'natural'
       return
     }

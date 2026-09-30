@@ -1,10 +1,14 @@
+import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { format, parse } from 'date-fns'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import type { Id } from 'convex/_generated/dataModel'
 import { useLocalMutation, useLocalQuery } from '@/state/hooks'
+import { DateAwareTitleInput } from '@/components/app/todos/date-aware-title-input'
 import { TimeRail } from '@/components/app/todos/date-leaf'
+import { useNaturalDueDate } from '@/hooks/use-natural-due-date'
+import { titleWithoutNaturalDate } from '@/lib/natural-date'
 import { dateKey } from '@/lib/calendar-month'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,7 +20,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -26,6 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+
+const DEFAULT_TIME = '00:00'
 
 const calendarTaskSchema = z.object({
   title: z.string().trim().min(1, 'Enter a task title'),
@@ -57,10 +62,14 @@ export function CreateCalendarTaskDialog({
     workspaces.set(list.workspaceTitle, workspaceLists)
   }
 
+  // A day named in the title ("tomorrow", "friday") moves the task off `date`.
+  const [writtenDay, setWrittenDay] = useState<Date>()
+  const day = writtenDay ?? date
+
   const form = useForm({
     defaultValues: {
       title: '',
-      time: '09:00',
+      time: DEFAULT_TIME,
       destination: 'inbox',
       priority: 'none' as 'high' | 'medium' | 'low' | 'none',
     },
@@ -68,17 +77,18 @@ export function CreateCalendarTaskDialog({
       onSubmit: calendarTaskSchema,
     },
     onSubmit: ({ value }) => {
+      const title = titleWithoutNaturalDate(value.title)
       const dueDate = parse(
-        `${dateKey(date)} ${value.time}`,
+        `${dateKey(day)} ${value.time}`,
         'yyyy-MM-dd HH:mm',
-        date,
+        day,
       )
       const createPromise = addTodo({
         listId:
           value.destination === 'inbox'
             ? undefined
             : (value.destination as Id<'lists'>),
-        title: value.title.trim(),
+        title,
         priority: value.priority,
         dueDate: format(dueDate, "yyyy-MM-dd'T'HH:mm"),
       })
@@ -88,7 +98,8 @@ export function CreateCalendarTaskDialog({
         success: () => {
           onOpenChange(false)
           form.reset()
-          return `"${value.title.trim()}" added to ${format(date, 'd MMMM')}`
+          readTitle('')
+          return `"${title}" added to ${format(day, 'd MMMM')}`
         },
         error: 'Task could not be added. Try again.',
       })
@@ -97,13 +108,18 @@ export function CreateCalendarTaskDialog({
     },
   })
 
+  const { match, readTitle, markManual } = useNaturalDueDate((due, found) => {
+    setWrittenDay(found?.hasDay ? due : undefined)
+    form.setFieldValue('time', due ? format(due, 'HH:mm') : DEFAULT_TIME)
+  })
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add a task</DialogTitle>
           <DialogDescription>
-            Schedule it for {format(date, 'EEEE, d MMMM yyyy')} and choose where
+            Schedule it for {format(day, 'EEEE, d MMMM yyyy')} and choose where
             it belongs.
           </DialogDescription>
         </DialogHeader>
@@ -123,17 +139,30 @@ export function CreateCalendarTaskDialog({
               return (
                 <Field data-invalid={isInvalid}>
                   <FieldLabel htmlFor={field.name}>Task</FieldLabel>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => field.handleChange(event.target.value)}
-                    aria-invalid={isInvalid}
-                    placeholder="Prepare the client notes"
-                    autoFocus
-                    autoComplete="off"
-                  />
+                  {/* The same well as an Input, around the title line that
+                      marks the date phrase it reads. */}
+                  <div
+                    data-invalid={isInvalid}
+                    className="flex h-9 items-center rounded-md border border-hairline-strong bg-surface-sunken px-3 shadow-inset-well transition-[box-shadow,border-color] duration-[var(--dur-2)] ease-[var(--ease-standard)] focus-within:border-ring focus-within:bg-card data-[invalid=true]:border-destructive data-[invalid=true]:ring-2 data-[invalid=true]:ring-destructive/25"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <DateAwareTitleInput
+                        id={field.name}
+                        name={field.name}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onValueChange={(value) => {
+                          field.handleChange(value)
+                          readTitle(value)
+                        }}
+                        match={match}
+                        aria-invalid={isInvalid}
+                        placeholder="Prepare the client notes tomorrow at 9"
+                        autoFocus
+                        autoComplete="off"
+                      />
+                    </div>
+                  </div>
                   {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
               )
@@ -153,7 +182,10 @@ export function CreateCalendarTaskDialog({
                   <div className="overflow-hidden rounded-md border border-hairline bg-surface-sunken/60">
                     <TimeRail
                       value={field.state.value}
-                      onChange={field.handleChange}
+                      onChange={(time) => {
+                        markManual()
+                        field.handleChange(time)
+                      }}
                       label="At"
                     />
                   </div>

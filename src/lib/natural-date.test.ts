@@ -41,6 +41,15 @@ describe('parseNaturalDate', () => {
     expectLocalDate(match!.date, 2026, 8, 3, 17, 0)
   })
 
+  it('tells a named day from a bare time', () => {
+    expect(parseNaturalDate('Call mum friday', REFERENCE_DATE)?.hasDay).toBe(
+      true,
+    )
+    expect(parseNaturalDate('Call mum at 9am', REFERENCE_DATE)?.hasDay).toBe(
+      false,
+    )
+  })
+
   it('keeps the implied time for a part of the day', () => {
     const match = parseNaturalDate(
       'Write the outline this evening',
