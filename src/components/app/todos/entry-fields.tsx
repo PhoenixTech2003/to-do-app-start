@@ -36,9 +36,6 @@ export const PRIORITY_SPINE: Record<Priority, string> = {
   none: 'var(--border)',
 }
 
-/** A day picked without a time is due by end of the working day, not midnight. */
-const DEFAULT_HOUR = 17
-
 const QUICK_DAYS = [
   { label: 'Today', days: 0 },
   { label: 'Tomorrow', days: 1 },
@@ -131,7 +128,7 @@ export function WhenBands({
 
   const selectDay = (day: Date) => {
     const next = new Date(day)
-    next.setHours(due?.getHours() ?? DEFAULT_HOUR, due?.getMinutes() ?? 0, 0, 0)
+    next.setHours(due?.getHours() ?? 0,due?.getMinutes() ?? 0, 0, 0)
     onDueChange(next)
   }
 

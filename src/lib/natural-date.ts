@@ -33,7 +33,7 @@ export function parseNaturalDate(
     tags.has('casualReference/tonight')
 
   // Chrono carries the reference time into date-only relative expressions.
-  // The rest of the app deliberately treats a picked day as due at 17:00.
+  // A day written without a time is due at 17:00 instead.
   if (!hasMeaningfulTime) {
     date.setHours(DEFAULT_DUE_HOUR, 0, 0, 0)
   } else {

@@ -247,7 +247,7 @@ export function DateLeaf({
   value?: Date
   onChange: (date: Date) => void
 }) {
-  const time = value ? format(value, 'HH:mm') : '17:00'
+  const time = value ? format(value, 'HH:mm') : '00:00'
 
   const selectDay = (day: Date) => {
     const [hours, minutes] = time.split(':').map(Number)
