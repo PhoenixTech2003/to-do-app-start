@@ -51,6 +51,7 @@
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/db": "^0.5.28",
+    "@tanstack/query-core": "^5.104.1",
     "@tanstack/query-db-collection": "^1.0.25",
     "@tanstack/react-db": "^0.1.72",
     "@tanstack/react-devtools": "^0.7.0",
