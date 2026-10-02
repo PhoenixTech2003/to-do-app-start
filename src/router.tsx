@@ -32,7 +32,9 @@ export const getRouter = () => {
     routeTree,
     defaultPreload: 'intent',
     context: { queryClient, convexQueryClient },
-    defaultErrorComponent: (err) => <p>{err.error.stack}</p>,
+    defaultErrorComponent: ({ error }) => (
+      <p>{error instanceof Error ? error.stack : String(error)}</p>
+    ),
     defaultNotFoundComponent: () => <p>not found</p>,
     scrollRestoration: true,
     defaultViewTransition: true,
