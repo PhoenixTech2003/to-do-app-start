@@ -50,6 +50,9 @@ export default defineSchema({
     ...syncFields,
     listId: v.optional(v.id('lists')),
     markAsOverdueScheudledFunctionId: v.optional(v.id('_scheduled_functions')),
+    /** When to send a push reminder (epoch ms). Mobile devices only. */
+    reminderAt: v.optional(v.number()),
+    reminderScheduledFunctionId: v.optional(v.id('_scheduled_functions')),
     title: v.string(),
     description: v.optional(v.string()),
     status: v.union(
@@ -113,6 +116,14 @@ export default defineSchema({
     token: v.string(),
     createdBy: v.string(),
   }).index('by_createdBy', ['createdBy']),
+  /** One row per installed mobile app; a user can have several devices. */
+  expoPushTokens: defineTable({
+    token: v.string(),
+    createdBy: v.string(),
+    platform: v.union(v.literal('ios'), v.literal('android')),
+  })
+    .index('by_createdBy', ['createdBy'])
+    .index('by_token', ['token']),
   habits: defineTable({
     ...syncFields,
     title: v.string(),
@@ -128,6 +139,14 @@ export default defineSchema({
       v.literal('creative'),
       v.literal('other'),
     ),
+    /** Daily reminder time, `HH:mm` in `timeZone`. */
+    reminderTime: v.optional(v.string()),
+    /** Weekdays to remind on, 0 = Sunday. Empty or absent means every day. */
+    reminderDays: v.optional(v.array(v.number())),
+    timeZone: v.optional(v.string()),
+    /** The pending reminder, so a stale scheduled run can tell it was replaced. */
+    nextReminderAt: v.optional(v.number()),
+    reminderScheduledFunctionId: v.optional(v.id('_scheduled_functions')),
     currentStreak: v.number(),
     longestStreak: v.number(),
     totalCompletions: v.number(),

@@ -13,6 +13,7 @@ import { DECAY_GRACE_UNITS, isDecaying } from 'convex/habits/xp'
 import { CATEGORY_META } from './habit-helpers'
 import { TallyWall, tallySizeFor } from './tally'
 import type { HabitWithStatus } from '@/types/global'
+import { HabitReminderEditor } from '@/components/app/reminders/habit-reminder-editor'
 import { useLocalMutation, useLocalQuery } from '@/state/hooks'
 import {
   Sheet,
@@ -242,7 +243,11 @@ export function HabitDetailSheet({
             </motion.div>
           )}
 
-          <motion.div {...stagger(5)} className="pt-2">
+          <motion.div {...stagger(5)}>
+            <HabitReminderEditor habit={habit} />
+          </motion.div>
+
+          <motion.div {...stagger(6)} className="pt-2">
             <Button
               variant="outline"
               size="sm"

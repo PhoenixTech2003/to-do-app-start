@@ -122,4 +122,43 @@ describe('sync protocol', () => {
     })
     expect(list.page).toHaveLength(1)
   })
+  it('schedules reminders, replaces them on edit and rejects bad values', async () => {
+    const { t, write } = setup()
+    const at = Date.now() + 3_600_000
+    await write('todos', 'todo-one', {
+      title: 'Call',
+      status: 'pending',
+      priority: 'none',
+      reminderAt: at,
+    })
+    await write('todos', 'todo-one', { reminderAt: at + 60_000 })
+    await write('habits', 'habit-one', {
+      title: 'Walk',
+      frequency: 'daily',
+      category: 'health',
+      reminderTime: '07:00',
+      timeZone: 'UTC',
+    })
+    await t.run(async (ctx) => {
+      const jobs = (await ctx.db.system.query('_scheduled_functions').collect())
+        .filter((job) => job.state.kind === 'pending')
+        .map((job) => job.name)
+      expect(jobs.filter((name) => name.includes('fireTodo'))).toHaveLength(1)
+      expect(jobs.filter((name) => name.includes('fireHabit'))).toHaveLength(1)
+      const todo = await ctx.db.query('todos').first()
+      expect(todo?.reminderAt).toBe(at + 60_000)
+    })
+    await write('todos', 'todo-one', { reminderAt: null })
+    await t.run(async (ctx) => {
+      const pending = (
+        await ctx.db.system.query('_scheduled_functions').collect()
+      ).filter(
+        (job) => job.state.kind === 'pending' && job.name.includes('fireTodo'),
+      )
+      expect(pending).toHaveLength(0)
+    })
+    await expect(
+      write('habits', 'habit-one', { reminderTime: '7am' }),
+    ).rejects.toThrow('Invalid reminder time')
+  })
 })

@@ -87,4 +87,51 @@ describe('offline domain actions', () => {
         .completedToday,
     ).toBe(false)
   })
+  it('sets reminders and carries a todo reminder to the next occurrence', () => {
+    const { records, act } = local()
+    act(
+      'createTodo',
+      {
+        title: 'Weekly review',
+        dueDate: '2026-10-02T09:00',
+        recurrence: { freq: 'weekly', interval: 1 },
+        reminderAt: new Date('2026-10-02T08:50').getTime(),
+      },
+      'task',
+    )
+    act('updateTodo', {
+      todoId: 'task',
+      title: 'Weekly review',
+      dueDate: '2026-10-02T09:00',
+      recurrence: { freq: 'weekly', interval: 1 },
+    })
+    expect(records.task!.reminderAt).toBe(
+      new Date('2026-10-02T08:50').getTime(),
+    )
+    act('toggleTodoStatus', { todoId: 'task', status: 'completed' })
+    expect(records['recurrence:task:1']!.reminderAt).toBe(
+      new Date('2026-10-09T08:50').getTime(),
+    )
+    act('setTodoReminder', { todoId: 'task', reminderAt: null })
+    expect(records.task!.reminderAt).toBeNull()
+
+    act(
+      'createHabit',
+      { title: 'Walk', category: 'health', frequency: 'daily' },
+      'habit',
+    )
+    act('setHabitReminder', {
+      habitId: 'habit',
+      reminderTime: '07:00',
+      reminderDays: [1, 3],
+    })
+    expect(records.habit!.reminderTime).toBe('07:00')
+    expect(records.habit!.reminderDays).toEqual([1, 3])
+    act('setHabitReminder', {
+      habitId: 'habit',
+      reminderTime: null,
+      reminderDays: [1],
+    })
+    expect(records.habit!.reminderDays).toBeNull()
+  })
 })

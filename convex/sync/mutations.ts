@@ -3,6 +3,10 @@ import { fromZonedTime } from 'date-fns-tz'
 import { mutation } from '../_generated/server'
 import { internal } from '../_generated/api'
 import { authComponent } from '../auth'
+import {
+  scheduleHabitReminder,
+  scheduleTodoReminder,
+} from '../notifications/reminders'
 import { kindValidator, patchValidator } from './validators'
 import {
   bumpHead,
@@ -41,9 +45,10 @@ export const write = mutation({
     let inheritedDelete = false
     if (relation) {
       const current = row ? await record(ctx, args.kind, row) : null
-      const parentId = relation[0] in args.fields
-        ? (args.fields as Record<string, unknown>)[relation[0]]
-        : (current as Record<string, unknown> | null)?.[relation[0]]
+      const parentId =
+        relation[0] in args.fields
+          ? (args.fields as Record<string, unknown>)[relation[0]]
+          : (current as Record<string, unknown> | null)?.[relation[0]]
       if (parentId) {
         const parent = await find(
           ctx,
@@ -124,6 +129,12 @@ export const write = mutation({
       await ctx.db.patch(row._id, {
         markAsOverdueScheudledFunctionId: scheduled,
       })
+      const saved = await ctx.db.get(ctx.db.normalizeId('todos', row._id)!)
+      if (saved) await scheduleTodoReminder(ctx, saved)
+    }
+    if (args.kind === 'habits') {
+      const habit = await ctx.db.get(ctx.db.normalizeId('habits', row._id)!)
+      if (habit) await scheduleHabitReminder(ctx, habit)
     }
     await bumpHead(ctx, user._id)
     await ctx.db.insert('syncReceipts', {

@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth/minimal'
 import { createClient } from '@convex-dev/better-auth'
 import { convex } from '@convex-dev/better-auth/plugins'
+import { expo } from '@better-auth/expo'
 import authConfig from './auth.config'
 import { components } from './_generated/api'
 import { query } from './_generated/server'
@@ -14,6 +15,9 @@ const siteUrl = process.env.SITE_URL!
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
   return {
     baseURL: siteUrl,
+    // The mobile app signs in through its deep-link scheme; development
+    // builds served by Metro use exp://.
+    trustedOrigins: ['todo://', 'exp://'],
     database: authComponent.adapter(ctx),
     // Configure simple, non-verified email/password to get started
     socialProviders: {
@@ -24,6 +28,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
     },
 
     plugins: [
+      expo(),
       // The Convex plugin is required for Convex compatibility
       convex({ authConfig }),
     ],

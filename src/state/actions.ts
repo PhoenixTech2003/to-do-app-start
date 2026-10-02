@@ -1,11 +1,12 @@
 import { isPastDue } from '../../convex/todos/due'
 import { nextOccurrenceDate } from '../../convex/todos/recurrence'
+import { shiftReminder } from '../../convex/notifications/reminderTimes'
 import { allRecords, isLive } from './model'
 import type { Kind, RecordData, Replica } from './model'
 
 type DueFields = Pick<
   RecordData,
-  'title' | 'description' | 'dueDate' | 'priority' | 'recurrence'
+  'title' | 'description' | 'dueDate' | 'priority' | 'recurrence' | 'reminderAt'
 >
 export type ActionArgs = {
   createWorkspace: { title: string }
@@ -23,6 +24,8 @@ export type ActionArgs = {
   moveTodoToList: { todoId: string; listId?: string }
   removeTodoFromDate: { todoId: string }
   deleteTodo: { todoId: string }
+  /** Push reminder for the mobile app; null clears it. */
+  setTodoReminder: { todoId: string; reminderAt: number | null }
   addSubTask: {
     todoId: string
     title: string
@@ -44,6 +47,12 @@ export type ActionArgs = {
     category: NonNullable<RecordData['category']>
   }
   toggleHabitCompletion: { habitId: string; date: string; completed: boolean }
+  /** Daily push reminder for the mobile app; a null time turns it off. */
+  setHabitReminder: {
+    habitId: string
+    reminderTime: string | null
+    reminderDays: Array<number> | null
+  }
   deleteHabit: { habitId: string }
 }
 export type Patch = { id: string; kind: Kind; fields: Partial<RecordData> }
@@ -120,6 +129,9 @@ export function changesFor<T extends keyof ActionArgs>(
             dueDate: next,
             dueTime: row.dueTime,
             timeZone: row.timeZone ?? zone,
+            reminderAt: row.reminderAt
+              ? shiftReminder(row.reminderAt, row.dueDate, next)
+              : null,
             status: 'pending',
           },
           nextId,
@@ -183,6 +195,7 @@ export function changesFor<T extends keyof ActionArgs>(
           ...fields,
           listId: a.listId ?? null,
           recurrenceIndex: a.recurrence ? 0 : null,
+          reminderAt: a.reminderAt ?? null,
         })
       else {
         const row = get(a.todoId, 'todos')
@@ -191,6 +204,8 @@ export function changesFor<T extends keyof ActionArgs>(
           recurrenceIndex: fields.recurrence
             ? (row.recurrenceIndex ?? 0)
             : null,
+          // Left out, the reminder stays as it was.
+          ...(a.reminderAt !== undefined && { reminderAt: a.reminderAt }),
         })
       }
       break
@@ -215,6 +230,9 @@ export function changesFor<T extends keyof ActionArgs>(
     }
     case 'deleteTodo':
       remove(get(a.todoId, 'todos'))
+      break
+    case 'setTodoReminder':
+      patch(get(a.todoId, 'todos'), { reminderAt: a.reminderAt })
       break
     case 'addSubTask':
       get(a.todoId, 'todos')
@@ -255,6 +273,13 @@ export function changesFor<T extends keyof ActionArgs>(
       break
     case 'deleteHabit':
       remove(get(a.habitId, 'habits'))
+      break
+    case 'setHabitReminder':
+      patch(get(a.habitId, 'habits'), {
+        reminderTime: a.reminderTime,
+        reminderDays: a.reminderTime ? a.reminderDays : null,
+        timeZone: zone,
+      })
       break
     case 'toggleHabitCompletion': {
       get(a.habitId, 'habits')

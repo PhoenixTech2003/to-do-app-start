@@ -1,4 +1,5 @@
 import { ConvexError } from 'convex/values'
+import { isReminderDays, isReminderTime } from '../notifications/reminderTimes'
 import type { kindValidator, recordValidator } from './validators'
 import type { Infer } from 'convex/values'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
@@ -29,6 +30,7 @@ export const allowed: Record<Kind, Array<string>> = {
     'recurrenceIndex',
     'seriesId',
     'timeZone',
+    'reminderAt',
   ],
   subTasks: [
     'title',
@@ -38,7 +40,15 @@ export const allowed: Record<Kind, Array<string>> = {
     'dueDate',
     'dueTime',
   ],
-  habits: ['title', 'description', 'frequency', 'category'],
+  habits: [
+    'title',
+    'description',
+    'frequency',
+    'category',
+    'reminderTime',
+    'reminderDays',
+    'timeZone',
+  ],
   habitCompletions: ['habitId', 'completedDate'],
 }
 export const parents: Partial<Record<Kind, readonly [string, Kind]>> = {
@@ -109,6 +119,9 @@ export async function record(
     'dueTime',
     'recurrence',
     'recurrenceIndex',
+    'reminderAt',
+    'reminderTime',
+    'reminderDays',
   ]) {
     if (allowed[kind].includes(field) && value[field] === undefined)
       value[field] = null
@@ -161,6 +174,16 @@ export function validate(
   }
   if (fields.dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(String(fields.dueDate)))
     throw new ConvexError('Invalid due date')
+  if (
+    fields.reminderAt != null &&
+    (typeof fields.reminderAt !== 'number' ||
+      !Number.isFinite(fields.reminderAt))
+  )
+    throw new ConvexError('Invalid reminder')
+  if (fields.reminderTime != null && !isReminderTime(fields.reminderTime))
+    throw new ConvexError('Invalid reminder time')
+  if (fields.reminderDays != null && !isReminderDays(fields.reminderDays))
+    throw new ConvexError('Invalid reminder days')
   if (
     fields.completedDate &&
     !/^\d{4}-\d{2}-\d{2}$/.test(String(fields.completedDate))

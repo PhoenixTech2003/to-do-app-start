@@ -8,6 +8,7 @@ import { SubtaskItem } from './subtask-item'
 import { SubtaskMeter } from './subtask-meter'
 import type { Id } from 'convex/_generated/dataModel'
 import type { Todo } from '@/types/global'
+import { TodoReminderPicker } from '@/components/app/reminders/todo-reminder-picker'
 import { useLocalMutation, useLocalQuery } from '@/state/hooks'
 import { Button } from '@/components/ui/button'
 import {
@@ -138,6 +139,9 @@ export function TodoSheet({
             ) : (
               <span className="text-muted-foreground">No due date</span>
             )}
+          </Particular>
+          <Particular label="Reminder">
+            <TodoReminderPicker todo={todo} />
           </Particular>
           <Particular label="Repeats">
             {todo.recurrence ? (
