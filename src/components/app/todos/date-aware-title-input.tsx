@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { CalendarClock } from 'lucide-react'
 import type { ComponentProps } from 'react'
 import type { NaturalDateMatch } from '@/lib/natural-date'
 import { splitTitleAtNaturalDate } from '@/lib/natural-date'
@@ -64,6 +65,49 @@ export function DateAwareTitleInput({
           className,
         )}
       />
+    </div>
+  )
+}
+
+/**
+ * Offered under the title while a date phrase is filling the due date: keep
+ * it, or keep the words as plain text. Leaving it alone keeps it.
+ */
+export function NaturalDateSuggestion({
+  match,
+  onAccept,
+  onDismiss,
+}: {
+  match: NaturalDateMatch
+  onAccept: () => void
+  onDismiss: () => void
+}) {
+  return (
+    <div
+      role="status"
+      className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground"
+    >
+      <CalendarClock className="size-3 text-primary" aria-hidden />
+      <span className="min-w-0 truncate">
+        <span className="text-primary">“{match.text.trim()}”</span> sets the due
+        date
+      </span>
+      <span className="ml-auto flex items-center gap-1">
+        <button
+          type="button"
+          onClick={onAccept}
+          className="label-meta rounded-sm border border-hairline px-1.5 py-0.5 transition-colors hover:border-hairline-strong hover:text-foreground"
+        >
+          Use date
+        </button>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="label-meta rounded-sm px-1.5 py-0.5 transition-colors hover:text-foreground"
+        >
+          Keep as text
+        </button>
+      </span>
     </div>
   )
 }

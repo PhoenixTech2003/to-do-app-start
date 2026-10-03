@@ -10,14 +10,22 @@ import {
   reminderAtFor,
   reminderChoiceFor,
 } from './entry-fields'
-import { DateAwareTitleInput } from './date-aware-title-input'
+import {
+  DateAwareTitleInput,
+  NaturalDateSuggestion,
+} from './date-aware-title-input'
+import {
+  EntryLine,
+  LineError,
+  NoteInput,
+  SlipActions,
+  submitOnModEnter,
+} from './entry-slip'
 import type z from 'zod'
 import type { Id } from 'convex/_generated/dataModel'
 import type { SubTask } from '@/types/global'
 import type { ReminderChoice } from 'convex/notifications/reminderTimes'
 import { useLocalMutation } from '@/state/hooks'
-import { Button } from '@/components/ui/button'
-import { Kbd } from '@/components/ui/kbd'
 import { createSubtaskFormSchema } from '@/validation/create-subtask-form-schema'
 import { useNaturalDueDate } from '@/hooks/use-natural-due-date'
 
@@ -88,10 +96,11 @@ function SubtaskSlip({
     },
   })
 
-  const { match, readTitle, markManual } = useNaturalDueDate(
-    (date) => form.setFieldValue('dueDate', date),
-    { title: defaultValues.title, dueDate: defaultValues.dueDate },
-  )
+  const { match, suggesting, readTitle, markManual, accept, dismiss } =
+    useNaturalDueDate((date) => form.setFieldValue('dueDate', date), {
+      title: defaultValues.title,
+      dueDate: defaultValues.dueDate,
+    })
 
   return (
     <form
@@ -99,72 +108,64 @@ function SubtaskSlip({
         e.preventDefault()
         form.handleSubmit()
       }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-          e.preventDefault()
-          form.handleSubmit()
-        }
-      }}
+      onKeyDown={submitOnModEnter(() => form.handleSubmit())}
     >
       <div className="max-h-[60vh] overflow-y-auto">
         <form.Subscribe
           selector={(state) => state.values.dueDate}
           children={(dueDate) => (
-            <div className="spine flex items-start gap-3 py-3.5 pr-3 pl-4">
-              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                <form.Field
-                  name="title"
-                  children={(field) => {
-                    const isInvalid =
-                      field.state.meta.isTouched && !field.state.meta.isValid
-                    return (
-                      <>
-                        <DateAwareTitleInput
-                          id={field.name}
-                          name={field.name}
-                          value={field.state.value}
-                          onBlur={field.handleBlur}
-                          onValueChange={(value) => {
-                            field.handleChange(value)
-                            readTitle(value)
-                          }}
+            <EntryLine mark={<EntryMark date={dueDate} />}>
+              <form.Field
+                name="title"
+                children={(field) => {
+                  const isInvalid =
+                    field.state.meta.isTouched && !field.state.meta.isValid
+                  return (
+                    <>
+                      <DateAwareTitleInput
+                        id={field.name}
+                        name={field.name}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onValueChange={(value) => {
+                          field.handleChange(value)
+                          readTitle(value)
+                        }}
+                        match={match}
+                        aria-invalid={isInvalid}
+                        aria-label="Title"
+                        placeholder="What needs doing first?"
+                        autoComplete="off"
+                        autoFocus
+                      />
+                      {isInvalid && (
+                        <LineError>A subtask needs a title.</LineError>
+                      )}
+                      {suggesting && match && (
+                        <NaturalDateSuggestion
                           match={match}
-                          aria-invalid={isInvalid}
-                          aria-label="Title"
-                          placeholder="What needs doing first?"
-                          autoComplete="off"
-                          autoFocus
+                          onAccept={accept}
+                          onDismiss={dismiss}
                         />
-                        {isInvalid && (
-                          <p className="font-mono text-[11px] text-destructive">
-                            A subtask needs a title.
-                          </p>
-                        )}
-                      </>
-                    )
-                  }}
-                />
+                      )}
+                    </>
+                  )
+                }}
+              />
 
-                <form.Field
-                  name="description"
-                  children={(field) => (
-                    <textarea
-                      id={field.name}
-                      name={field.name}
-                      value={field.state.value ?? ''}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      aria-label="Note"
-                      placeholder="Add a note"
-                      rows={2}
-                      className="w-full resize-none bg-transparent text-xs leading-relaxed text-muted-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none"
-                    />
-                  )}
-                />
-              </div>
-
-              <EntryMark date={dueDate} />
-            </div>
+              <form.Field
+                name="description"
+                children={(field) => (
+                  <NoteInput
+                    id={field.name}
+                    name={field.name}
+                    value={field.state.value ?? ''}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                )}
+              />
+            </EntryLine>
           )}
         />
 
@@ -195,28 +196,17 @@ function SubtaskSlip({
         />
       </div>
 
-      <div className="flex items-center justify-between gap-3 border-t border-hairline bg-surface-sunken px-4 py-3">
-        <span className="hidden items-center gap-1.5 text-[11px] text-muted-foreground sm:flex">
-          <Kbd>⏎</Kbd> to save
-        </span>
-        <div className="flex items-center gap-2">
-          <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-            Cancel
-          </Button>
-          <form.Subscribe
-            selector={(state) => [state.isSubmitting, state.isSubmitSuccessful]}
-            children={([isSubmitting, isSubmitSuccessful]) => (
-              <Button
-                size="sm"
-                disabled={isSubmitting && !isSubmitSuccessful}
-                type="submit"
-              >
-                {submitLabel}
-              </Button>
-            )}
+      <form.Subscribe
+        selector={(state) => [state.isSubmitting, state.isSubmitSuccessful]}
+        children={([isSubmitting, isSubmitSuccessful]) => (
+          <SlipActions
+            submitLabel={submitLabel}
+            hint="to save"
+            onCancel={onClose}
+            disabled={isSubmitting && !isSubmitSuccessful}
           />
-        </div>
-      </div>
+        )}
+      />
     </form>
   )
 }
