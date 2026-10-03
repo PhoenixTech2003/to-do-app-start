@@ -8,11 +8,13 @@ import { api } from '../../convex/_generated/api'
 import { kinds, parentId } from './model'
 import { changesFor } from './actions'
 import type { Observable } from '@legendapp/state'
-import type { SyncedSetParams } from '@legendapp/state/sync'
+import type { SyncedGetParams, SyncedSetParams } from '@legendapp/state/sync'
 import type { ConvexReactClient } from 'convex/react'
 import type { ActionArgs } from './actions'
 import type { RecordData, Replica } from './model'
 
+/** How far each incremental pull reaches back before the last one. */
+const PULL_OVERLAP_MS = 60_000
 type Intent = { token: string; fields: Partial<RecordData>; record: RecordData }
 const persistence = observablePersistIndexedDB({
   databaseName: 'twodo-replica',
@@ -108,6 +110,9 @@ export function createReplica(client: ConvexReactClient, userId: string) {
       as: 'object',
       mode: 'assign',
       updatePartial: false,
+      // Pulls after the first ask only for what changed since the last one;
+      // `list` keeps the watermark (server time) with `updateLastSync`.
+      changesSince: 'last-sync',
       persist: {
         name: 'records',
         plugin: persistence,
@@ -136,24 +141,42 @@ export function createReplica(client: ConvexReactClient, userId: string) {
             !!records$[parent].remoteId.get()
           )
         },
-      list: async (): Promise<Array<RecordData>> => {
+      list: async (
+        params: SyncedGetParams<RecordData>,
+      ): Promise<Array<RecordData>> => {
         await when(ready$)
-        const rows: Array<RecordData> = []
-        for (const kind of kinds) {
-          let cursor: string | null = null
-          do {
-            const result: {
-              page: Array<RecordData>
-              isDone: boolean
-              continueCursor: string
-            } = await client.query(api.sync.queries.list, {
-              kind,
-              paginationOpts: { cursor, numItems: 100 },
-            })
-            rows.push(...result.page)
-            cursor = result.isDone ? null : result.continueCursor
-          } while (cursor)
-        }
+        // Overlap the previous pull: a write timestamped just before the
+        // watermark can commit after it. Re-applying a record is harmless.
+        const since =
+          params.lastSync !== undefined
+            ? params.lastSync - PULL_OVERLAP_MS
+            : undefined
+        const pages = await Promise.all(
+          kinds.map(async (kind) => {
+            const rows: Array<RecordData> = []
+            let cursor: string | null = null
+            do {
+              const result: {
+                page: Array<RecordData>
+                isDone: boolean
+                continueCursor: string
+              } = await client.query(api.sync.queries.list, {
+                kind,
+                paginationOpts: { cursor, numItems: 100 },
+                ...(since !== undefined && { since }),
+              })
+              rows.push(...result.page)
+              cursor = result.isDone ? null : result.continueCursor
+            } while (cursor)
+            return rows
+          }),
+        )
+        const rows = pages.flat()
+        const newest = rows.reduce(
+          (max, row) => Math.max(max, row.updatedAt),
+          params.lastSync ?? 0,
+        )
+        if (newest) params.updateLastSync(newest)
         errors$.remote.delete()
         const current = records$.peek()
         return rows.map((row) => {

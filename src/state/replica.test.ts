@@ -171,4 +171,29 @@ describe('durable local replica', () => {
     expect(store.records$[row.id].status.peek()).toBe('completed')
     store.dispose()
   })
+  it('pulls everything once, then only what changed since the last pull', async () => {
+    const remote = server()
+    const store = createReplica(remote.client, crypto.randomUUID())
+    await store.hydrated
+    await store.act('createTodo', { title: 'Task' })
+    store.ready$.set(true)
+    await eventually(() => expect(remote.rows.size).toBe(1))
+    const settled = () =>
+      eventually(() => expect(store.state$.isGetting.peek()).toBe(false))
+    const query = remote.client.query as ReturnType<typeof vi.fn>
+    const sinces = () =>
+      query.mock.calls.map(([, args]) => (args as { since?: number }).since)
+    await settled()
+    // The first pull asked for everything.
+    expect(sinces()[0]).toBeUndefined()
+    await store.state$.sync()
+    await settled()
+    query.mockClear()
+    await store.state$.sync()
+    await settled()
+    // Later pulls reach back from the newest server time already seen.
+    expect(sinces().length).toBeGreaterThan(0)
+    expect(sinces().every((since) => typeof since === 'number')).toBe(true)
+    store.dispose()
+  })
 })

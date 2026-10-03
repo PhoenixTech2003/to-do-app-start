@@ -186,4 +186,19 @@ describe('sync protocol', () => {
       write('habits', 'habit-one', { reminderTime: '7am' }),
     ).rejects.toThrow('Invalid reminder time')
   })
+  it('returns only records changed since a watermark for incremental pulls', async () => {
+    const { user, write } = setup()
+    const first = await write('workspace', 'workspace-one', { title: 'Old' })
+    await new Promise((resolve) => setTimeout(resolve, 5))
+    await write('workspace', 'workspace-two', { title: 'New' })
+    const page = (since?: number) =>
+      user.query(api.sync.queries.list, {
+        kind: 'workspace',
+        paginationOpts: { numItems: 100, cursor: null },
+        ...(since !== undefined && { since }),
+      })
+    expect((await page()).page).toHaveLength(2)
+    const changed = (await page(first.updatedAt)).page
+    expect(changed.map((row) => row.id)).toEqual(['workspace-two'])
+  })
 })

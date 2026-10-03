@@ -1,4 +1,5 @@
 import { paginationOptsValidator } from 'convex/server'
+import { v } from 'convex/values'
 import { query } from '../_generated/server'
 import { authComponent } from '../auth'
 import { kindValidator } from './validators'
@@ -20,16 +21,33 @@ export const head = query({
   },
 })
 export const list = query({
-  args: { kind: kindValidator, paginationOpts: paginationOptsValidator },
+  args: {
+    kind: kindValidator,
+    paginationOpts: paginationOptsValidator,
+    /**
+     * Only records changed after this server time (ms), for incremental
+     * pulls. Omitted, every record is returned, including ones written
+     * before records carried `updatedAt`.
+     */
+    since: v.optional(v.number()),
+  },
   handler: async (ctx, args) => {
     const user = await authComponent.getAuthUser(ctx)
-    const result = await ctx.db
-      .query(args.kind)
-      .withIndex('sync_owner', (q) => q.eq('createdBy', user._id))
-      .paginate({
-        ...args.paginationOpts,
-        numItems: Math.min(args.paginationOpts.numItems, 100),
-      })
+    const since = args.since
+    const rows =
+      since === undefined
+        ? ctx.db
+            .query(args.kind)
+            .withIndex('sync_owner', (q) => q.eq('createdBy', user._id))
+        : ctx.db
+            .query(args.kind)
+            .withIndex('sync_updated', (q) =>
+              q.eq('createdBy', user._id).gt('updatedAt', since),
+            )
+    const result = await rows.paginate({
+      ...args.paginationOpts,
+      numItems: Math.min(args.paginationOpts.numItems, 100),
+    })
     return {
       ...result,
       page: await Promise.all(
