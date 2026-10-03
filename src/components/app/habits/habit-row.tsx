@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { motion } from 'motion/react'
+import { format, subDays } from 'date-fns'
 import { Trash2 } from 'lucide-react'
 import { isDecaying } from 'convex/habits/xp'
-import { CATEGORY_META } from './habit-helpers'
+import { CATEGORY_FILL, CATEGORY_META } from './habit-helpers'
 import { HabitDetailSheet } from './habit-detail-sheet'
 import { MarkSlot } from './tally'
 import type { HabitWithStatus } from '@/types/global'
-import { useLocalMutation } from '@/state/hooks'
+import { useLocalMutation, useLocalQuery } from '@/state/hooks'
 import { cn } from '@/lib/utils'
 
 /**
@@ -54,7 +55,7 @@ export function HabitRow({
           delay: index * 0.035,
           ease: [0.22, 1, 0.36, 1],
         }}
-        className="group/row relative flex items-center gap-3 border-b border-hairline py-2.5 pr-1 transition-colors duration-200 last:border-b-0 hover:bg-accent/45 sm:gap-4"
+        className="group/row relative flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-hairline py-2.5 pr-1 transition-colors duration-200 last:border-b-0 hover:bg-accent/45 sm:flex-nowrap sm:gap-4"
       >
         <button
           onClick={handleToggle}
@@ -98,6 +99,8 @@ export function HabitRow({
             </span>
           </span>
         </button>
+
+        <WeekStrip habit={habit} today={today} />
 
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <Standing
@@ -185,4 +188,71 @@ function Standing({
   }
 
   return <span className="w-6" aria-hidden="true" />
+}
+
+/**
+ * The last seven days, oldest first. Any of them can be marked or unmarked —
+ * a day missed in the app is often a day done but not recorded.
+ */
+function WeekStrip({
+  habit,
+  today,
+}: {
+  habit: HabitWithStatus
+  today: string
+}) {
+  const toggle = useLocalMutation('toggleHabitCompletion')
+  const anchor = new Date(`${today}T12:00:00`)
+  const days = Array.from({ length: 7 }, (_, i) => subDays(anchor, 6 - i))
+  const marked = useLocalQuery('getHabitCompletions', {
+    habitId: habit._id,
+    startDate: format(days[0], 'yyyy-MM-dd'),
+    endDate: today,
+  })
+
+  return (
+    <div
+      role="group"
+      aria-label={`${habit.title}, last seven days`}
+      className="order-last flex w-full gap-1 pl-10 sm:order-none sm:w-auto sm:pl-0"
+    >
+      {days.map((day) => {
+        const key = format(day, 'yyyy-MM-dd')
+        const done = marked.includes(key)
+        const isToday = key === today
+        return (
+          <button
+            key={key}
+            type="button"
+            aria-pressed={done}
+            aria-label={`${format(day, 'EEEE d MMMM')}: ${done ? 'marked' : 'not marked'}`}
+            title={format(day, 'EEE d MMM')}
+            onClick={() =>
+              void toggle({ habitId: habit._id, date: key, completed: !done })
+            }
+            className="group/day flex w-6 flex-col items-center gap-1 rounded-sm py-0.5 focus-visible:outline-2 focus-visible:outline-ring"
+          >
+            <span
+              className={cn(
+                'h-1.5 w-full rounded-full transition-colors duration-200',
+                done
+                  ? CATEGORY_FILL[habit.category]
+                  : 'bg-surface-sunken group-hover/day:bg-muted-foreground/25',
+              )}
+            />
+            <span
+              className={cn(
+                'font-mono text-[9px] leading-none',
+                isToday
+                  ? 'font-bold text-foreground'
+                  : 'text-muted-foreground/70',
+              )}
+            >
+              {format(day, 'EEEEE')}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
 }
