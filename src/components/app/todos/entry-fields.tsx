@@ -1,6 +1,19 @@
 import { useState } from 'react'
-import { addDays, format, isSameDay, parse, startOfDay } from 'date-fns'
-import { X } from 'lucide-react'
+import {
+  addDays,
+  addHours,
+  format,
+  isSameDay,
+  parse,
+  startOfDay,
+  startOfHour,
+} from 'date-fns'
+import { Bell, X } from 'lucide-react'
+import {
+  reminderChoice,
+  reminderOffsets,
+  resolveReminder,
+} from 'convex/notifications/reminderTimes'
 import {
   RECURRENCE_PRESETS,
   WEEKDAY_LABEL,
@@ -9,6 +22,7 @@ import {
 } from 'convex/todos/recurrence'
 import { DateLeaf, Leaf, MonthSheet } from './date-leaf'
 import type { RecurrenceFreq, RecurrenceRule } from 'convex/todos/recurrence'
+import type { ReminderChoice } from 'convex/notifications/reminderTimes'
 import { GUTTER } from '@/components/app/docket'
 import { gutterInk, gutterTime } from '@/lib/todo-time'
 import { dateKey } from '@/lib/calendar-month'
@@ -128,7 +142,7 @@ export function WhenBands({
 
   const selectDay = (day: Date) => {
     const next = new Date(day)
-    next.setHours(due?.getHours() ?? 0,due?.getMinutes() ?? 0, 0, 0)
+    next.setHours(due?.getHours() ?? 0, due?.getMinutes() ?? 0, 0, 0)
     onDueChange(next)
   }
 
@@ -473,5 +487,105 @@ export function PriorityMargin({
         )
       })}
     </div>
+  )
+}
+
+/** The `reminderAt` to save for a form's reminder choice and due date. */
+export function reminderAtFor(choice: ReminderChoice | null, due?: Date) {
+  return resolveReminder(
+    choice,
+    due ? format(due, 'yyyy-MM-dd') : null,
+    due ? format(due, 'HH:mm') : null,
+  )
+}
+
+/** The form choice for an entry's saved reminder. */
+export function reminderChoiceFor(entry: {
+  reminderAt?: number
+  dueDate?: string
+  dueTime?: string
+}) {
+  return reminderChoice(entry.reminderAt, entry.dueDate, entry.dueTime)
+}
+
+/**
+ * A push reminder for the entry being written, delivered to the mobile app.
+ * Relative choices follow the due date as it changes on the slip; "Pick a
+ * time" fixes a moment.
+ */
+export function ReminderBand({
+  due,
+  value,
+  onChange,
+}: {
+  due?: Date
+  value: ReminderChoice | null
+  onChange: (choice: ReminderChoice | null) => void
+}) {
+  const offsets = due ? reminderOffsets(format(due, 'HH:mm')) : []
+  const at = reminderAtFor(value, due)
+  const fixed = value && 'at' in value ? new Date(value.at) : null
+  const passed = at !== null && at <= Date.now()
+
+  return (
+    <Band label="Remind">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <button
+          type="button"
+          className={chipClasses(!value)}
+          onClick={() => onChange(null)}
+        >
+          Off
+        </button>
+        {offsets.map(({ label, offset }) => (
+          <button
+            key={offset}
+            type="button"
+            className={chipClasses(
+              !!value && 'offset' in value && value.offset === offset,
+            )}
+            onClick={() => onChange({ offset })}
+          >
+            {label}
+          </button>
+        ))}
+        <button
+          type="button"
+          className={chipClasses(!!fixed)}
+          onClick={() =>
+            onChange({
+              at: at ?? addHours(startOfHour(new Date()), 1).getTime(),
+            })
+          }
+        >
+          Pick a time
+        </button>
+        {fixed && (
+          <input
+            type="datetime-local"
+            aria-label="Reminder time"
+            value={format(fixed, "yyyy-MM-dd'T'HH:mm")}
+            onChange={(event) => {
+              const next = new Date(event.target.value).getTime()
+              if (Number.isFinite(next)) onChange({ at: next })
+            }}
+            className="h-7 rounded-sm border border-hairline bg-transparent px-1.5 font-mono text-[11px]"
+          />
+        )}
+      </div>
+      {at !== null && (
+        <p
+          className={cn(
+            'flex w-full items-center gap-1.5 pl-[5.25rem] text-[11px]',
+            passed ? 'text-destructive' : 'text-muted-foreground',
+          )}
+        >
+          <Bell className="size-3" aria-hidden />
+          {passed
+            ? 'That moment has passed — pick a later one.'
+            : `Push to the mobile app · ${format(at, "EEE d MMM 'at' HH:mm")}`}
+        </p>
+      )}
+    </Band>
   )
 }

@@ -82,27 +82,73 @@ export function describeHabitReminder(
   return `${sorted.map((d) => WEEKDAY_LABEL[d]).join(', ')} at ${time}`
 }
 
-/** One-tap todo reminders, relative to the due moment when there is one. */
+/**
+ * A reminder as a form holds it: relative to the due moment ("1 hour
+ * before"), so it follows the due date while the form is being edited, or a
+ * fixed moment. It becomes a timestamp only when the entry is saved.
+ */
+export type ReminderChoice = { offset: number } | { at: number }
+
+/** Minutes before the due moment. A day without a time is due at 09:00. */
+export function reminderOffsets(
+  dueTime: string | null | undefined,
+): Array<{ label: string; offset: number }> {
+  return dueTime
+    ? [
+        { label: 'At due time', offset: 0 },
+        { label: '10 minutes before', offset: 10 },
+        { label: '1 hour before', offset: 60 },
+        { label: '1 day before', offset: 1440 },
+      ]
+    : [
+        { label: 'That morning (09:00)', offset: 0 },
+        { label: 'The day before (09:00)', offset: 1440 },
+      ]
+}
+
+export function resolveReminder(
+  choice: ReminderChoice | null | undefined,
+  dueDate: string | null | undefined,
+  dueTime: string | null | undefined,
+): number | null {
+  if (!choice) return null
+  if ('at' in choice) return choice.at
+  if (!dueDate) return null
+  const due = new Date(`${dueDate}T${dueTime ?? '09:00'}:00`)
+  // Whole days step by calendar day so the time survives DST changes.
+  return choice.offset % 1440 === 0
+    ? addDays(due, -choice.offset / 1440).getTime()
+    : due.getTime() - choice.offset * 60_000
+}
+
+/** The form choice for a saved reminder: a preset if it matches one. */
+export function reminderChoice(
+  at: number | null | undefined,
+  dueDate: string | null | undefined,
+  dueTime: string | null | undefined,
+): ReminderChoice | null {
+  if (!at) return null
+  const preset = dueDate
+    ? reminderOffsets(dueTime).find(
+        ({ offset }) => resolveReminder({ offset }, dueDate, dueTime) === at,
+      )
+    : undefined
+  return preset ? { offset: preset.offset } : { at }
+}
+
+/** One-tap reminders relative to the due moment, still in the future. */
 export function todoReminderPresets(
   dueDate: string | null | undefined,
   dueTime: string | null | undefined,
   now = Date.now(),
 ): Array<{ label: string; at: number }> {
   if (!dueDate) return []
-  // A date without a time is due at the end of the day; remind that morning.
-  const due = new Date(`${dueDate}T${dueTime ?? '09:00'}:00`).getTime()
-  const presets = dueTime
-    ? [
-        { label: 'At due time', at: due },
-        { label: '10 minutes before', at: due - 10 * 60_000 },
-        { label: '1 hour before', at: due - 60 * 60_000 },
-        { label: '1 day before', at: addDays(due, -1).getTime() },
-      ]
-    : [
-        { label: 'That morning (09:00)', at: due },
-        { label: 'The day before (09:00)', at: addDays(due, -1).getTime() },
-      ]
-  return presets.filter((preset) => preset.at > now)
+  return reminderOffsets(dueTime)
+    .map(({ label, offset }) => ({
+      label,
+      at: resolveReminder({ offset }, dueDate, dueTime)!,
+    }))
+    .filter((preset) => preset.at > now)
 }
 
 export function describeTodoReminder(at: number | null | undefined) {

@@ -25,6 +25,7 @@ const WEEKDAY_NAMES = [
  */
 export function HabitReminderEditor({ habit }: { habit: HabitWithStatus }) {
   const setReminder = useLocalMutation('setHabitReminder')
+  const [enabled, setEnabled] = useState(!!habit.reminderTime)
   const [time, setTime] = useState(habit.reminderTime ?? '19:00')
   const [days, setDays] = useState<Array<number>>(habit.reminderDays ?? [])
 
@@ -58,49 +59,69 @@ export function HabitReminderEditor({ habit }: { habit: HabitWithStatus }) {
           {describeHabitReminder(habit.reminderTime, habit.reminderDays)}
         </span>
       </div>
-      <div className="flex flex-wrap items-center gap-3">
-        <TimePicker value={time} onChange={setTime} />
-        <div className="flex gap-1" role="group" aria-label="Days">
-          {WEEKDAYS.map((label, day) => {
-            const on = days.includes(day)
-            return (
-              <button
-                key={day}
-                type="button"
-                aria-pressed={on}
-                aria-label={WEEKDAY_NAMES[day]}
-                onClick={() =>
-                  setDays(on ? days.filter((d) => d !== day) : [...days, day])
-                }
-                className={cn(
-                  'size-7 rounded-full border text-[11px] font-semibold transition-colors',
-                  on
-                    ? 'border-foreground bg-foreground text-background'
-                    : 'border-input hover:bg-accent',
-                )}
-              >
-                {label}
-              </button>
-            )
-          })}
-        </div>
+      <div className="flex gap-1.5" role="group" aria-label="Reminder">
+        {[
+          { label: 'Off', on: false },
+          { label: 'On', on: true },
+        ].map((option) => (
+          <button
+            key={option.label}
+            type="button"
+            aria-pressed={enabled === option.on}
+            onClick={() => setEnabled(option.on)}
+            className={cn(
+              'label-meta rounded-sm border px-2.5 py-1 transition-colors',
+              enabled === option.on
+                ? 'border-foreground bg-foreground text-background'
+                : 'border-hairline text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {option.label}
+          </button>
+        ))}
       </div>
-      <p className="text-[11px] text-muted-foreground">
-        {describeHabitReminder(time, days)}. No days picked means every day.{' '}
-        {habit.frequency === 'weekly'
-          ? 'Skipped once it is marked this week.'
-          : 'Skipped on days it is already marked.'}
-      </p>
-      <div className="flex items-center gap-2">
-        <Button size="sm" onClick={() => save(time)}>
-          Save reminder
-        </Button>
-        {habit.reminderTime && (
-          <Button size="sm" variant="ghost" onClick={() => save(null)}>
-            Turn off
-          </Button>
-        )}
-      </div>
+      {enabled && (
+        <>
+          <div className="flex flex-wrap items-center gap-3">
+            <TimePicker value={time} onChange={setTime} />
+            <div className="flex gap-1" role="group" aria-label="Days">
+              {WEEKDAYS.map((label, day) => {
+                const on = days.includes(day)
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    aria-pressed={on}
+                    aria-label={WEEKDAY_NAMES[day]}
+                    onClick={() =>
+                      setDays(
+                        on ? days.filter((d) => d !== day) : [...days, day],
+                      )
+                    }
+                    className={cn(
+                      'size-7 rounded-full border text-[11px] font-semibold transition-colors',
+                      on
+                        ? 'border-foreground bg-foreground text-background'
+                        : 'border-input hover:bg-accent',
+                    )}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            {describeHabitReminder(time, days)}. No days picked means every day.{' '}
+            {habit.frequency === 'weekly'
+              ? 'Skipped once it is marked this week.'
+              : 'Skipped on days it is already marked.'}
+          </p>
+        </>
+      )}
+      <Button size="sm" onClick={() => save(enabled ? time : null)}>
+        {enabled ? 'Save reminder' : 'Save — no reminder'}
+      </Button>
       <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
         <Smartphone className="size-3" aria-hidden />
         Delivered as a push notification to the mobile app.

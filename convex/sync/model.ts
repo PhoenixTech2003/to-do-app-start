@@ -39,6 +39,7 @@ export const allowed: Record<Kind, Array<string>> = {
     'completed',
     'dueDate',
     'dueTime',
+    'reminderAt',
   ],
   habits: [
     'title',

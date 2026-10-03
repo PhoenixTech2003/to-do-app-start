@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   describeHabitReminder,
+  reminderChoice,
+  resolveReminder,
   habitUnitDates,
   nextHabitReminder,
   shiftReminder,
@@ -56,6 +58,28 @@ describe('todo reminders', () => {
     const at = new Date('2026-10-02T08:50:00').getTime()
     expect(shiftReminder(at, '2026-10-02', '2026-10-09')).toBe(
       new Date('2026-10-09T08:50:00').getTime(),
+    )
+  })
+})
+
+describe('reminder choices', () => {
+  it('follows the due date and round-trips through a saved reminder', () => {
+    const at = resolveReminder({ offset: 60 }, '2026-10-05', '14:00')
+    expect(at).toBe(new Date('2026-10-05T13:00:00').getTime())
+    expect(resolveReminder({ offset: 60 }, '2026-10-06', '14:00')).toBe(
+      new Date('2026-10-06T13:00:00').getTime(),
+    )
+    expect(reminderChoice(at, '2026-10-05', '14:00')).toEqual({ offset: 60 })
+  })
+
+  it('keeps a fixed moment, and needs a due date for relative ones', () => {
+    const fixed = new Date('2026-10-05T07:30:00').getTime()
+    expect(reminderChoice(fixed, '2026-10-05', '14:00')).toEqual({ at: fixed })
+    expect(resolveReminder({ at: fixed }, null, null)).toBe(fixed)
+    expect(resolveReminder({ offset: 0 }, null, null)).toBeNull()
+    // Without a time, a day is due at 09:00.
+    expect(resolveReminder({ offset: 1440 }, '2026-10-05', null)).toBe(
+      new Date('2026-10-04T09:00:00').getTime(),
     )
   })
 })

@@ -5,6 +5,7 @@ import { internal } from '../_generated/api'
 import { authComponent } from '../auth'
 import {
   scheduleHabitReminder,
+  scheduleSubTaskReminder,
   scheduleTodoReminder,
 } from '../notifications/reminders'
 import { kindValidator, patchValidator } from './validators'
@@ -131,6 +132,10 @@ export const write = mutation({
       })
       const saved = await ctx.db.get(ctx.db.normalizeId('todos', row._id)!)
       if (saved) await scheduleTodoReminder(ctx, saved)
+    }
+    if (args.kind === 'subTasks') {
+      const subTask = await ctx.db.get(ctx.db.normalizeId('subTasks', row._id)!)
+      if (subTask) await scheduleSubTaskReminder(ctx, subTask)
     }
     if (args.kind === 'habits') {
       const habit = await ctx.db.get(ctx.db.normalizeId('habits', row._id)!)

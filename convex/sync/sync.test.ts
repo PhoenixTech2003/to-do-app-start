@@ -148,6 +148,31 @@ describe('sync protocol', () => {
       const todo = await ctx.db.query('todos').first()
       expect(todo?.reminderAt).toBe(at + 60_000)
     })
+    await write('subTasks', 'part-one', {
+      title: 'Bring the folder',
+      todoId: 'todo-one',
+      completed: false,
+      reminderAt: at,
+    })
+    await t.run(async (ctx) => {
+      const jobs = (await ctx.db.system.query('_scheduled_functions').collect())
+        .filter((job) => job.state.kind === 'pending')
+        .map((job) => job.name)
+      expect(jobs.filter((name) => name.includes('fireSubTask'))).toHaveLength(
+        1,
+      )
+    })
+    // Ticking the subtask off cancels its reminder.
+    await write('subTasks', 'part-one', { completed: true })
+    await t.run(async (ctx) => {
+      const pending = (
+        await ctx.db.system.query('_scheduled_functions').collect()
+      ).filter(
+        (job) =>
+          job.state.kind === 'pending' && job.name.includes('fireSubTask'),
+      )
+      expect(pending).toHaveLength(0)
+    })
     await write('todos', 'todo-one', { reminderAt: null })
     await t.run(async (ctx) => {
       const pending = (

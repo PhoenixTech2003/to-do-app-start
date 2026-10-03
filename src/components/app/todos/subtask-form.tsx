@@ -1,12 +1,20 @@
+import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { formatInTimeZone } from 'date-fns-tz'
 import { isValid, parse } from 'date-fns'
 import { toast } from 'sonner'
-import { EntryMark, WhenBands } from './entry-fields'
+import {
+  EntryMark,
+  ReminderBand,
+  WhenBands,
+  reminderAtFor,
+  reminderChoiceFor,
+} from './entry-fields'
 import { DateAwareTitleInput } from './date-aware-title-input'
 import type z from 'zod'
 import type { Id } from 'convex/_generated/dataModel'
 import type { SubTask } from '@/types/global'
+import type { ReminderChoice } from 'convex/notifications/reminderTimes'
 import { useLocalMutation } from '@/state/hooks'
 import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
@@ -28,10 +36,12 @@ interface SubtaskPayload {
   title: string
   description?: string
   dueDate?: string
+  reminderAt: number | null
 }
 
 interface SubtaskSlipProps {
   defaultValues: SubtaskFormValues
+  defaultReminder?: ReminderChoice | null
   submitLabel: string
   messages: { loading: string; success: string; error: string }
   submit: (payload: SubtaskPayload) => Promise<unknown>
@@ -40,11 +50,13 @@ interface SubtaskSlipProps {
 
 function SubtaskSlip({
   defaultValues,
+  defaultReminder = null,
   submitLabel,
   messages,
   submit,
   onClose,
 }: SubtaskSlipProps) {
+  const [reminder, setReminder] = useState(defaultReminder)
   const form = useForm({
     defaultValues,
     validators: {
@@ -62,6 +74,7 @@ function SubtaskSlip({
               "yyyy-MM-dd'T'HH:mm",
             )
           : undefined,
+        reminderAt: reminderAtFor(reminder, formData.value.dueDate),
       })
 
       toast.promise(promise, {
@@ -169,6 +182,17 @@ function SubtaskSlip({
             />
           )}
         />
+
+        <form.Subscribe
+          selector={(state) => state.values.dueDate}
+          children={(dueDate) => (
+            <ReminderBand
+              due={dueDate}
+              value={reminder}
+              onChange={setReminder}
+            />
+          )}
+        />
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-hairline bg-surface-sunken px-4 py-3">
@@ -252,6 +276,7 @@ export function UpdateSubtaskForm({
         description: subtask.description,
         dueDate: subtaskDueDate(subtask),
       }}
+      defaultReminder={reminderChoiceFor(subtask)}
       submitLabel="Save subtask"
       messages={{
         loading: 'Saving the subtask…',

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { toast } from 'sonner'
 import { formatInTimeZone } from 'date-fns-tz'
@@ -6,12 +7,15 @@ import {
   EntryMark,
   PRIORITY_SPINE,
   PriorityMargin,
+  ReminderBand,
   WhenBands,
+  reminderAtFor,
 } from './entry-fields'
 import { DateAwareTitleInput } from './date-aware-title-input'
 import type z from 'zod'
 import type { Id } from 'convex/_generated/dataModel'
 import type { Priority } from './entry-fields'
+import type { ReminderChoice } from 'convex/notifications/reminderTimes'
 import { useLocalMutation } from '@/state/hooks'
 import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
@@ -35,6 +39,7 @@ export function CreateTodoForm({
     priority: 'none',
   }
 
+  const [reminder, setReminder] = useState<ReminderChoice | null>(null)
   const form = useForm({
     defaultValues,
 
@@ -58,6 +63,7 @@ export function CreateTodoForm({
           : undefined,
         priority: formData.value.priority,
         recurrence: formData.value.recurrence,
+        reminderAt: reminderAtFor(reminder, formData.value.dueDate),
       })
       toast.promise(addTodoPromise, {
         loading: 'Adding your todo…',
@@ -188,6 +194,17 @@ export function CreateTodoForm({
               onRecurrenceChange={(rule) =>
                 form.setFieldValue('recurrence', rule)
               }
+            />
+          )}
+        />
+
+        <form.Subscribe
+          selector={(state) => state.values.dueDate}
+          children={(dueDate) => (
+            <ReminderBand
+              due={dueDate}
+              value={reminder}
+              onChange={setReminder}
             />
           )}
         />

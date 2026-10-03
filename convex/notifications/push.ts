@@ -12,8 +12,8 @@ import { internal } from '../_generated/api'
  *
  * The channel, sound and categories must match src/notifications in the app.
  */
-const CHANNEL_ID = 'reminders'
-const SOUND = 'todo_chime.wav'
+const CHANNEL_ID = 'alerts'
+const SOUND = 'todo_alert.wav'
 
 export const tokensFor = internalQuery({
   args: { owner: v.string() },
@@ -46,9 +46,13 @@ export const send = internalAction({
     owner: v.string(),
     title: v.string(),
     body: v.string(),
-    /** `todo` or `habit`: decides the "Mark done" action the app offers. */
-    categoryId: v.union(v.literal('todo'), v.literal('habit')),
-    /** Local IDs the app acts on: `todoId` or `habitId`. */
+    /** Decides what the notification's "Mark done" action completes. */
+    categoryId: v.union(
+      v.literal('todo'),
+      v.literal('subtask'),
+      v.literal('habit'),
+    ),
+    /** Local IDs the app acts on: `todoId`, `subTaskId` or `habitId`. */
     data: v.record(v.string(), v.string()),
   },
   handler: async (ctx, args) => {

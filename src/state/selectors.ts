@@ -117,6 +117,10 @@ export const selectors = {
       (t) => t.dueDate && t.dueDate >= a.startDate && t.dueDate <= a.endDate,
     ),
   }),
+  getSubTask: (r: Replica, a: { subTaskId: string }) => {
+    const row = rows(r, 'subTasks').find((part) => part.id === a.subTaskId)
+    return row ? doc<'subTasks'>(row) : null
+  },
   GetAllSubtasks: (r: Replica, a: { todoId: string }) => {
     const subtasks = rows(r, 'subTasks')
       .filter((row) => row.todoId === a.todoId)

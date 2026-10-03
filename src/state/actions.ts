@@ -31,13 +31,18 @@ export type ActionArgs = {
     title: string
     description?: string
     dueDate?: string
+    reminderAt?: number | null
   }
   updateSubTask: {
     subTaskId: string
     title: string
     description?: string
     dueDate?: string
+    /** Left out, the reminder stays as it was. */
+    reminderAt?: number | null
   }
+  /** Push reminder for the mobile app; null clears it. */
+  setSubTaskReminder: { subTaskId: string; reminderAt: number | null }
   toggleSubTask: { subTaskId: string; completed: boolean }
   deleteSubTask: { subTaskId: string }
   createHabit: {
@@ -242,6 +247,7 @@ export function changesFor<T extends keyof ActionArgs>(
         description: a.description ?? null,
         ...due(a.dueDate),
         completed: false,
+        reminderAt: a.reminderAt ?? null,
       })
       break
     case 'updateSubTask':
@@ -249,7 +255,11 @@ export function changesFor<T extends keyof ActionArgs>(
         title: title(a.title),
         description: a.description ?? null,
         ...due(a.dueDate),
+        ...(a.reminderAt !== undefined && { reminderAt: a.reminderAt }),
       })
+      break
+    case 'setSubTaskReminder':
+      patch(get(a.subTaskId, 'subTasks'), { reminderAt: a.reminderAt })
       break
     case 'toggleSubTask': {
       const row = get(a.subTaskId, 'subTasks')

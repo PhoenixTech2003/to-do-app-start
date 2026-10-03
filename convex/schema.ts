@@ -106,6 +106,9 @@ export default defineSchema({
     dueDate: v.optional(v.string()),
     dueTime: v.optional(v.string()),
     completed: v.boolean(),
+    /** When to send a push reminder (epoch ms). Mobile devices only. */
+    reminderAt: v.optional(v.number()),
+    reminderScheduledFunctionId: v.optional(v.id('_scheduled_functions')),
     createdBy: v.string(),
   })
     .index('sync_owner', ['createdBy'])

@@ -4,9 +4,14 @@ import { format, parse } from 'date-fns'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import type { Id } from 'convex/_generated/dataModel'
+import type { ReminderChoice } from 'convex/notifications/reminderTimes'
 import { useLocalMutation, useLocalQuery } from '@/state/hooks'
 import { DateAwareTitleInput } from '@/components/app/todos/date-aware-title-input'
 import { TimeRail } from '@/components/app/todos/date-leaf'
+import {
+  ReminderBand,
+  reminderAtFor,
+} from '@/components/app/todos/entry-fields'
 import { useNaturalDueDate } from '@/hooks/use-natural-due-date'
 import { titleWithoutNaturalDate } from '@/lib/natural-date'
 import { dateKey } from '@/lib/calendar-month'
@@ -65,6 +70,9 @@ export function CreateCalendarTaskDialog({
   // A day named in the title ("tomorrow", "friday") moves the task off `date`.
   const [writtenDay, setWrittenDay] = useState<Date>()
   const day = writtenDay ?? date
+  const [reminder, setReminder] = useState<ReminderChoice | null>(null)
+  const dueOn = (time: string) =>
+    parse(`${dateKey(day)} ${time}`, 'yyyy-MM-dd HH:mm', day)
 
   const form = useForm({
     defaultValues: {
@@ -78,11 +86,7 @@ export function CreateCalendarTaskDialog({
     },
     onSubmit: ({ value }) => {
       const title = titleWithoutNaturalDate(value.title)
-      const dueDate = parse(
-        `${dateKey(day)} ${value.time}`,
-        'yyyy-MM-dd HH:mm',
-        day,
-      )
+      const dueDate = dueOn(value.time)
       const createPromise = addTodo({
         listId:
           value.destination === 'inbox'
@@ -91,6 +95,7 @@ export function CreateCalendarTaskDialog({
         title,
         priority: value.priority,
         dueDate: format(dueDate, "yyyy-MM-dd'T'HH:mm"),
+        reminderAt: reminderAtFor(reminder, dueDate),
       })
 
       toast.promise(createPromise, {
@@ -98,6 +103,7 @@ export function CreateCalendarTaskDialog({
         success: () => {
           onOpenChange(false)
           form.reset()
+          setReminder(null)
           readTitle('')
           return `"${title}" added to ${format(day, 'd MMMM')}`
         },
@@ -193,6 +199,22 @@ export function CreateCalendarTaskDialog({
                 </Field>
               )
             }}
+          />
+
+          <form.Subscribe
+            selector={(state) => state.values.time}
+            children={(time) => (
+              <Field>
+                <FieldLabel>Reminder</FieldLabel>
+                <div className="overflow-hidden rounded-md border border-hairline bg-surface-sunken/60 [&>div]:border-t-0">
+                  <ReminderBand
+                    due={dueOn(time)}
+                    value={reminder}
+                    onChange={setReminder}
+                  />
+                </div>
+              </Field>
+            )}
           />
 
           <form.Field

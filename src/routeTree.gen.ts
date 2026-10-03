@@ -9,25 +9,25 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as appRouteRouteImport } from './routes/(app)/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as appRouteRouteImport } from './routes/(app)/route'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
-import { Route as appTodayIndexRouteImport } from './routes/(app)/today/index'
-import { Route as appInboxIndexRouteImport } from './routes/(app)/inbox/index'
-import { Route as appHabitsIndexRouteImport } from './routes/(app)/habits/index'
-import { Route as appDashboardIndexRouteImport } from './routes/(app)/dashboard/index'
 import { Route as appCalendarIndexRouteImport } from './routes/(app)/calendar/index'
+import { Route as appDashboardIndexRouteImport } from './routes/(app)/dashboard/index'
+import { Route as appHabitsIndexRouteImport } from './routes/(app)/habits/index'
+import { Route as appInboxIndexRouteImport } from './routes/(app)/inbox/index'
+import { Route as appTodayIndexRouteImport } from './routes/(app)/today/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as appDashboardWorkspaceWorkspaceIdListsIndexRouteImport } from './routes/(app)/dashboard/workspace/$workspaceId/lists/index'
 import { Route as appDashboardWorkspaceWorkspaceIdListsListIdTodosIndexRouteImport } from './routes/(app)/dashboard/workspace/$workspaceId/lists/$listId/todos/index'
 
-const appRouteRoute = appRouteRouteImport.update({
-  id: '/(app)',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const appRouteRoute = appRouteRouteImport.update({
+  id: '/(app)',
   getParentRoute: () => rootRouteImport,
 } as any)
 const authSignupRoute = authSignupRouteImport.update({
@@ -35,19 +35,9 @@ const authSignupRoute = authSignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
-const appTodayIndexRoute = appTodayIndexRouteImport.update({
-  id: '/today/',
-  path: '/today/',
-  getParentRoute: () => appRouteRoute,
-} as any)
-const appInboxIndexRoute = appInboxIndexRouteImport.update({
-  id: '/inbox/',
-  path: '/inbox/',
-  getParentRoute: () => appRouteRoute,
-} as any)
-const appHabitsIndexRoute = appHabitsIndexRouteImport.update({
-  id: '/habits/',
-  path: '/habits/',
+const appCalendarIndexRoute = appCalendarIndexRouteImport.update({
+  id: '/calendar/',
+  path: '/calendar/',
   getParentRoute: () => appRouteRoute,
 } as any)
 const appDashboardIndexRoute = appDashboardIndexRouteImport.update({
@@ -55,9 +45,19 @@ const appDashboardIndexRoute = appDashboardIndexRouteImport.update({
   path: '/dashboard/',
   getParentRoute: () => appRouteRoute,
 } as any)
-const appCalendarIndexRoute = appCalendarIndexRouteImport.update({
-  id: '/calendar/',
-  path: '/calendar/',
+const appHabitsIndexRoute = appHabitsIndexRouteImport.update({
+  id: '/habits/',
+  path: '/habits/',
+  getParentRoute: () => appRouteRoute,
+} as any)
+const appInboxIndexRoute = appInboxIndexRouteImport.update({
+  id: '/inbox/',
+  path: '/inbox/',
+  getParentRoute: () => appRouteRoute,
+} as any)
+const appTodayIndexRoute = appTodayIndexRouteImport.update({
+  id: '/today/',
+  path: '/today/',
   getParentRoute: () => appRouteRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -165,18 +165,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/(app)': {
-      id: '/(app)'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof appRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(app)': {
+      id: '/(app)'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof appRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(auth)/signup': {
@@ -186,25 +186,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authSignupRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(app)/today/': {
-      id: '/(app)/today/'
-      path: '/today'
-      fullPath: '/today/'
-      preLoaderRoute: typeof appTodayIndexRouteImport
-      parentRoute: typeof appRouteRoute
-    }
-    '/(app)/inbox/': {
-      id: '/(app)/inbox/'
-      path: '/inbox'
-      fullPath: '/inbox/'
-      preLoaderRoute: typeof appInboxIndexRouteImport
-      parentRoute: typeof appRouteRoute
-    }
-    '/(app)/habits/': {
-      id: '/(app)/habits/'
-      path: '/habits'
-      fullPath: '/habits/'
-      preLoaderRoute: typeof appHabitsIndexRouteImport
+    '/(app)/calendar/': {
+      id: '/(app)/calendar/'
+      path: '/calendar'
+      fullPath: '/calendar/'
+      preLoaderRoute: typeof appCalendarIndexRouteImport
       parentRoute: typeof appRouteRoute
     }
     '/(app)/dashboard/': {
@@ -214,11 +200,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appDashboardIndexRouteImport
       parentRoute: typeof appRouteRoute
     }
-    '/(app)/calendar/': {
-      id: '/(app)/calendar/'
-      path: '/calendar'
-      fullPath: '/calendar/'
-      preLoaderRoute: typeof appCalendarIndexRouteImport
+    '/(app)/habits/': {
+      id: '/(app)/habits/'
+      path: '/habits'
+      fullPath: '/habits/'
+      preLoaderRoute: typeof appHabitsIndexRouteImport
+      parentRoute: typeof appRouteRoute
+    }
+    '/(app)/inbox/': {
+      id: '/(app)/inbox/'
+      path: '/inbox'
+      fullPath: '/inbox/'
+      preLoaderRoute: typeof appInboxIndexRouteImport
+      parentRoute: typeof appRouteRoute
+    }
+    '/(app)/today/': {
+      id: '/(app)/today/'
+      path: '/today'
+      fullPath: '/today/'
+      preLoaderRoute: typeof appTodayIndexRouteImport
       parentRoute: typeof appRouteRoute
     }
     '/api/auth/$': {

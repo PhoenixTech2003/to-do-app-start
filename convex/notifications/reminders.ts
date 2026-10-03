@@ -36,6 +36,27 @@ export async function scheduleTodoReminder(
   await ctx.db.patch(todo._id, { reminderScheduledFunctionId: job })
 }
 
+/** Replaces a subtask's pending reminder with one for its current state. */
+export async function scheduleSubTaskReminder(
+  ctx: MutationCtx,
+  subTask: Doc<'subTasks'>,
+) {
+  await cancel(ctx, subTask.reminderScheduledFunctionId)
+  let job: Id<'_scheduled_functions'> | undefined
+  if (
+    subTask.reminderAt &&
+    subTask.reminderAt > Date.now() &&
+    !subTask.completed &&
+    !(await deletedAncestor(ctx, 'subTasks', subTask))
+  )
+    job = await ctx.scheduler.runAt(
+      subTask.reminderAt,
+      internal.notifications.reminders.fireSubTask,
+      { subTaskId: subTask._id, at: subTask.reminderAt },
+    )
+  await ctx.db.patch(subTask._id, { reminderScheduledFunctionId: job })
+}
+
 /** Replaces a habit's pending reminder with the next one its settings call for. */
 export async function scheduleHabitReminder(
   ctx: MutationCtx,
@@ -79,6 +100,30 @@ export const fireTodo = internalMutation({
         : todo.title,
       categoryId: 'todo',
       data: { todoId: todo.clientId ?? todoId },
+    })
+  },
+})
+
+export const fireSubTask = internalMutation({
+  args: { subTaskId: v.id('subTasks'), at: v.number() },
+  handler: async (ctx, { subTaskId, at }) => {
+    const subTask = await ctx.db.get(subTaskId)
+    if (!subTask || subTask.reminderAt !== at) return
+    await ctx.db.patch(subTaskId, { reminderScheduledFunctionId: undefined })
+    if (subTask.completed || (await deletedAncestor(ctx, 'subTasks', subTask)))
+      return
+    const parent = await ctx.db.get(subTask.todoId)
+    await ctx.scheduler.runAfter(0, internal.notifications.push.send, {
+      owner: subTask.createdBy,
+      title: parent ? `Reminder · ${parent.title}` : 'Reminder',
+      body: subTask.dueDate
+        ? `${subTask.title} · due ${subTask.dueDate}${subTask.dueTime ? ` ${subTask.dueTime}` : ''}`
+        : subTask.title,
+      categoryId: 'subtask',
+      data: {
+        subTaskId: subTask.clientId ?? subTaskId,
+        todoId: parent?.clientId ?? subTask.todoId,
+      },
     })
   },
 })
