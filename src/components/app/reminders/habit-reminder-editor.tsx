@@ -5,19 +5,9 @@ import { describeHabitReminder } from 'convex/notifications/reminderTimes'
 import type { HabitWithStatus } from '@/types/global'
 import { useLocalMutation } from '@/state/hooks'
 import { Button } from '@/components/ui/button'
-import { TimePicker } from '@/components/ui/time-picker'
+import { TimeRail } from '@/components/app/todos/date-leaf'
+import { WeekdayChips, chipClasses } from '@/components/app/todos/entry-fields'
 import { cn } from '@/lib/utils'
-
-const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-const WEEKDAY_NAMES = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-]
 
 /**
  * A habit's push reminder: a time, and optionally the weekdays it applies to.
@@ -69,12 +59,7 @@ export function HabitReminderEditor({ habit }: { habit: HabitWithStatus }) {
             type="button"
             aria-pressed={enabled === option.on}
             onClick={() => setEnabled(option.on)}
-            className={cn(
-              'label-meta rounded-sm border px-2.5 py-1 transition-colors',
-              enabled === option.on
-                ? 'border-foreground bg-foreground text-background'
-                : 'border-hairline text-muted-foreground hover:text-foreground',
-            )}
+            className={chipClasses(enabled === option.on)}
           >
             {option.label}
           </button>
@@ -82,33 +67,23 @@ export function HabitReminderEditor({ habit }: { habit: HabitWithStatus }) {
       </div>
       {enabled && (
         <>
-          <div className="flex flex-wrap items-center gap-3">
-            <TimePicker value={time} onChange={setTime} />
-            <div className="flex gap-1" role="group" aria-label="Days">
-              {WEEKDAYS.map((label, day) => {
-                const on = days.includes(day)
-                return (
-                  <button
-                    key={day}
-                    type="button"
-                    aria-pressed={on}
-                    aria-label={WEEKDAY_NAMES[day]}
-                    onClick={() =>
-                      setDays(
-                        on ? days.filter((d) => d !== day) : [...days, day],
-                      )
-                    }
-                    className={cn(
-                      'size-7 rounded-full border text-[11px] font-semibold transition-colors',
-                      on
-                        ? 'border-foreground bg-foreground text-background'
-                        : 'border-input hover:bg-accent',
-                    )}
-                  >
-                    {label}
-                  </button>
-                )
-              })}
+          {/* The time rail and day toggles the entry slip uses. */}
+          <div className="overflow-hidden rounded-md border border-hairline bg-surface-sunken/60 [&>div:first-child]:border-t-0">
+            <TimeRail value={time} onChange={setTime} />
+            <div className="flex items-center gap-1.5 border-t border-hairline px-3 py-2.5">
+              <span className="label-meta w-8 shrink-0 text-muted-foreground">
+                On
+              </span>
+              <WeekdayChips
+                value={days}
+                onToggle={(day) =>
+                  setDays(
+                    days.includes(day)
+                      ? days.filter((d) => d !== day)
+                      : [...days, day],
+                  )
+                }
+              />
             </div>
           </div>
           <p className="text-[11px] text-muted-foreground">

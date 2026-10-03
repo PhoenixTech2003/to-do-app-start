@@ -56,7 +56,7 @@ const QUICK_DAYS = [
   { label: 'Next week', days: 7 },
 ]
 
-function chipClasses(selected: boolean) {
+export function chipClasses(selected: boolean) {
   return cn(
     'label-meta rounded-sm border px-2 py-1 transition-colors duration-[var(--dur-1)] ease-[var(--ease-standard)]',
     selected
@@ -116,6 +116,40 @@ const FREQ_UNITS: Array<{ freq: RecurrenceFreq; label: string }> = [
   { freq: 'monthly', label: 'Months' },
   { freq: 'yearly', label: 'Years' },
 ]
+
+/** Seven day toggles, Monday first. `value` holds 0 (Sunday) – 6. */
+export function WeekdayChips({
+  value,
+  onToggle,
+}: {
+  value: Array<number>
+  onToggle: (day: number) => void
+}) {
+  return (
+    <div className="flex gap-1" role="group" aria-label="Days">
+      {WEEK_ORDER.map((day) => {
+        const selected = value.includes(day)
+        return (
+          <button
+            key={day}
+            type="button"
+            onClick={() => onToggle(day)}
+            aria-pressed={selected}
+            aria-label={WEEKDAY_LABEL[day]}
+            className={cn(
+              'size-6 rounded-sm border font-mono text-[10px] font-semibold transition-colors',
+              selected
+                ? 'border-foreground bg-foreground text-background'
+                : 'border-hairline text-muted-foreground hover:border-hairline-strong hover:text-foreground',
+            )}
+          >
+            {WEEKDAY_LABEL[day].charAt(0)}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
 
 /**
  * When an entry is due and how it comes back. Both bands unfold into the same
@@ -338,28 +372,10 @@ export function WhenBands({
                 <span className="label-meta w-12 shrink-0 text-muted-foreground">
                   On
                 </span>
-                <div className="flex gap-1">
-                  {WEEK_ORDER.map((day) => {
-                    const selected = (rule.weekdays ?? []).includes(day)
-                    return (
-                      <button
-                        key={day}
-                        type="button"
-                        onClick={() => toggleWeekday(day)}
-                        aria-pressed={selected}
-                        aria-label={WEEKDAY_LABEL[day]}
-                        className={cn(
-                          'size-6 rounded-sm border font-mono text-[10px] font-semibold transition-colors',
-                          selected
-                            ? 'border-foreground bg-foreground text-background'
-                            : 'border-hairline text-muted-foreground hover:border-hairline-strong hover:text-foreground',
-                        )}
-                      >
-                        {WEEKDAY_LABEL[day].charAt(0)}
-                      </button>
-                    )
-                  })}
-                </div>
+                <WeekdayChips
+                  value={rule.weekdays ?? []}
+                  onToggle={toggleWeekday}
+                />
               </div>
             )}
 
@@ -510,8 +526,9 @@ export function reminderChoiceFor(entry: {
 
 /**
  * A push reminder for the entry being written, delivered to the mobile app.
- * Relative choices follow the due date as it changes on the slip; "Pick a
- * time" fixes a moment.
+ * Relative choices follow the due date as it changes on the slip; a picked
+ * moment is fixed, and chosen on the same month sheet and time rail as the
+ * due date.
  */
 export function ReminderBand({
   due,
@@ -522,70 +539,79 @@ export function ReminderBand({
   value: ReminderChoice | null
   onChange: (choice: ReminderChoice | null) => void
 }) {
+  const [picking, setPicking] = useState(false)
   const offsets = due ? reminderOffsets(format(due, 'HH:mm')) : []
   const at = reminderAtFor(value, due)
   const fixed = value && 'at' in value ? new Date(value.at) : null
   const passed = at !== null && at <= Date.now()
 
+  const choose = (choice: ReminderChoice | null) => {
+    onChange(choice)
+    setPicking(false)
+  }
+
   return (
-    <Band label="Remind">
-      <div className="flex flex-wrap items-center gap-1.5">
-        <button
-          type="button"
-          className={chipClasses(!value)}
-          onClick={() => onChange(null)}
-        >
-          Off
-        </button>
-        {offsets.map(({ label, offset }) => (
+    <>
+      <Band label="Remind">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           <button
-            key={offset}
             type="button"
-            className={chipClasses(
-              !!value && 'offset' in value && value.offset === offset,
-            )}
-            onClick={() => onChange({ offset })}
+            className={chipClasses(!value)}
+            onClick={() => choose(null)}
           >
-            {label}
+            Off
           </button>
-        ))}
-        <button
-          type="button"
-          className={chipClasses(!!fixed)}
-          onClick={() =>
-            onChange({
-              at: at ?? addHours(startOfHour(new Date()), 1).getTime(),
-            })
-          }
-        >
-          Pick a time
-        </button>
-        {fixed && (
-          <input
-            type="datetime-local"
-            aria-label="Reminder time"
-            value={format(fixed, "yyyy-MM-dd'T'HH:mm")}
-            onChange={(event) => {
-              const next = new Date(event.target.value).getTime()
-              if (Number.isFinite(next)) onChange({ at: next })
+          {offsets.map(({ label, offset }) => (
+            <button
+              key={offset}
+              type="button"
+              className={chipClasses(
+                !!value && 'offset' in value && value.offset === offset,
+              )}
+              onClick={() => choose({ offset })}
+            >
+              {label}
+            </button>
+          ))}
+          <button
+            type="button"
+            aria-expanded={picking}
+            className={cn(
+              chipClasses(picking || !!fixed),
+              fixed && 'tabular-nums',
+            )}
+            onClick={() => {
+              if (!fixed)
+                onChange({
+                  at: at ?? addHours(startOfHour(new Date()), 1).getTime(),
+                })
+              setPicking((open) => !open)
             }}
-            className="h-7 rounded-sm border border-hairline bg-transparent px-1.5 font-mono text-[11px]"
-          />
+          >
+            {fixed ? format(fixed, 'd MMM HH:mm') : 'Pick a time'}
+          </button>
+        </div>
+        {at !== null && (
+          <p
+            className={cn(
+              'flex w-full items-center gap-1.5 pl-[5.25rem] text-[11px]',
+              passed ? 'text-destructive' : 'text-muted-foreground',
+            )}
+          >
+            <Bell className="size-3" aria-hidden />
+            {passed
+              ? 'That moment has passed — pick a later one.'
+              : `Push to the mobile app · ${format(at, "EEE d MMM 'at' HH:mm")}`}
+          </p>
         )}
-      </div>
-      {at !== null && (
-        <p
-          className={cn(
-            'flex w-full items-center gap-1.5 pl-[5.25rem] text-[11px]',
-            passed ? 'text-destructive' : 'text-muted-foreground',
-          )}
-        >
-          <Bell className="size-3" aria-hidden />
-          {passed
-            ? 'That moment has passed — pick a later one.'
-            : `Push to the mobile app · ${format(at, "EEE d MMM 'at' HH:mm")}`}
-        </p>
-      )}
-    </Band>
+      </Band>
+
+      <Leaf open={picking && !!fixed}>
+        <DateLeaf
+          value={fixed ?? undefined}
+          onChange={(date) => onChange({ at: date.getTime() })}
+        />
+      </Leaf>
+    </>
   )
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { format } from 'date-fns'
+import { addHours, format, startOfHour } from 'date-fns'
 import { Bell, BellOff, Smartphone } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -9,7 +9,7 @@ import {
 import type { Todo } from '@/types/global'
 import { useLocalMutation } from '@/state/hooks'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { DateLeaf } from '@/components/app/todos/date-leaf'
 import {
   Popover,
   PopoverContent,
@@ -26,13 +26,13 @@ export function TodoReminderPicker({ todo }: { todo: Todo }) {
   const [open, setOpen] = useState(false)
   const current = todo.reminderAt
   const [custom, setCustom] = useState(() =>
-    format(
-      current ??
-        (todo.dueDate ? new Date(`${todo.dueDate}T09:00`) : new Date()),
-      "yyyy-MM-dd'T'HH:mm",
-    ),
+    current
+      ? new Date(current)
+      : todo.dueDate
+        ? new Date(`${todo.dueDate}T09:00`)
+        : addHours(startOfHour(new Date()), 1),
   )
-  const customAt = custom ? new Date(custom).getTime() : NaN
+  const customAt = custom.getTime()
 
   function set(at: number | null) {
     setReminder({ todoId: todo._id, reminderAt: at })
@@ -64,8 +64,8 @@ export function TodoReminderPicker({ todo }: { todo: Todo }) {
           {current ? describeTodoReminder(current) : 'Add a reminder'}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-72 space-y-3">
-        <div className="space-y-1">
+      <PopoverContent align="start" className="w-80 overflow-hidden p-0">
+        <div className="space-y-1 p-2">
           {todoReminderPresets(todo.dueDate, todo.dueTime).map((preset) => (
             <button
               key={preset.label}
@@ -86,42 +86,36 @@ export function TodoReminderPicker({ todo }: { todo: Todo }) {
             </button>
           ))}
         </div>
-        <div className="space-y-2 border-t border-hairline pt-3">
-          <label
-            className="label-meta text-muted-foreground"
-            htmlFor="reminder-at"
-          >
+        {/* The same month sheet and time rail every date is picked on. */}
+        <div className="border-t border-hairline bg-surface-sunken/60">
+          <span className="label-meta block px-3 pt-2.5 text-muted-foreground">
             Or pick a moment
-          </label>
-          <div className="flex gap-2">
-            <Input
-              id="reminder-at"
-              type="datetime-local"
-              value={custom}
-              onChange={(event) => setCustom(event.target.value)}
-              className="h-8 text-xs"
-            />
-            <Button
-              size="sm"
-              disabled={!Number.isFinite(customAt) || customAt <= Date.now()}
-              onClick={() => set(customAt)}
-            >
-              Set
-            </Button>
-          </div>
+          </span>
+          <DateLeaf value={custom} onChange={setCustom} />
         </div>
-        {current && (
+        <div className="flex items-center justify-between gap-2 border-t border-hairline px-3 py-2.5">
+          {current ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-muted-foreground"
+              onClick={() => set(null)}
+            >
+              <BellOff className="size-3.5" />
+              Turn off
+            </Button>
+          ) : (
+            <span />
+          )}
           <Button
-            variant="ghost"
             size="sm"
-            className="w-full justify-start gap-2 text-muted-foreground"
-            onClick={() => set(null)}
+            disabled={customAt <= Date.now()}
+            onClick={() => set(customAt)}
           >
-            <BellOff className="size-3.5" />
-            Turn off
+            Set {format(custom, 'd MMM HH:mm')}
           </Button>
-        )}
-        <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        </div>
+        <p className="flex items-center gap-1.5 border-t border-hairline px-3 py-2 text-[11px] text-muted-foreground">
           <Smartphone className="size-3" aria-hidden />
           Delivered as a push notification to the mobile app.
         </p>
